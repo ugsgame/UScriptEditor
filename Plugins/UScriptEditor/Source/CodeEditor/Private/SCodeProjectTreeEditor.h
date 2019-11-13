@@ -1,4 +1,4 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -9,13 +9,13 @@
 #include "CodeProjectItem.h"
 #include "Widgets/Views/STreeView.h"
 
-class SCodeProjectEditor : public SCompoundWidget
+class SCodeProjectTreeEditor : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SCodeProjectEditor) {}
+	SLATE_BEGIN_ARGS(SCodeProjectTreeEditor) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, class UCodeProject* InCodeProject);
+	void Construct(const FArguments& InArgs, class UCodeProjectItem* InCodeProject, class UCodeProjectItem* InScriptProject);
 
 private:
 	/** Begin SWidget interface */
@@ -33,7 +33,9 @@ private:
 	void HandleMouseButtonDoubleClick(class UCodeProjectItem* Item) const;
 
 private:
-	class UCodeProject* CodeProject;
+	class  UCodeProjectItem* CodeProject;
+	class  UCodeProjectItem* ScriptProject;
 
-	TSharedPtr<STreeView<class UCodeProjectItem*>> ProjectTree;
+	TSharedPtr<STreeView<class UCodeProjectItem*>> CodeProjectTree;
+	TSharedPtr<STreeView<class UCodeProjectItem*>> ScriptProjectTree;
 };

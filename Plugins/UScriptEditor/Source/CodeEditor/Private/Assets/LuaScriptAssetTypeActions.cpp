@@ -33,14 +33,6 @@ void FLuaScriptAssetTypeActions::OpenAssetEditor(const TArray<UObject*>& InObjec
 {
 	EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
 
-	for (auto ObjIt = InObjects.CreateConstIterator(); ObjIt; ++ObjIt)
-	{
-		if (UCodeProject* CodeProject = Cast<UCodeProject>(*ObjIt))
-		{
-			TSharedRef<FCodeProjectEditor> NewCodeProjectEditor(new FCodeProjectEditor());
-			NewCodeProjectEditor->InitCodeEditor(Mode, EditWithinLevelEditor, CodeProject);
-		}
-	}
 }
 
 uint32 FLuaScriptAssetTypeActions::GetCategories()

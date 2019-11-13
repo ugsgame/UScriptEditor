@@ -1,4 +1,4 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -43,13 +43,14 @@ public:
 
 public:
 	/** Initialize the code editor */
-	void InitCodeEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, class UCodeProject* CodeProject);
+	void InitCodeEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, class UCodeProjectItem* CodeProject, class UCodeProjectItem* ScriptProject);
 
 	/** Try to open a new file for editing */
 	void OpenFileForEditing(class UCodeProjectItem* Item);
 
 	/** Get the current project being edited by this code editor */
-	UCodeProject* GetCodeProjectBeingEdited() const { return CodeProjectBeingEdited.Get(); }
+	UCodeProjectItem* GetCodeProjectBeingEdited() const { return CodeProjectBeingEdited.Get(); }
+	UCodeProjectItem* GetScriptProjectBeingEdited() const { return ScriptProjectBeingEdited.Get(); }
 
 	TSharedRef<SWidget> CreateCodeEditorWidget(TSharedRef<FTabInfo> TabInfo, UCodeProjectItem* Item);
 
@@ -77,7 +78,8 @@ protected:
 	TSharedPtr<FDocumentTracker> DocumentManager;
 
 	/** The code project we are currently editing */
-	TWeakObjectPtr<UCodeProject> CodeProjectBeingEdited;
+	TWeakObjectPtr<UCodeProjectItem> CodeProjectBeingEdited;
+	TWeakObjectPtr<UCodeProjectItem> ScriptProjectBeingEdited;
 
 	TSharedPtr<class FCodeProjectEditorToolbar> ToolbarBuilder;
 

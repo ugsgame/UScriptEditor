@@ -1,4 +1,4 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "CodeProjectEditor.h"
 #include "CodeProjectItem.h"
@@ -8,7 +8,7 @@
 #include "WorkflowOrientedApp/WorkflowTabFactory.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 #include "SCodeEditor.h"
-#include "SCodeProjectEditor.h"
+#include "SCodeProjectTreeEditor.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "CodeProjectEditorToolbar.h"
 #include "WorkflowOrientedApp/ApplicationMode.h"
@@ -112,10 +112,9 @@ public:
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override
 	{
 		TSharedPtr<FCodeProjectEditor> CodeEditorPtr = StaticCastSharedPtr<FCodeProjectEditor>(HostingApp.Pin());
-		return SNew(SCodeProjectEditor, CodeEditorPtr->GetCodeProjectBeingEdited());
+		return SNew(SCodeProjectTreeEditor, CodeEditorPtr->GetCodeProjectBeingEdited(),CodeEditorPtr->GetScriptProjectBeingEdited());
 	}
 };
-
 
 class FBasicCodeEditorMode : public FApplicationMode
 {
@@ -129,6 +128,7 @@ public:
 protected:
 	TWeakPtr<FCodeProjectEditor> MyCodeEditor;
 	FWorkflowAllowedTabSet TabFactories;
+
 };
 
 FBasicCodeEditorMode::FBasicCodeEditorMode(TSharedPtr<class FCodeProjectEditor> InCodeEditor, FName InModeName)
@@ -202,10 +202,12 @@ void FCodeProjectEditor::RegisterToolbarTab(const TSharedRef<class FTabManager>&
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 }
 
-void FCodeProjectEditor::InitCodeEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, class UCodeProject* CodeProject)
+void FCodeProjectEditor::InitCodeEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, class UCodeProjectItem* CodeProject, class UCodeProjectItem* ScriptProject)
 {
 	FAssetEditorManager::Get().CloseOtherEditors(CodeProject, this);
+	FAssetEditorManager::Get().CloseOtherEditors(ScriptProject, this);
 	CodeProjectBeingEdited = CodeProject;
+	ScriptProjectBeingEdited = ScriptProject;
 
 	TSharedPtr<FCodeProjectEditor> ThisPtr(SharedThis(this));
 	if(!DocumentManager.IsValid())
@@ -292,8 +294,11 @@ FLinearColor FCodeProjectEditor::GetWorldCentricTabColorScale() const
 
 void FCodeProjectEditor::AddReferencedObjects(FReferenceCollector& Collector)
 {
-	UCodeProject* CodeProject = CodeProjectBeingEdited.Get();
+	UCodeProjectItem* CodeProject = CodeProjectBeingEdited.Get();
 	Collector.AddReferencedObject(CodeProject);
+
+	UCodeProjectItem* ScriptProject = ScriptProjectBeingEdited.Get();
+	Collector.AddReferencedObject(ScriptProject);
 }
 
 TSharedRef<SWidget> FCodeProjectEditor::CreateCodeEditorWidget(TSharedRef<FTabInfo> TabInfo, UCodeProjectItem* Item)

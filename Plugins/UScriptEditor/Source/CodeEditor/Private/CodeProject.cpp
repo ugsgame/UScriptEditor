@@ -4,7 +4,6 @@
 #include "Misc/Paths.h"
 
 
-
 UCodeProject::UCodeProject(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {

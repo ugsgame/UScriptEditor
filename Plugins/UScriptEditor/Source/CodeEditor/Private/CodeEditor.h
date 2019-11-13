@@ -6,6 +6,7 @@
 #include "Developer/AssetTools/Public/AssetToolsModule.h"
 
 class FExtender;
+class FCodeProjectEditor;
 
 class FCodeEditor : public IModuleInterface
 {
@@ -22,6 +23,7 @@ public:
 private:
 	EAssetTypeCategories::Type AssetCategoryBit;
 	TSharedPtr<FExtender> Extender;
+
 
 	/** All created asset type actions.  Cached here so that we can unregister them during shutdown. */
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;

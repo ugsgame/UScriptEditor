@@ -10,6 +10,7 @@
 #include "Toolkits/IToolkitHost.h"
 #include "CodeEditorStyle.h"
 #include "CodeProject.h"
+#include "ScriptProject.h"
 #include "CodeProjectEditor.h"
 #include "LevelEditor.h"
 
@@ -30,7 +31,7 @@ void FCodeEditor::StartupModule()
 		static TSharedRef<SDockTab> SpawnCodeEditorTab(const FSpawnTabArgs& TabArgs)
 		{
 			TSharedRef<FCodeProjectEditor> NewCodeProjectEditor(new FCodeProjectEditor());
-			NewCodeProjectEditor->InitCodeEditor(EToolkitMode::Standalone, TSharedPtr<class IToolkitHost>(), GetMutableDefault<UCodeProject>());
+			NewCodeProjectEditor->InitCodeEditor(EToolkitMode::Standalone, TSharedPtr<class IToolkitHost>(), GetMutableDefault<UCodeProject>(), GetMutableDefault<UScriptProject>());
 
 			return FGlobalTabmanager::Get()->GetMajorTabForTabManager(NewCodeProjectEditor->GetTabManager().ToSharedRef()).ToSharedRef();
 		}

@@ -31,8 +31,8 @@ void FCodeProjectAssetTypeActions::OpenAssetEditor(const TArray<UObject*>& InObj
 	{
 		if (UCodeProject* CodeProject = Cast<UCodeProject>(*ObjIt))
 		{
-			TSharedRef<FCodeProjectEditor> NewCodeProjectEditor(new FCodeProjectEditor());
-			NewCodeProjectEditor->InitCodeEditor(Mode, EditWithinLevelEditor, CodeProject);
+			//TSharedRef<FCodeProjectEditor> NewCodeProjectEditor(new FCodeProjectEditor());
+			//NewCodeProjectEditor->InitCodeEditor(Mode, EditWithinLevelEditor, CodeProject);
 		}
 	}
 }
