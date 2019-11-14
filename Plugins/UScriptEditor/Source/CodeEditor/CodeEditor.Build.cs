@@ -22,7 +22,8 @@ namespace UnrealBuildTool.Rules
 					"SlateCore",
 					"Slate",
 					"AssetTools",
-					"UnrealEd",
+                    "Engine",
+                    "UnrealEd",
 					"EditorStyle",
 					"PropertyEditor",
 					"Kismet",  // for FWorkflowCentricApplication

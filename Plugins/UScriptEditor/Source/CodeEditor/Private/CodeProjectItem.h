@@ -34,6 +34,14 @@ public:
 	/** Handle directory changing */
 	void HandleDirectoryChanged(const TArray<struct FFileChangeData>& FileChanges);
 
+	bool IsLegalFile()const;
+
+	bool IsEmptyFolder()const;
+
+private:
+
+	void RescaParentIsLegal(UCodeProjectItem* InParent);
+
 public:
 	UPROPERTY(Transient)
 	TEnumAsByte<ECodeProjectItemType::Type> Type;
@@ -48,6 +56,9 @@ public:
 	FString Path;
 
 	UPROPERTY(Transient)
+	UCodeProjectItem* Parent;
+
+	UPROPERTY(Transient)
 	TArray<UCodeProjectItem*> Children;
 
 	UPROPERTY(Transient)
@@ -55,4 +66,9 @@ public:
 
 	/** Delegate handle for directory watcher */
 	FDelegateHandle OnDirectoryChangedHandle;
+
+	bool bWithLegalFile;
+private:
+	UPROPERTY(Transient)
+	TArray<FString> LegalExtensions;
 };

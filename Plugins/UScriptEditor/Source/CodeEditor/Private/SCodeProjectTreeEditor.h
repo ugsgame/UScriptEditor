@@ -32,10 +32,14 @@ private:
 
 	void HandleMouseButtonDoubleClick(class UCodeProjectItem* Item) const;
 
+	virtual FReply OnClickedCodeProject();
+	virtual FReply OnClickedScriptProject();
 private:
 	class  UCodeProjectItem* CodeProject;
 	class  UCodeProjectItem* ScriptProject;
 
-	TSharedPtr<STreeView<class UCodeProjectItem*>> CodeProjectTree;
-	TSharedPtr<STreeView<class UCodeProjectItem*>> ScriptProjectTree;
+	class UCodeProjectItem* EditingProject;
+
+	TSharedPtr<STreeView<class UCodeProjectItem*>> ProjectTree;
+
 };

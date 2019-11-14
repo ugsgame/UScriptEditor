@@ -6,10 +6,18 @@
 #include "UObject/Package.h"
 #include "IDirectoryWatcher.h"
 #include "DirectoryScanner.h"
+#include "DirectoryWatcherModule.h"
 
 UCodeProjectItem::UCodeProjectItem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	LegalExtensions.Add("h");
+	LegalExtensions.Add("cpp");
+	LegalExtensions.Add("cs");
+	LegalExtensions.Add("lua");
+	LegalExtensions.Add("js");
+
+	bWithLegalFile = false;
 }
 
 void UCodeProjectItem::RescanChildren()
@@ -40,15 +48,24 @@ void UCodeProjectItem::HandleDirectoryScanned(const FString& InPathName, ECodePr
 		NewItem->Type = InType;
 		NewItem->Path = InPathName;
 		NewItem->Name = FPaths::GetCleanFilename(InPathName);
+		NewItem->Parent = this;
 		if(InType != ECodeProjectItemType::Folder)
 		{
 			NewItem->Extension = FPaths::GetExtension(InPathName);
+			//Check Extension!!
+			if (!NewItem->IsLegalFile())
+			{
+				return;
+			}
+			else
+			{
+				//Have an legal file,tell my parent it is legal too!! 
+ 				this->RescaParentIsLegal(this);
+			}
 		}
-
 
 		Children.Add(NewItem);
 		
-
 		Children.Sort(
 			[](const UCodeProjectItem& ItemA, const UCodeProjectItem& ItemB) -> bool
 			{
@@ -67,8 +84,8 @@ void UCodeProjectItem::HandleDirectoryScanned(const FString& InPathName, ECodePr
 			FDirectoryScanner::AddDirectory(InPathName, FOnDirectoryScanned::CreateUObject(NewItem, &UCodeProjectItem::HandleDirectoryScanned));
 
 			// @TODO: now register for any changes to this directory if needed
-		//	FDirectoryWatcherModule& DirectoryWatcherModule = FModuleManager::Get().LoadModuleChecked<FDirectoryWatcherModule>(TEXT("DirectoryWatcher"));
-		//	DirectoryWatcherModule.Get()->RegisterDirectoryChangedCallback_Handle(InPathName, IDirectoryWatcher::FDirectoryChanged::CreateUObject(NewItem, &UCodeProjectItem::HandleDirectoryChanged), OnDirectoryChangedHandle);
+			FDirectoryWatcherModule& DirectoryWatcherModule = FModuleManager::Get().LoadModuleChecked<FDirectoryWatcherModule>(TEXT("DirectoryWatcher"));
+			DirectoryWatcherModule.Get()->RegisterDirectoryChangedCallback_Handle(InPathName, IDirectoryWatcher::FDirectoryChanged::CreateUObject(NewItem, &UCodeProjectItem::HandleDirectoryChanged), OnDirectoryChangedHandle);
 		}
 	}
 }
@@ -99,5 +116,31 @@ void UCodeProjectItem::HandleDirectoryChanged(const TArray<FFileChangeData>& Fil
 			}
 			break;
 		}
+	}
+}
+
+bool UCodeProjectItem::IsLegalFile()const
+{
+	for (FString CompareEx:LegalExtensions)
+	{
+		if (CompareEx == Extension)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool UCodeProjectItem::IsEmptyFolder()const
+{
+	return Type== ECodeProjectItemType::Folder && !bWithLegalFile;
+}
+
+void UCodeProjectItem::RescaParentIsLegal(UCodeProjectItem* InParent)
+{
+	InParent->bWithLegalFile = true;
+	if (InParent->Parent && !InParent->bWithLegalFile)
+	{
+		RescaParentIsLegal(InParent->Parent);
 	}
 }

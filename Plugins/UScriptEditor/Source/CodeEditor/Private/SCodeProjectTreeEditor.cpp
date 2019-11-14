@@ -25,6 +25,18 @@ void SCodeProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectIte
 	CodeProject = InCodeProject;
 	ScriptProject = InScriptProject;
 
+	EditingProject = ScriptProject;
+
+	if (!ProjectTree.IsValid())
+	{
+		SAssignNew(ProjectTree, STreeView<UCodeProjectItem*>)
+			.TreeItemsSource(&EditingProject->Children)
+			.OnGenerateRow(this, &SCodeProjectTreeEditor::OnGenerateRow)
+			.OnGetChildren(this, &SCodeProjectTreeEditor::OnGetChildren)
+			.OnMouseButtonDoubleClick(this, &SCodeProjectTreeEditor::HandleMouseButtonDoubleClick)
+			.HighlightParentNodesForSelection(true);
+	}
+
 	ChildSlot
 	[
 		SNew(SBorder)
@@ -39,63 +51,31 @@ void SCodeProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectIte
 				.Padding(FMargin(0.0f, 5.0f))
 				.AutoHeight()
 				[
-					SNew(SHeader)
-					.HAlign(HAlign_Center)
-					.Content()
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.VAlign(VAlign_Center)
+					.FillWidth(2)
 					[
-						SNew(STextBlock)
-						.Text(LOCTEXT("ScriptProjectHeader", "ScriptProject"))
+						SNew(SButton)
+						.Text(LOCTEXT("ButtonScriptProject", "ScriptContent"))
+						.OnClicked(this, &SCodeProjectTreeEditor::OnClickedScriptProject)
+					]
+					+ SHorizontalBox::Slot()
+					.VAlign(VAlign_Center)
+					.FillWidth(2)
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("ButtonCodeProject", "SourceCode"))
+						.OnClicked(this,&SCodeProjectTreeEditor::OnClickedCodeProject)
 					]
 				]
-				+ SVerticalBox::Slot()
+	 			+ SVerticalBox::Slot()
 				.AutoHeight()
 				.Padding(1)
-				[
- 					SAssignNew(ScriptProjectTree, STreeView<UCodeProjectItem*>)
- 					.TreeItemsSource(&ScriptProject->Children)
- 					.OnGenerateRow(this, &SCodeProjectTreeEditor::OnGenerateRow)
- 					.OnGetChildren(this, &SCodeProjectTreeEditor::OnGetChildren)
- 					.OnMouseButtonDoubleClick(this, &SCodeProjectTreeEditor::HandleMouseButtonDoubleClick)
-				]
-				+ SVerticalBox::Slot()
-				.Padding(FMargin(0.0f, 5.0f))
-				.AutoHeight()
-				[
-					SNew(SHeader)
-					.HAlign(HAlign_Center)
-					.Content()
-					[
-						SNew(STextBlock)
-						.Text(LOCTEXT("CodeProjectHeader", "CodeProject"))
-					]
-				]
-		 		+ SVerticalBox::Slot()
-		 		.AutoHeight()
-		 		.Padding(1)
-		 		[
-		 			SAssignNew(CodeProjectTree, STreeView<UCodeProjectItem*>)
-		 			.TreeItemsSource(&CodeProject->Children)
-		 			.OnGenerateRow(this, &SCodeProjectTreeEditor::OnGenerateRow)
-		 			.OnGetChildren(this, &SCodeProjectTreeEditor::OnGetChildren)
-		 			.OnMouseButtonDoubleClick(this, &SCodeProjectTreeEditor::HandleMouseButtonDoubleClick)
-		 		]
-			]
-// 			+SOverlay::Slot()
-// 			[
-// 				SAssignNew(CodeProjectTree, STreeView<UCodeProjectItem*>)
-// 				.TreeItemsSource(&CodeProject->Children)
-// 				.OnGenerateRow(this, &SCodeProjectTreeEditor::OnGenerateRow)
-// 				.OnGetChildren(this, &SCodeProjectTreeEditor::OnGetChildren)
-// 				.OnMouseButtonDoubleClick(this, &SCodeProjectTreeEditor::HandleMouseButtonDoubleClick)
-// 			]
-// 			+ SOverlay::Slot()
-// 			[
-// 				SAssignNew(ScriptProjectTree, STreeView<UCodeProjectItem*>)
-// 				.TreeItemsSource(&ScriptProject->Children)
-// 				.OnGenerateRow(this, &SCodeProjectTreeEditor::OnGenerateRow)
-// 				.OnGetChildren(this, &SCodeProjectTreeEditor::OnGetChildren)
-// 				.OnMouseButtonDoubleClick(this, &SCodeProjectTreeEditor::HandleMouseButtonDoubleClick)
-// 			]
+	 			[
+					ProjectTree.ToSharedRef()
+	 			]
+ 			]
 			+SOverlay::Slot()
 			.VAlign(VAlign_Bottom)
 			.Padding(10.0f)
@@ -114,8 +94,7 @@ void SCodeProjectTreeEditor::Tick( const FGeometry& AllottedGeometry, const doub
 {
 	if(FDirectoryScanner::Tick())
 	{
-		CodeProjectTree->SetTreeItemsSource(&CodeProject->Children);
-		ScriptProjectTree->SetTreeItemsSource(&ScriptProject->Children);
+		ProjectTree->SetTreeItemsSource(&EditingProject->Children);
 	}
 
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
@@ -163,6 +142,22 @@ void SCodeProjectTreeEditor::HandleMouseButtonDoubleClick(UCodeProjectItem* Item
 	{
 		FCodeProjectEditor::Get()->OpenFileForEditing(Item);
 	}
+}
+
+FReply SCodeProjectTreeEditor::OnClickedCodeProject()
+{
+	ProjectTree->SetTreeItemsSource(&CodeProject->Children);
+	EditingProject = CodeProject;
+	ProjectTree->SetSingleExpandedItem(EditingProject);
+	return FReply::Handled();
+}
+
+FReply SCodeProjectTreeEditor::OnClickedScriptProject()
+{
+	ProjectTree->SetTreeItemsSource(&ScriptProject->Children);
+	EditingProject = ScriptProject;
+	ProjectTree->SetSingleExpandedItem(EditingProject);
+	return FReply::Handled();
 }
 
 #undef LOCTEXT_NAMESPACE
