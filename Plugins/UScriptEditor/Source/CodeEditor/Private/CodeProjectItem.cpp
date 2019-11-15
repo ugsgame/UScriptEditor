@@ -20,15 +20,17 @@ UCodeProjectItem::UCodeProjectItem(const FObjectInitializer& ObjectInitializer)
 	bWithLegalFile = false;
 }
 
-void UCodeProjectItem::RescanChildren()
+void UCodeProjectItem::RescanChildren(bool ShowEmptyFolder)
 {
 	if(Path.Len() > 0)
 	{
-		FDirectoryScanner::OnDirectoryScannedOver = FOnDirectoryScannedOver::CreateUObject(this, &UCodeProjectItem::DeletedEmptyFolder);
+		if (!ShowEmptyFolder)
+		{
+			FDirectoryScanner::OnDirectoryScannedOver = FOnDirectoryScannedOver::CreateUObject(this, &UCodeProjectItem::DeletedEmptyFolder);
+		}
+
 		FDirectoryScanner::AddDirectory(Path, FOnDirectoryScanned::CreateUObject(this, &UCodeProjectItem::HandleDirectoryScanned));
 	}
-	//
-	//this->DeletedEmptyFolder();
 }
 
 void UCodeProjectItem::DeletedEmptyFolder()

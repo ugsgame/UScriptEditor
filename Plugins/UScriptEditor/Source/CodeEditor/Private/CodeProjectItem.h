@@ -27,7 +27,7 @@ class UCodeProjectItem : public UObject
 
 public:
 
-	void RescanChildren();
+	void RescanChildren(bool ShowEmptyFolder = false);
 
 	void DeletedEmptyFolder();
 
