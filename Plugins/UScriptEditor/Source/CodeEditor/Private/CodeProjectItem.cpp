@@ -24,7 +24,18 @@ void UCodeProjectItem::RescanChildren()
 {
 	if(Path.Len() > 0)
 	{
+		FDirectoryScanner::OnDirectoryScannedOver = FOnDirectoryScannedOver::CreateUObject(this, &UCodeProjectItem::DeletedEmptyFolder);
 		FDirectoryScanner::AddDirectory(Path, FOnDirectoryScanned::CreateUObject(this, &UCodeProjectItem::HandleDirectoryScanned));
+	}
+	//
+	//this->DeletedEmptyFolder();
+}
+
+void UCodeProjectItem::DeletedEmptyFolder()
+{
+	if (this->Children.Num() > 0)
+	{
+		DeleteUnlegalChildren(this);
 	}
 }
 
@@ -59,6 +70,7 @@ void UCodeProjectItem::HandleDirectoryScanned(const FString& InPathName, ECodePr
 			}
 			else
 			{
+				NewItem->bWithLegalFile = true;
 				//Have an legal file,tell my parent it is legal too!! 
  				this->RescaParentIsLegal(this);
 			}
@@ -84,8 +96,8 @@ void UCodeProjectItem::HandleDirectoryScanned(const FString& InPathName, ECodePr
 			FDirectoryScanner::AddDirectory(InPathName, FOnDirectoryScanned::CreateUObject(NewItem, &UCodeProjectItem::HandleDirectoryScanned));
 
 			// @TODO: now register for any changes to this directory if needed
-			FDirectoryWatcherModule& DirectoryWatcherModule = FModuleManager::Get().LoadModuleChecked<FDirectoryWatcherModule>(TEXT("DirectoryWatcher"));
-			DirectoryWatcherModule.Get()->RegisterDirectoryChangedCallback_Handle(InPathName, IDirectoryWatcher::FDirectoryChanged::CreateUObject(NewItem, &UCodeProjectItem::HandleDirectoryChanged), OnDirectoryChangedHandle);
+			//FDirectoryWatcherModule& DirectoryWatcherModule = FModuleManager::Get().LoadModuleChecked<FDirectoryWatcherModule>(TEXT("DirectoryWatcher"));
+			//DirectoryWatcherModule.Get()->RegisterDirectoryChangedCallback_Handle(InPathName, IDirectoryWatcher::FDirectoryChanged::CreateUObject(NewItem, &UCodeProjectItem::HandleDirectoryChanged), OnDirectoryChangedHandle);
 		}
 	}
 }
@@ -139,8 +151,38 @@ bool UCodeProjectItem::IsEmptyFolder()const
 void UCodeProjectItem::RescaParentIsLegal(UCodeProjectItem* InParent)
 {
 	InParent->bWithLegalFile = true;
-	if (InParent->Parent && !InParent->bWithLegalFile)
+	if (InParent->Parent)
 	{
 		RescaParentIsLegal(InParent->Parent);
+	}
+}
+
+void UCodeProjectItem::DeleteUnlegalChildren(UCodeProjectItem* InParent)
+{
+	if (InParent->bWithLegalFile)
+	{
+		if (InParent->Children.Num()>0)
+		{
+			for (int32 i=0;i< InParent->Children.Num();i++)
+			{
+				if (!InParent->Children[i]->bWithLegalFile)
+				{
+					InParent->Children.RemoveAt(i);
+					i--;
+				}
+				else
+				{
+					this->DeleteUnlegalChildren(InParent->Children[i]);
+				}
+			}
+		}
+		else
+		{
+			InParent->Children.Empty();
+		}
+	}
+	else
+	{
+		InParent->Children.Empty();
 	}
 }

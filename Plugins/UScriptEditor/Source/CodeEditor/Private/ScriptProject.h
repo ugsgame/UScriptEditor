@@ -10,5 +10,5 @@ class UScriptProject : public UCodeProjectItem
 {
 	GENERATED_UCLASS_BODY()
 
-		// @TODO: This class should probably be mostly config/settings stuff, with a details panel allowing editing somewhere
+	// @TODO: This class should probably be mostly config/settings stuff, with a details panel allowing editing somewhere
 };

@@ -1,4 +1,4 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -6,6 +6,7 @@
 #include "CodeProjectItem.h"
 
 DECLARE_DELEGATE_TwoParams(FOnDirectoryScanned, const FString& /*InPathName*/, ECodeProjectItemType::Type /*InType*/);
+DECLARE_DELEGATE(FOnDirectoryScannedOver);
 
 class FDirectoryScanner
 {
@@ -18,6 +19,10 @@ public:
 
 public:
 	static TArray<struct FDirectoryScannerCommand*> CommandQueue;
+	static FOnDirectoryScannedOver OnDirectoryScannedOver;
 
 	static bool bDataDirty;
+
+private:
+	static bool bScanOverFlag;
 };

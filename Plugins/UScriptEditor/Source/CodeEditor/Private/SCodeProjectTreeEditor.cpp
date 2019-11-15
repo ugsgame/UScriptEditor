@@ -25,7 +25,7 @@ void SCodeProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectIte
 	CodeProject = InCodeProject;
 	ScriptProject = InScriptProject;
 
-	EditingProject = ScriptProject;
+	EditingProject = InScriptProject;
 
 	if (!ProjectTree.IsValid())
 	{
@@ -118,12 +118,12 @@ FName SCodeProjectTreeEditor::GetIconForItem(UCodeProjectItem* Item) const
 TSharedRef<class ITableRow> SCodeProjectTreeEditor::OnGenerateRow(UCodeProjectItem* Item, const TSharedRef<STableViewBase >& OwnerTable)
 {
 	return
-		SNew(STableRow<UCodeProjectItem*>, OwnerTable)
-		[
-			SNew(SProjectViewItem)
-			.Text(FText::FromString(Item->Name))
-			.IconName(GetIconForItem(Item))
-		];
+	SNew(STableRow<UCodeProjectItem*>, OwnerTable)
+	[
+		SNew(SProjectViewItem)
+		.Text(FText::FromString(Item->Name))
+		.IconName(GetIconForItem(Item))
+	];
 }
 
 void SCodeProjectTreeEditor::OnGetChildren(UCodeProjectItem* Item, TArray<UCodeProjectItem*>& OutChildItems)
@@ -148,7 +148,6 @@ FReply SCodeProjectTreeEditor::OnClickedCodeProject()
 {
 	ProjectTree->SetTreeItemsSource(&CodeProject->Children);
 	EditingProject = CodeProject;
-	ProjectTree->SetSingleExpandedItem(EditingProject);
 	return FReply::Handled();
 }
 
@@ -156,7 +155,6 @@ FReply SCodeProjectTreeEditor::OnClickedScriptProject()
 {
 	ProjectTree->SetTreeItemsSource(&ScriptProject->Children);
 	EditingProject = ScriptProject;
-	ProjectTree->SetSingleExpandedItem(EditingProject);
 	return FReply::Handled();
 }
 

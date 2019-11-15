@@ -29,6 +29,8 @@ public:
 
 	void RescanChildren();
 
+	void DeletedEmptyFolder();
+
 	void HandleDirectoryScanned(const FString& InPathName, ECodeProjectItemType::Type InType);
 
 	/** Handle directory changing */
@@ -42,6 +44,7 @@ private:
 
 	void RescaParentIsLegal(UCodeProjectItem* InParent);
 
+	void DeleteUnlegalChildren(UCodeProjectItem* InParent);
 public:
 	UPROPERTY(Transient)
 	TEnumAsByte<ECodeProjectItemType::Type> Type;

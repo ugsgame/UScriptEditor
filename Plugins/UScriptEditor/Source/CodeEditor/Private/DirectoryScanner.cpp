@@ -1,4 +1,4 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "DirectoryScanner.h"
 #include "GenericPlatform/GenericPlatformFile.h"
@@ -6,6 +6,8 @@
 #include "Misc/QueuedThreadPool.h"
 
 TArray<FDirectoryScannerCommand*> FDirectoryScanner::CommandQueue;
+bool FDirectoryScanner::bScanOverFlag = false;
+FOnDirectoryScannedOver FDirectoryScanner::OnDirectoryScannedOver;
 
 struct FDirectoryResult
 {
@@ -103,6 +105,16 @@ bool FDirectoryScanner::Tick()
 		}
 	}
 
+	if (!IsScanning())
+	{
+		if (bScanOverFlag && OnDirectoryScannedOver.IsBound())
+		{
+			OnDirectoryScannedOver.ExecuteIfBound();
+			OnDirectoryScannedOver.Unbind();
+			bScanOverFlag = false;
+		}
+	}
+
 	return bAddedData;
 }
 
@@ -111,6 +123,8 @@ void FDirectoryScanner::AddDirectory(const FString& PathName, const FOnDirectory
 	FDirectoryScannerCommand* NewCommand = new FDirectoryScannerCommand(PathName, OnDirectoryScanned);
 	CommandQueue.Add(NewCommand);
 	GThreadPool->AddQueuedWork(NewCommand);
+
+	bScanOverFlag = true;
 }
 
 bool FDirectoryScanner::IsScanning()
