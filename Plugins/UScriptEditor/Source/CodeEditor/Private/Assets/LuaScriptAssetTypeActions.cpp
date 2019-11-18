@@ -31,8 +31,8 @@ UClass* FLuaScriptAssetTypeActions::GetSupportedClass() const
 
 void FLuaScriptAssetTypeActions::OpenAssetEditor(const TArray<UObject*>& InObjects, TSharedPtr<class IToolkitHost> EditWithinLevelEditor)
 {
-	EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
-
+	//EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
+	FGlobalTabmanager::Get()->InvokeTab(FCodeEditor::CodeEditorTabName);
 }
 
 uint32 FLuaScriptAssetTypeActions::GetCategories()

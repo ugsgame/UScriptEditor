@@ -226,7 +226,7 @@ void FCodeProjectEditor::InitCodeEditor(const EToolkitMode::Type Mode, const TSh
 		ToolbarBuilder = MakeShareable(new FCodeProjectEditorToolbar(SharedThis(this)));
 	}
 
-	FCodeProjectEditorCommands::Register();
+	//FCodeProjectEditorCommands::Register();
 
 	// Initialize the asset editor and spawn nothing (dummy layout)
 	const TSharedRef<FTabManager::FLayout> DummyLayout = FTabManager::NewLayout("NullLayout")->AddArea(FTabManager::NewPrimaryArea());

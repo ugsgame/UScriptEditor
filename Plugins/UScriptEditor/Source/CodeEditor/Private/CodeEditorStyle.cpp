@@ -4,6 +4,9 @@
 #include "Styling/SlateStyleRegistry.h"
 #include "Styling/SlateTypes.h"
 #include "Styling/CoreStyle.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Slate/SlateGameResources.h"
+#include "Interfaces/IPluginManager.h"
 
 TSharedPtr< FSlateStyleSet > FCodeEditorStyle::StyleSet = nullptr;
 
@@ -45,6 +48,8 @@ void FCodeEditorStyle::Initialize()
 
 	// Icons
 	{
+		StyleSet->Set("CodeEditor.OpenPluginWindow", new IMAGE_BRUSH("UI/CodeEditor_16x", Icon16x16));
+
 		StyleSet->Set("CodeEditor.TabIcon", new IMAGE_BRUSH("UI/CodeEditor_16x", Icon16x16));
 
 		StyleSet->Set("CodeEditor.Save", new IMAGE_BRUSH("UI/Save_40x", Icon40x40));
@@ -116,6 +121,14 @@ void FCodeEditorStyle::Shutdown()
 		FSlateStyleRegistry::UnRegisterSlateStyle( *StyleSet.Get() );
 		ensure( StyleSet.IsUnique() );
 		StyleSet.Reset();
+	}
+}
+
+void FCodeEditorStyle::ReloadTextures()
+{
+	if (FSlateApplication::IsInitialized())
+	{
+		FSlateApplication::Get().GetRenderer()->ReloadTextureResources();
 	}
 }
 

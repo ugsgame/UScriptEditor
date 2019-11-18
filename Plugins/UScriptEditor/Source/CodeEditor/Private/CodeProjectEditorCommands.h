@@ -1,4 +1,4 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -12,7 +12,9 @@ public:
 
 	TSharedPtr<FUICommandInfo> Save;
 	TSharedPtr<FUICommandInfo> SaveAll;
+	TSharedPtr< FUICommandInfo > OpenPluginWindow;
 
 	/** Initialize commands */
 	virtual void RegisterCommands() override;
+
 };
