@@ -1,4 +1,4 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "SCodeEditor.h"
 #include "Misc/FileHelper.h"
@@ -8,6 +8,7 @@
 #include "Widgets/Layout/SScrollBar.h"
 #include "CodeEditorStyle.h"
 #include "CodeProjectItem.h"
+#include "CodeEditorUtils.h"
 #include "CPPRichTextSyntaxHighlighterTextLayoutMarshaller.h"
 #include "SCodeEditableText.h"
 
@@ -71,6 +72,16 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 void SCodeEditor::OnTextChanged(const FText& NewText)
 {
 	bDirty = true;
+	//Sync to the ScriptAsset?
+	/*
+	if (CodeProjectItem->ScriptDataAsset)
+	{
+		CodeProjectItem->ScriptDataAsset->CodeText = CodeEditableText->GetText().ToString();
+		//Set Asset To Dirty
+		CodeProjectItem->ScriptDataAsset->MarkPackageDirty();
+	}
+	*/
+	//
 }
 
 bool SCodeEditor::Save() const
@@ -81,6 +92,15 @@ bool SCodeEditor::Save() const
 		if(bResult)
 		{
 			bDirty = false;
+			//Save to asset
+			if (CodeProjectItem->ScriptDataAsset)
+			{
+				CodeProjectItem->ScriptDataAsset->CodeText = CodeEditableText->GetText().ToString();
+				//CodeEditorUtils::SaveScriptAsset(CodeProjectItem->ScriptDataAsset);
+				TArray<UPackage*> Packages;
+				Packages.Add(CodeProjectItem->ScriptDataAsset->GetOutermost());
+				UEditorLoadingAndSavingUtils::SavePackages(Packages, false);
+			}
 		}
 
 		return bResult;

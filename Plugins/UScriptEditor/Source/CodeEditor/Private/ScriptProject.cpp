@@ -7,3 +7,4 @@ UScriptProject::UScriptProject(const FObjectInitializer& ObjectInitializer)
 {
 	Path = FPaths::ProjectContentDir();
 }
+

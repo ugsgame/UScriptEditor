@@ -14,7 +14,15 @@ namespace UnrealBuildTool.Rules
 				}
 				);
 
-			PrivateDependencyModuleNames.AddRange(
+            PublicDependencyModuleNames.AddRange(
+                new string[]
+                {
+                    "EditorScriptingUtilities",
+                }
+                );
+
+
+            PrivateDependencyModuleNames.AddRange(
 				new string[]
 				{
 					"Core",
@@ -30,7 +38,7 @@ namespace UnrealBuildTool.Rules
 					"InputCore",
 					"DirectoryWatcher",
 					"LevelEditor",
-                    "ScriptHelper"
+                    "ScriptHelper",
 				}
 				);
 		}

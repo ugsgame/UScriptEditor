@@ -1,6 +1,8 @@
 ﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "CodeProjectItem.h"
+#include "EditorAssetLibrary.h"
+#include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "UObject/WeakObjectPtr.h"
 #include "UObject/Package.h"
@@ -73,6 +75,7 @@ void UCodeProjectItem::HandleDirectoryScanned(const FString& InPathName, ECodePr
 			else
 			{
 				NewItem->bWithLegalFile = true;
+				NewItem->BuildScriptAssetContext();
 				//Have an legal file,tell my parent it is legal too!! 
  				this->RescaParentIsLegal(this);
 			}
@@ -150,6 +153,45 @@ bool UCodeProjectItem::IsEmptyFolder()const
 	return Type== ECodeProjectItemType::Folder && !bWithLegalFile;
 }
 
+UCodeProjectItem* UCodeProjectItem::FindChild(FString ChildFullPath)
+{
+	/*
+	//层序遍历
+	TArray<UCodeProjectItem*> Quece;
+	UCodeProjectItem* CurrentNode = this;
+	while (CurrentNode)
+	{
+		if (CurrentNode->Path == ChildFullPath)
+		{
+			return CurrentNode;
+		}
+
+		for (UCodeProjectItem* Child: Children)
+		{
+			Quece.Add(Child);
+		}
+		if (Quece.Num() == 0)
+		{
+			return nullptr;
+		}
+		CurrentNode = Quece[0];
+		Quece.RemoveAt(0);
+	}
+	return nullptr;
+	*/
+	UCodeProjectItem* OutChild = nullptr;
+	if (this->Path == ChildFullPath)
+	{
+		return this;
+	}
+	else
+	{
+		FindChild(this, ChildFullPath, OutChild);
+	}
+	return OutChild;
+}
+
+
 void UCodeProjectItem::RescaParentIsLegal(UCodeProjectItem* InParent)
 {
 	InParent->bWithLegalFile = true;
@@ -187,4 +229,74 @@ void UCodeProjectItem::DeleteUnlegalChildren(UCodeProjectItem* InParent)
 	{
 		InParent->Children.Empty();
 	}
+}
+
+void UCodeProjectItem::FindChild(UCodeProjectItem* InParent, FString ChildFullPath, OUT UCodeProjectItem*  OutChild)
+{
+	if (InParent && InParent->Children.Num() > 0)
+	{
+		for (UCodeProjectItem* Child : InParent->Children)
+		{
+			if (Child->Path == ChildFullPath)
+			{
+				OutChild = Child;
+				return;
+			}
+			else
+			{
+				FindChild(Child, ChildFullPath, OutChild);
+			}
+		}
+	}
+}
+
+bool UCodeProjectItem::BuildScriptAssetContext()
+{
+	if (Extension == "lua")
+	{
+		//Check file exist?
+		FString ScriptAssetPath = CodeEditorUtils::CovertContentFilePathToAssetPath(Path);
+
+		if (UEditorAssetLibrary::DoesAssetExist(ScriptAssetPath))
+		{
+			UScriptDataAsset* ScriptAsset = Cast<UScriptDataAsset>(UEditorAssetLibrary::LoadAsset(ScriptAssetPath));
+			if (ScriptAsset)
+			{
+				ScriptDataAsset = ScriptAsset;
+				ScriptAsset->Path = Path;
+				//
+				FString CodeText;
+				if (FFileHelper::LoadFileToString(CodeText, *Path))
+				{
+					ScriptAsset->CodeText = CodeText;
+					ScriptAsset->UserObject = this;
+				}
+				GEditor->AddOnScreenDebugMessage(0, 1, FColor::Red, "Build Asset Content:" + ScriptAssetPath);
+
+				return true;
+			}
+			else
+			{
+				//LogError: 
+			}
+		}
+		else
+		{
+			UScriptDataAsset* ScriptAsset = CodeEditorUtils::CreateLuaScriptAssetFromLuaFile(Path);
+			if (ScriptAsset)
+			{
+				ScriptDataAsset = ScriptAsset;
+				ScriptAsset->UserObject = this;
+				GEditor->AddOnScreenDebugMessage(0, 1, FColor::Red, "Create A New Asset Content:" + ScriptAssetPath);
+
+				return true;
+			}
+			else
+			{
+				//LogError
+			}
+		}
+
+	}
+	return false;
 }

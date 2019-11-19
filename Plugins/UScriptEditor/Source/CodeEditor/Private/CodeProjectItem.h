@@ -40,11 +40,17 @@ public:
 
 	bool IsEmptyFolder()const;
 
-private:
+	UCodeProjectItem* FindChild(FString ChildFullPath);
+protected:
 
+	bool BuildScriptAssetContext();
+
+private:
 	void RescaParentIsLegal(UCodeProjectItem* InParent);
 
 	void DeleteUnlegalChildren(UCodeProjectItem* InParent);
+
+	void FindChild(UCodeProjectItem* InParent, FString ChildFullPath, OUT UCodeProjectItem*  OutChild);
 public:
 	UPROPERTY(Transient)
 	TEnumAsByte<ECodeProjectItemType::Type> Type;

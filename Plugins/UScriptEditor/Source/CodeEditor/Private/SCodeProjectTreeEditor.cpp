@@ -10,6 +10,7 @@
 #include "CodeEditorStyle.h"
 #include "CodeProject.h"
 #include "CodeProjectEditor.h"
+#include "CodeEditorUtils.h"
 #include "SProjectViewItem.h"
 #include "DirectoryScanner.h"
 #include "Widgets/Images/SThrobber.h"
@@ -86,8 +87,13 @@ void SCodeProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectIte
 		]
 	];
 
+	//TODO:Reflash
+	//CodeProject->Children.Empty();
+	//ScriptProject->Children.Empty();
+	
 	CodeProject->RescanChildren();
 	ScriptProject->RescanChildren();
+	//
 }
 
 void SCodeProjectTreeEditor::Tick( const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime )
@@ -141,6 +147,12 @@ void SCodeProjectTreeEditor::HandleMouseButtonDoubleClick(UCodeProjectItem* Item
 	if(Item->Type == ECodeProjectItemType::File)
 	{
 		FCodeProjectEditor::Get()->OpenFileForEditing(Item);
+
+		//TODO:Browser to Objects(move to browser button)
+		if (Item->ScriptDataAsset)
+		{
+			CodeEditorUtils::BrowserToScriptAsset(Item->ScriptDataAsset);
+		}
 	}
 }
 

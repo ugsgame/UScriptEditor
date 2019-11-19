@@ -3,6 +3,7 @@
 
 #include "LuaScriptFactory.h"
 #include "CodeEditor.h"
+#include "CodeEditorUtils.h"
 #include "AssetToolsModule.h"
 #include "Editor/UnrealEd/Public/FileHelpers.h"
 #include "Misc/FileHelper.h"
@@ -24,20 +25,23 @@ UObject* ULuaScriptFactory::FactoryCreateNew(UClass* Class, UObject* InParent, F
 	check(Class == ULuaScript::StaticClass() || Class->IsChildOf(ULuaScript::StaticClass()));
 	ULuaScript* ScriptAsset = NewObject<ULuaScript>(InParent, Class, Name, Flags);
 	//create *.lua in this directory
-	GEngine->AddOnScreenDebugMessage(1,2,FColor::Red,ScriptAsset->GetPathName());
-
-	FString FullPath = ScriptAsset->GetPathName();
-	FullPath.RemoveFromStart("/Game");
-	FullPath.RemoveFromEnd(Name.ToString());
-	FullPath = FPaths::ProjectContentDir() + FullPath+"lua";
-	FFileHelper::SaveStringToFile("", *FullPath);
-	ScriptAsset->Path = FullPath;
-
+	CodeEditorUtils::CreateLuaFileFromLuaScriptAsset(ScriptAsset);
 	//save asset
-	TArray<UPackage*> Packages;
-	Packages.Add(ScriptAsset->GetOutermost()); // Fully load and check out is done in UEditorLoadingAndSavingUtils::SavePackages
-	bool SaveRel = UEditorLoadingAndSavingUtils::SavePackages(Packages, false);
-	//
+	CodeEditorUtils::SaveScriptAsset(ScriptAsset);
+
+	//Reflash Browser
+	TSharedPtr<FCodeProjectEditor> ProjectEditor = FCodeProjectEditor::Get();
+	if (ProjectEditor.IsValid())
+	{
+		ProjectEditor->GetScriptProjectBeingEdited()->Children.Empty();
+		ProjectEditor->GetScriptProjectBeingEdited()->RescanChildren();
+	}
+	else
+	{
+		//Open Editor
+		FGlobalTabmanager::Get()->InvokeTab(FCodeEditor::CodeEditorTabName);
+	}
+
 	return ScriptAsset;
 }
 

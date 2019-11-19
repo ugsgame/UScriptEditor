@@ -31,8 +31,36 @@ UClass* FLuaScriptAssetTypeActions::GetSupportedClass() const
 
 void FLuaScriptAssetTypeActions::OpenAssetEditor(const TArray<UObject*>& InObjects, TSharedPtr<class IToolkitHost> EditWithinLevelEditor)
 {
-	//EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
-	FGlobalTabmanager::Get()->InvokeTab(FCodeEditor::CodeEditorTabName);
+	if (UScriptDataAsset* ScriptAsset = Cast<UScriptDataAsset>(InObjects[0]))
+	{
+		FGlobalTabmanager::Get()->InvokeTab(FCodeEditor::CodeEditorTabName);
+
+		TSharedPtr<FCodeProjectEditor> ProjectEditor = FCodeProjectEditor::Get();
+		if (ProjectEditor.IsValid())
+		{
+			if (UCodeProjectItem* Item = Cast<UCodeProjectItem>(ScriptAsset->UserObject))
+			{
+				//Goto item tab
+				FCodeProjectEditor::Get()->OpenFileForEditing(Item);
+			}
+			else
+			{
+				//Check file is exist
+				uint32 Flags = 0;
+				FArchive* Reader = IFileManager::Get().CreateFileReader(*ScriptAsset->Path, Flags);
+				if (Reader && Flags > 0)
+				{
+
+				}
+				// Unlegalized Asset File!!
+				else
+				{
+
+				}
+			}
+		}
+
+	}
 }
 
 uint32 FLuaScriptAssetTypeActions::GetCategories()

@@ -12,6 +12,7 @@
 #include "CodeProject.h"
 #include "ScriptProject.h"
 #include "CodeProjectEditor.h"
+#include "CodeEditorUtils.h"
 #include "LevelEditor.h"
 
 #include "Assets/LuaScriptAssetTypeActions.h"
@@ -64,8 +65,8 @@ void FCodeEditor::StartupModule()
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(CodeEditorTabName, FOnSpawnTab::CreateRaw(this, &FCodeEditor::OnSpawnPluginTab))
 		.SetDisplayName(LOCTEXT("CodeEditorTabTitle", "UScriptEditor"))
 		.SetTooltipText(LOCTEXT("CodeEditorTooltipText", "Open the Code Editor tab."))
-		.SetIcon(FSlateIcon(FCodeEditorStyle::Get().GetStyleSetName(), "CodeEditor.TabIcon"))
-		.SetMenuType(ETabSpawnerMenuType::Hidden);
+		.SetIcon(FSlateIcon(FCodeEditorStyle::Get().GetStyleSetName(), "CodeEditor.TabIcon"));
+		//.SetMenuType(ETabSpawnerMenuType::Hidden);
 
 
 	// Register asset types
@@ -79,16 +80,12 @@ void FCodeEditor::StartupModule()
 
 void FCodeEditor::ShutdownModule()
 {
+	FCodeEditorStyle::Shutdown();
+
+	FCodeProjectEditorCommands::Unregister();
+
 	// Unregister the tab spawner
 	FGlobalTabmanager::Get()->UnregisterTabSpawner(CodeEditorTabName);
-
-	if (FModuleManager::Get().IsModuleLoaded("LevelEditor"))
-	{
-		FLevelEditorModule& LevelEditorModule = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
-		LevelEditorModule.GetMenuExtensibilityManager()->RemoveExtender(Extender);
-	}
-
-	FCodeEditorStyle::Shutdown();
 }
 
 TSharedRef<SDockTab> FCodeEditor::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)

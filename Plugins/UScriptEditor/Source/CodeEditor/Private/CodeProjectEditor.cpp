@@ -9,6 +9,7 @@
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 #include "SCodeEditor.h"
 #include "SCodeProjectTreeEditor.h"
+#include "SCodeEditorLog.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "CodeProjectEditorToolbar.h"
 #include "WorkflowOrientedApp/ApplicationMode.h"
@@ -32,6 +33,7 @@ namespace CodeEditorTabs
 	// Tab identifiers
 	static const FName ProjectViewID(TEXT("ProjectView"));
 	static const FName CodeViewID(TEXT("Document"));
+	static const FName LogViewID(TEXT("Log"));
 };
 
 struct FCodeTabSummoner : public FDocumentTabFactoryForObjects<UCodeProjectItem>
@@ -116,6 +118,26 @@ public:
 	}
 };
 
+struct FLogViewSummoner : public FWorkflowTabFactory
+{
+public:
+	FLogViewSummoner(TSharedPtr<class FAssetEditorToolkit> InHostingApp)
+		: FWorkflowTabFactory(CodeEditorTabs::LogViewID, InHostingApp)
+	{
+		TabLabel = LOCTEXT("LogViewTabLabel", "Log");
+
+		bIsSingleton = true;
+
+		ViewMenuDescription = LOCTEXT("LogViewTabMenu_Description", "Log");
+		ViewMenuTooltip = LOCTEXT("LogViewTabMenu_ToolTip", "Shows the script Logs");
+	}
+
+	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override
+	{
+		return SNew(SCodeEditorLog);
+	}
+};
+
 class FBasicCodeEditorMode : public FApplicationMode
 {
 public:
@@ -137,6 +159,7 @@ FBasicCodeEditorMode::FBasicCodeEditorMode(TSharedPtr<class FCodeProjectEditor> 
 	MyCodeEditor = InCodeEditor;
 
 	TabFactories.RegisterFactory(MakeShareable(new FProjectViewSummoner(InCodeEditor)));
+	TabFactories.RegisterFactory(MakeShareable(new FLogViewSummoner(InCodeEditor)));
 
 	TabLayout = FTabManager::NewLayout("Standalone_CodeEditor_Layout_v1.1")
 		->AddArea
@@ -204,8 +227,8 @@ void FCodeProjectEditor::RegisterToolbarTab(const TSharedRef<class FTabManager>&
 
 void FCodeProjectEditor::InitCodeEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, class UCodeProjectItem* CodeProject, class UCodeProjectItem* ScriptProject)
 {
-	FAssetEditorManager::Get().CloseOtherEditors(CodeProject, this);
-	FAssetEditorManager::Get().CloseOtherEditors(ScriptProject, this);
+	//FAssetEditorManager::Get().CloseOtherEditors(CodeProject, this);
+	//FAssetEditorManager::Get().CloseOtherEditors(ScriptProject, this);
 	CodeProjectBeingEdited = CodeProject;
 	ScriptProjectBeingEdited = ScriptProject;
 

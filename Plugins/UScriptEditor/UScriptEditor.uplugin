@@ -1,19 +1,19 @@
 ﻿{
-	"FileVersion" : 3,
-	"Version" : 1,
-	"VersionName" : "0.1",
-	"FriendlyName" : "UScript Editor",
-	"Description" : "Allows editing of code from within the Unreal editor",
-	"Category" : "Scripting",
-	"CreatedBy" : "Dean",
-	"CreatedByURL" : "",
-	"DocsURL" : "",
-	"MarketplaceURL" : "",
-	"SupportURL" : "",
-	"EnabledByDefault" : true,
-	"CanContainContent" : false,
-	"IsBetaVersion" : true,
-	"Installed" : false,
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1",
+  "FriendlyName": "UScript Editor",
+  "Description": "Allows editing of code from within the Unreal editor",
+  "Category": "Scripting",
+  "CreatedBy": "Dean",
+  "CreatedByURL": "",
+  "DocsURL": "",
+  "MarketplaceURL": "",
+  "SupportURL": "",
+  "EnabledByDefault": true,
+  "CanContainContent": false,
+  "IsBetaVersion": true,
+  "Installed": false,
   "Modules": [
     {
       "Name": "ScriptHelper",
@@ -24,6 +24,16 @@
       "Name": "CodeEditor",
       "Type": "Editor",
       "LoadingPhase": "Default"
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "Unlua",
+      "Enabled": true
+    },
+    {
+      "Name": "EditorScriptingUtilities",
+      "Enabled": true
     }
   ]
 }

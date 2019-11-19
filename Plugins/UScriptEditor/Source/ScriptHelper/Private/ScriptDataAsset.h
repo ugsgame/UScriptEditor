@@ -14,6 +14,11 @@ public:
 	UScriptDataAsset(const FObjectInitializer& ObjectInitializer);
 
 public:
+	UPROPERTY()
 	FString Path;
+	UPROPERTY()
 	FString CodeText;
+
+	//UPROPERTY()
+	UObject* UserObject;
 };
