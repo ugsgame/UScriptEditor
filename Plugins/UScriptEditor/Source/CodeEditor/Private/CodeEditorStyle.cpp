@@ -58,7 +58,7 @@ void FCodeEditorStyle::Initialize()
 		StyleSet->Set("CodeEditor.SaveAll.Small", new IMAGE_BRUSH("UI/SaveAll_40x", Icon16x16));
 	}
 
-	const FSlateFontInfo Consolas10  = DEFAULT_FONT("Mono", 9);
+	const FSlateFontInfo Consolas10  = DEFAULT_FONT("Mono", 10);
 
 	const FTextBlockStyle NormalText = FTextBlockStyle()
 		.SetFont(Consolas10)

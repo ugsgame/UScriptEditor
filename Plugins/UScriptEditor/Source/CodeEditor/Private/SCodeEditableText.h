@@ -1,4 +1,4 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -6,11 +6,14 @@
 #include "Input/Reply.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/Text/SMultiLineEditableText.h"
+#include "Runtime/InputCore/Classes/InputCoreTypes.h"
+#include "Widgets/Text/SlateEditableTextLayout.h"
 
 class ITextLayoutMarshaller;
 
 class SCodeEditableText : public SMultiLineEditableText
 {
+public:
 	SLATE_BEGIN_ARGS( SCodeEditableText )
 	{}
 		/** The initial text that will appear in the widget. */
@@ -25,12 +28,25 @@ class SCodeEditableText : public SMultiLineEditableText
 		/** The vertical scroll bar widget */
 		SLATE_ARGUMENT(TSharedPtr< SScrollBar >, VScrollBar)
 
+		SLATE_ATTRIBUTE(bool, CanKeyboardFocus)
+
+		SLATE_ATTRIBUTE(bool, IsReadOnly)
+
 		/** Called whenever the text is changed interactively by the user */
+		//SLATE_EVENT(FOnAutoCompleteEvent, OnAutoComplete)
+		//SLATE_EVENT(FOnInvokeSearchEvent, OnInvokeSearch)
 		SLATE_EVENT(FOnTextChanged, OnTextChanged)
+		SLATE_EVENT(FOnTextCommitted, OnTextCommitted)
 
 	SLATE_END_ARGS()
 
 	void Construct( const FArguments& InArgs );
+
+	//
+	//
+	void SelectLine();
+	void DeleteSelectedText();
+	void GoToLineColumn(int32 Line, int32 Column);
 
 private:
 	virtual FReply OnKeyChar(const FGeometry& MyGeometry,const FCharacterEvent& InCharacterEvent) override;

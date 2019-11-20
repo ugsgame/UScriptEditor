@@ -1,4 +1,4 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "SCodeEditableText.h"
 #include "CodeEditorStyle.h"
@@ -18,6 +18,22 @@ void SCodeEditableText::Construct( const FArguments& InArgs )
 		.VScrollBar(InArgs._VScrollBar)
 		.OnTextChanged(InArgs._OnTextChanged)
 	);
+}
+
+void SCodeEditableText::GoToLineColumn(int32 Line, int32 Column) {
+	FTextLocation Location(Line, Column);
+	//
+	GoTo(Location);
+	ScrollTo(Location);
+}
+
+void SCodeEditableText::SelectLine() {
+	EditableTextLayout->JumpTo(ETextLocation::EndOfLine, ECursorAction::MoveCursor);
+	EditableTextLayout->JumpTo(ETextLocation::BeginningOfLine, ECursorAction::SelectText);
+}
+
+void SCodeEditableText::DeleteSelectedText() {
+	EditableTextLayout->DeleteSelectedText();
 }
 
 FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacterEvent& InCharacterEvent)

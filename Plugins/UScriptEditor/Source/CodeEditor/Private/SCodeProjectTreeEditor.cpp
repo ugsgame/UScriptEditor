@@ -149,10 +149,12 @@ void SCodeProjectTreeEditor::HandleMouseButtonDoubleClick(UCodeProjectItem* Item
 		FCodeProjectEditor::Get()->OpenFileForEditing(Item);
 
 		//TODO:Browser to Objects(move to browser button)
+		/*
 		if (Item->ScriptDataAsset)
 		{
 			CodeEditorUtils::BrowserToScriptAsset(Item->ScriptDataAsset);
 		}
+		*/
 	}
 }
 
