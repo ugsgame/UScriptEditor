@@ -42,7 +42,7 @@ void FCodeEditorStyle::Initialize()
 		return;
 	}
 
-	StyleSet = MakeShareable(new FSlateStyleSet("CodeEditor") );
+	StyleSet = MakeShareable(new FSlateStyleSet("CodeEditorStyle") );
 
 	StyleSet->SetContentRoot(FPaths::EnginePluginsDir() / TEXT("Experimental/CodeEditor/Resources"));
 
@@ -137,7 +137,7 @@ const ISlateStyle& FCodeEditorStyle::Get()
 	return *( StyleSet.Get() );
 }
 
-const FName& FCodeEditorStyle::GetStyleSetName()
+FName FCodeEditorStyle::GetStyleSetName()
 {
 	return StyleSet->GetStyleSetName();
 }

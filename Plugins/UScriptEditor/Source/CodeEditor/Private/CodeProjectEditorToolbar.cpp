@@ -1,4 +1,4 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "CodeProjectEditorToolbar.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
@@ -31,6 +31,7 @@ void FCodeProjectEditorToolbar::FillEditorToolbar(FToolBarBuilder& ToolbarBuilde
 	}
 	ToolbarBuilder.EndSection();
 
+
 	// Only show the compile options on machines with the solution (assuming they can build it)
 	if ( FSourceCodeNavigation::IsCompilerAvailable() )
 	{
@@ -61,5 +62,6 @@ void FCodeProjectEditorToolbar::FillEditorToolbar(FToolBarBuilder& ToolbarBuilde
 				);
 		}
 		ToolbarBuilder.EndSection();
+		
 	}
 }

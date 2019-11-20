@@ -16,8 +16,7 @@ public:
 	static void ReloadTextures();
 
 	static const ISlateStyle& Get();
-
-	static const FName& GetStyleSetName();
+	static  FName GetStyleSetName();
 
 private:
 

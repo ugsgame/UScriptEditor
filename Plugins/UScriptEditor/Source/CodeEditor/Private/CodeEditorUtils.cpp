@@ -43,7 +43,7 @@ namespace CodeEditorUtils
 		}
 		else
 		{
-			FFileHelper::SaveStringToFile("", *FullPath);
+			FFileHelper::SaveStringToFile(TEXT("\n\n\n\n\n"), *FullPath);
 		}
 		ScriptAsset->Path = FullPath;
 

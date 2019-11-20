@@ -266,7 +266,7 @@ TSharedRef<ITableRow> SCodeEditor::OnGenerateLineCounter(TSharedPtr<FString>Item
 			SNew(STextBlock)
 			.Text(FText::FromString(*Item.Get()))
 			.ColorAndOpacity(FSlateColor(FLinearColor(FColor(75, 185, 245, 225))))
-			.Font(FCodeEditorStyle::Get().GetWidgetStyle<FTextBlockStyle>("MGC.CodeBlockStyle").Font)
+			.Font(FCodeEditorStyle::Get().GetWidgetStyle<FTextBlockStyle>("TextEditor.NormalText").Font)
 		]
 	];//
 }
