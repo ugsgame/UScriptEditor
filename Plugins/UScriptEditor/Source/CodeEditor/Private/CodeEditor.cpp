@@ -15,6 +15,8 @@
 #include "CodeEditorUtils.h"
 #include "LevelEditor.h"
 
+#include "AssetRegistryModule.h"
+
 #include "Assets/LuaScriptAssetTypeActions.h"
 
 #define LOCTEXT_NAMESPACE "CodeEditor"
@@ -76,6 +78,9 @@ void FCodeEditor::StartupModule()
 	// register JK category so that assets can register to it
 	AssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("UScript")), LOCTEXT("UScriptAssetCategory", "UScript"));
 
+	//
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	AssetRegistryModule.Get().OnInMemoryAssetDeleted().AddRaw(this, &FCodeEditor::OnAssetDeleted);
 }
 
 void FCodeEditor::ShutdownModule()
@@ -92,8 +97,14 @@ TSharedRef<SDockTab> FCodeEditor::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTab
 {
 	TSharedRef<FCodeProjectEditor> NewCodeProjectEditor = MakeShareable(new FCodeProjectEditor());
 	NewCodeProjectEditor->InitCodeEditor(EToolkitMode::Standalone, TSharedPtr<class IToolkitHost>(), GetMutableDefault<UCodeProject>(), GetMutableDefault<UScriptProject>());
-	
+
 	return FGlobalTabmanager::Get()->GetMajorTabForTabManager(NewCodeProjectEditor->GetTabManager().ToSharedRef()).ToSharedRef();
+	
+}
+
+void FCodeEditor::OnAssetDeleted(UObject*  AssetObject)
+{
+	GEditor->AddOnScreenDebugMessage(1, 1, FColor::Red, "ss");
 }
 
 void FCodeEditor::PluginButtonClicked()
@@ -105,6 +116,7 @@ void FCodeEditor::AddMenuExtension(FMenuBuilder& Builder)
 {
 	Builder.AddMenuEntry(FCodeProjectEditorCommands::Get().OpenPluginWindow);
 }
+
 
 void FCodeEditor::AddToolbarExtension(FToolBarBuilder& Builder)
 {

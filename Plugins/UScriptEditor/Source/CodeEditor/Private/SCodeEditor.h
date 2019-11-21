@@ -36,7 +36,7 @@ protected:
 	void OnVerticalScroll(float Offset);
 	void SetLineCountList(const int32 Count);
 	void OnSelectedLineCounterItem(TSharedPtr<FString>Item, ESelectInfo::Type SelectInfo);
-	void OnDoubleClickLineNumber(TSharedPtr<FString>Item);
+	void OnDoubleClickLineCounterItem(TSharedPtr<FString>Item);
 	TSharedRef<ITableRow>OnGenerateLineCounter(TSharedPtr<FString>Item, const TSharedRef<STableViewBase>&OwnerTable);
 
 protected:

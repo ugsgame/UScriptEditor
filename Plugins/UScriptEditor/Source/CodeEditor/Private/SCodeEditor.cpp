@@ -113,7 +113,7 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 									[
 										SAssignNew(LineCounter, SListView<TSharedPtr<FString>>)
 										.OnSelectionChanged(this, &SCodeEditor::OnSelectedLineCounterItem)
-										.OnMouseButtonDoubleClick(this, &SCodeEditor::OnDoubleClickLineNumber)
+										.OnMouseButtonDoubleClick(this, &SCodeEditor::OnDoubleClickLineCounterItem)
 										.OnGenerateRow(this, &SCodeEditor::OnGenerateLineCounter)
 										.ScrollbarVisibility(EVisibility::Collapsed)
 										.ListItemsSource(&LineCount).ItemHeight(14)
@@ -140,10 +140,8 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 				]
 			]
 		];
-
-	//TAttribute<FLinearColor> ColorAndOpacity(FLinearColor(0, 0, 0, 0));
-	//LineCounter->SetForegroundColor(FSlateColor::UseForeground());
-
+	
+	//Add Line Number
 	SetLineCountList(GetLineCount());
 }
 
@@ -250,7 +248,7 @@ void SCodeEditor::OnSelectedLineCounterItem(TSharedPtr<FString>Item, ESelectInfo
 	LineCounter->SetItemSelection(Item, false);
 }
 
-void SCodeEditor::OnDoubleClickLineNumber(TSharedPtr<FString>Item)
+void SCodeEditor::OnDoubleClickLineCounterItem(TSharedPtr<FString>Item)
 {
 	if (!Item.IsValid()) { return; }
 	//

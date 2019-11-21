@@ -265,7 +265,6 @@ void FCodeProjectEditor::InitCodeEditor(const EToolkitMode::Type Mode, const TSh
 	SetCurrentMode(CodeEditorModes::StandardMode);
 
 	RegenerateMenusAndToolbars();
-
 }
 
 void FCodeProjectEditor::BindCommands()

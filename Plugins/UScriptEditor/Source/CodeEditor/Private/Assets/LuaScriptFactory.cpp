@@ -15,15 +15,19 @@
 ULuaScriptFactory::ULuaScriptFactory(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	bCreateNew = true;
-	bEditAfterNew = true;
 	SupportedClass = ULuaScript::StaticClass();
+
+	//Formats.Add("lua;Script");
+
+	bCreateNew = true;
+	//bEditorImport = true;
+	bEditAfterNew = true;
 }
 
-UObject* ULuaScriptFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
+UObject* ULuaScriptFactory::FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
-	check(Class == ULuaScript::StaticClass() || Class->IsChildOf(ULuaScript::StaticClass()));
-	ULuaScript* ScriptAsset = NewObject<ULuaScript>(InParent, Class, Name, Flags);
+	check(InClass == ULuaScript::StaticClass() || InClass->IsChildOf(ULuaScript::StaticClass()));
+	ULuaScript* ScriptAsset = NewObject<ULuaScript>(InParent, InClass, InName, Flags);
 	//create *.lua in this directory
 	CodeEditorUtils::CreateLuaFileFromLuaScriptAsset(ScriptAsset);
 	//save asset
@@ -45,6 +49,52 @@ UObject* ULuaScriptFactory::FactoryCreateNew(UClass* Class, UObject* InParent, F
 	return ScriptAsset;
 }
 
+/*
+UObject* ULuaScriptFactory::FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled)
+{
+	GEditor->SelectNone(true, true, false);
+
+	check(InClass == ULuaScript::StaticClass() || InClass->IsChildOf(ULuaScript::StaticClass()));
+	ULuaScript* ScriptAsset = NewObject<ULuaScript>(InParent, InClass, InName, Flags);
+	//
+	FString CodeText;
+	if (FFileHelper::LoadFileToString(CodeText, *Filename))
+	{
+		ScriptAsset->CodeText = CodeText;
+	}
+
+	//save asset
+	CodeEditorUtils::SaveScriptAsset(ScriptAsset);
+	//save lua file in same directory
+
+
+	return ScriptAsset;
+}
+
+UObject* ULuaScriptFactory::FactoryCreateText(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, const TCHAR* Type, const TCHAR*& Buffer, const TCHAR* BufferEnd, FFeedbackContext* Warn)
+{
+	GEditor->SelectNone(true, true, false);
+
+	check(InClass == ULuaScript::StaticClass() || InClass->IsChildOf(ULuaScript::StaticClass()));
+	ULuaScript* ScriptAsset = NewObject<ULuaScript>(InParent, InClass, InName, Flags);
+
+	//save asset
+	CodeEditorUtils::SaveScriptAsset(ScriptAsset);
+
+	return ScriptAsset;
+}
+
+bool ULuaScriptFactory::FactoryCanImport(const FString& Filename)
+{
+	if (FPaths::GetExtension(Filename) == "lua")
+	{
+		bCreateNew = false;
+		return true;
+	}
+	bCreateNew = true;
+	return false;
+}
+*/
 // uint32 ULuaScriptFactory::GetMenuCategories() const
 // {
 // 	if (FCodeEditor* Module = FCodeEditor::GetInstance()) {

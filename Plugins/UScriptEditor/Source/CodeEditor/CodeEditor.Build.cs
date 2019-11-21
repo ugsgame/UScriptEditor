@@ -30,6 +30,7 @@ namespace UnrealBuildTool.Rules
 					"SlateCore",
 					"Slate",
 					"AssetTools",
+                    "AssetRegistry",
                     "Engine",
                     "UnrealEd",
 					"EditorStyle",

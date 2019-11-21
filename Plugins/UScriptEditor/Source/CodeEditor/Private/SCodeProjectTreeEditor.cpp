@@ -92,13 +92,25 @@ void SCodeProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectIte
 		]
 	];
 
-	//TODO:Reflash
-	//CodeProject->Children.Empty();
-	//ScriptProject->Children.Empty();
-	
-	CodeProject->RescanChildren();
-	ScriptProject->RescanChildren();
 	//
+	
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+	if (AssetRegistryModule.Get().IsLoadingAssets())
+	{
+		AssetRegistryModule.Get().OnFilesLoaded().AddRaw(this, &SCodeProjectTreeEditor::RescanAllFiles);
+	}
+	else
+	{
+		//TODO:Reflash
+		//CodeProject->Children.Empty();
+		//ScriptProject->Children.Empty();
+
+		CodeProject->RescanChildren();
+		ScriptProject->RescanChildren();
+		//
+	}
+	
 }
 
 void SCodeProjectTreeEditor::ExpanedScriptItem(UCodeProjectItem* Item)
@@ -119,6 +131,18 @@ void SCodeProjectTreeEditor::ExpanedAllScriptItems()
 	EditingProject = ScriptProject;
 
 	ExpanedItemChildren(EditingProject);
+}
+
+void SCodeProjectTreeEditor::RescanAllFiles()
+{
+	CodeProject->Children.Empty();
+	ScriptProject->Children.Empty();
+
+	CodeProject->RescanChildren();
+	ScriptProject->RescanChildren();
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	AssetRegistryModule.Get().OnFilesLoaded().RemoveAll(this);
 }
 
 void SCodeProjectTreeEditor::Tick( const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime )

@@ -41,6 +41,8 @@ private:
 		CreatedAssetTypeActions.Add(Action);
 	};
 
+	void OnAssetDeleted(UObject*  AssetObject);
+
 private:
 	EAssetTypeCategories::Type AssetCategoryBit;
 
@@ -50,6 +52,7 @@ private:
 	TSharedPtr<class FUICommandList> PluginCommands;
 
 	//TSharedPtr<FCodeProjectEditor> CodeProjectEditorInstance;
+
 public:
 	static const FName CodeEditorTabName;
 };

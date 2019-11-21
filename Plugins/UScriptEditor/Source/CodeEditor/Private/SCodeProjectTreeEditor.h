@@ -25,6 +25,8 @@ public:
 	void ExpanedScriptItem(class UCodeProjectItem* Item);
 
 	void ExpanedAllScriptItems();
+
+	void RescanAllFiles();
 private:
 	/** Begin SWidget interface */
 	void Tick( const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime ) override;
