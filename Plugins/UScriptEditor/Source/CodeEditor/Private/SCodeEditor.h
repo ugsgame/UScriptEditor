@@ -21,6 +21,8 @@ public:
 	//
 	bool Save() const;
 	bool CanSave() const;
+
+	void Browser() const;
 	//
 	//
 	int32 GetLineCount() const;
@@ -34,7 +36,7 @@ protected:
 	void OnVerticalScroll(float Offset);
 	void SetLineCountList(const int32 Count);
 	void OnSelectedLineCounterItem(TSharedPtr<FString>Item, ESelectInfo::Type SelectInfo);
-	void OnDoubleClick(TSharedPtr<FString>Item);
+	void OnDoubleClickLineNumber(TSharedPtr<FString>Item);
 	TSharedRef<ITableRow>OnGenerateLineCounter(TSharedPtr<FString>Item, const TSharedRef<STableViewBase>&OwnerTable);
 
 protected:

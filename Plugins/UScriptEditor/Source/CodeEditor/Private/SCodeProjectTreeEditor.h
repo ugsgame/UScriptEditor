@@ -6,7 +6,7 @@
 #include "Layout/Visibility.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/SCompoundWidget.h"
-#include "CodeProjectItem.h"
+#include "SCodeProjectTreeEditor.h"
 #include "Widgets/Views/STreeView.h"
 
 class SCodeProjectTreeEditor : public SCompoundWidget
@@ -17,6 +17,14 @@ public:
 
 	void Construct(const FArguments& InArgs, class UCodeProjectItem* InCodeProject, class UCodeProjectItem* InScriptProject);
 
+	static TSharedPtr<SCodeProjectTreeEditor> Get()
+	{
+		return CodeProjectTreeEditor.Pin();
+	}
+
+	void ExpanedScriptItem(class UCodeProjectItem* Item);
+
+	void ExpanedAllScriptItems();
 private:
 	/** Begin SWidget interface */
 	void Tick( const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime ) override;
@@ -30,10 +38,15 @@ private:
 
 	FName GetIconForItem(class UCodeProjectItem* Item) const;
 
+	void ExpanedItem(class UCodeProjectItem* Item) const;
+
+	void ExpanedItemChildren(class UCodeProjectItem* Item) const;
+
 	void HandleMouseButtonDoubleClick(class UCodeProjectItem* Item) const;
 
 	virtual FReply OnClickedCodeProject();
 	virtual FReply OnClickedScriptProject();
+
 private:
 	class  UCodeProjectItem* CodeProject;
 	class  UCodeProjectItem* ScriptProject;
@@ -41,5 +54,7 @@ private:
 	class UCodeProjectItem* EditingProject;
 
 	TSharedPtr<STreeView<class UCodeProjectItem*>> ProjectTree;
+
+	static TWeakPtr<SCodeProjectTreeEditor> CodeProjectTreeEditor;
 
 };

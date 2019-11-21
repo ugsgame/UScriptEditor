@@ -26,7 +26,7 @@ void FCodeProjectEditorToolbar::FillEditorToolbar(FToolBarBuilder& ToolbarBuilde
 
 	ToolbarBuilder.BeginSection(TEXT("FileManagement"));
 	{
-		ToolbarBuilder.AddToolBarButton(FCodeProjectEditorCommands::Get().Save);
+		//ToolbarBuilder.AddToolBarButton(FCodeProjectEditorCommands::Get().Save);
 		ToolbarBuilder.AddToolBarButton(FCodeProjectEditorCommands::Get().SaveAll);
 	}
 	ToolbarBuilder.EndSection();

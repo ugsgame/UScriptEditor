@@ -75,6 +75,13 @@ private:
 	bool CanSaveAll() const;
 
 protected:
+	//Overried Asset Editing
+	virtual bool CanSaveAsset()const;
+	virtual void SaveAsset_Execute();
+
+	virtual void FindInContentBrowser_Execute();
+	//
+protected:
 	TSharedPtr<FDocumentTracker> DocumentManager;
 
 	/** The code project we are currently editing */

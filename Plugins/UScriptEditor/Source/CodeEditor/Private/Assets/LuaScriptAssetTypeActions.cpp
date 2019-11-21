@@ -5,6 +5,7 @@
 #include "LuaWrapper/LuaScript.h"
 #include "CodeProject.h"
 #include "CodeProjectEditor.h"
+#include "SCodeProjectTreeEditor.h"
 #include "AssetToolsModule.h"
 #include "ContentBrowserModule.h"
 
@@ -42,6 +43,12 @@ void FLuaScriptAssetTypeActions::OpenAssetEditor(const TArray<UObject*>& InObjec
 			{
 				//Goto item tab
 				FCodeProjectEditor::Get()->OpenFileForEditing(Item);
+				//Expaned this item
+				if (SCodeProjectTreeEditor::Get().IsValid())
+				{
+					SCodeProjectTreeEditor::Get()->ExpanedScriptItem(Item);
+				}
+				//
 			}
 			else
 			{

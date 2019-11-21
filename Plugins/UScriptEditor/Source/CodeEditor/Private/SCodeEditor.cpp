@@ -109,10 +109,11 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 									SNew(SBorder)
 									.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
 									//.BorderImage(FEditorStyle::GetBrush("Graph.Node.Body"))
+									.BorderImage(FEditorStyle::GetBrush("NoBorder"))
 									[
 										SAssignNew(LineCounter, SListView<TSharedPtr<FString>>)
 										.OnSelectionChanged(this, &SCodeEditor::OnSelectedLineCounterItem)
-										.OnMouseButtonDoubleClick(this, &SCodeEditor::OnDoubleClick)
+										.OnMouseButtonDoubleClick(this, &SCodeEditor::OnDoubleClickLineNumber)
 										.OnGenerateRow(this, &SCodeEditor::OnGenerateLineCounter)
 										.ScrollbarVisibility(EVisibility::Collapsed)
 										.ListItemsSource(&LineCount).ItemHeight(14)
@@ -151,15 +152,16 @@ void SCodeEditor::OnTextChanged(const FText& NewText)
 	bDirty = true;
 
 	SetLineCountList(GetLineCount());
+
 	//Sync to the ScriptAsset?
-	/*
+	
 	if (CodeProjectItem->ScriptDataAsset)
 	{
 		CodeProjectItem->ScriptDataAsset->CodeText = CodeEditableText->GetText().ToString();
 		//Set Asset To Dirty
 		CodeProjectItem->ScriptDataAsset->MarkPackageDirty();
 	}
-	*/
+	
 	//
 }
 
@@ -197,6 +199,14 @@ bool SCodeEditor::Save() const
 bool SCodeEditor::CanSave() const
 {
 	return bDirty;
+}
+
+void SCodeEditor::Browser() const
+{
+	if (CodeProjectItem->ScriptDataAsset)
+	{
+		CodeEditorUtils::BrowserToScriptAsset(CodeProjectItem->ScriptDataAsset);
+	}
 }
 
 int32 SCodeEditor::GetLineCount() const
@@ -240,7 +250,7 @@ void SCodeEditor::OnSelectedLineCounterItem(TSharedPtr<FString>Item, ESelectInfo
 	LineCounter->SetItemSelection(Item, false);
 }
 
-void SCodeEditor::OnDoubleClick(TSharedPtr<FString>Item)
+void SCodeEditor::OnDoubleClickLineNumber(TSharedPtr<FString>Item)
 {
 	if (!Item.IsValid()) { return; }
 	//

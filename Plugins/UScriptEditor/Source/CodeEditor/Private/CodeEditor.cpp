@@ -90,14 +90,6 @@ void FCodeEditor::ShutdownModule()
 
 TSharedRef<SDockTab> FCodeEditor::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	/*
-	if (!CodeProjectEditorInstance.IsValid())
-	{
-		CodeProjectEditorInstance = MakeShareable(new FCodeProjectEditor());
-		CodeProjectEditorInstance->InitCodeEditor(EToolkitMode::Standalone, TSharedPtr<class IToolkitHost>(), GetMutableDefault<UCodeProject>(), GetMutableDefault<UScriptProject>());
-	}
-	return FGlobalTabmanager::Get()->GetMajorTabForTabManager(CodeProjectEditorInstance->GetTabManager().ToSharedRef()).ToSharedRef();
-	*/
 	TSharedRef<FCodeProjectEditor> NewCodeProjectEditor = MakeShareable(new FCodeProjectEditor());
 	NewCodeProjectEditor->InitCodeEditor(EToolkitMode::Standalone, TSharedPtr<class IToolkitHost>(), GetMutableDefault<UCodeProject>(), GetMutableDefault<UScriptProject>());
 	

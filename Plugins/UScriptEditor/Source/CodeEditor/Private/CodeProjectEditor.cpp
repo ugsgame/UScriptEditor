@@ -5,6 +5,7 @@
 #include "CodeProject.h"
 #include "CodeEditorStyle.h"
 #include "CodeProjectEditorCommands.h"
+#include "Editor/UnrealEd//Private/Toolkits/AssetEditorCommonCommands.h"
 #include "WorkflowOrientedApp/WorkflowTabFactory.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 #include "SCodeEditor.h"
@@ -253,7 +254,7 @@ void FCodeProjectEditor::InitCodeEditor(const EToolkitMode::Type Mode, const TSh
 
 	// Initialize the asset editor and spawn nothing (dummy layout)
 	const TSharedRef<FTabManager::FLayout> DummyLayout = FTabManager::NewLayout("NullLayout")->AddArea(FTabManager::NewPrimaryArea());
-	InitAssetEditor(Mode, InitToolkitHost, CodeEditorAppName, DummyLayout, /*bCreateDefaultStandaloneMenu=*/ true, /*bCreateDefaultToolbar=*/ true, CodeProject);
+	InitAssetEditor(Mode, InitToolkitHost, CodeEditorAppName, DummyLayout, /*bCreateDefaultStandaloneMenu=*/ true, /*bCreateDefaultToolbar=*/ true, ScriptProject);
 
 	BindCommands();
 
@@ -264,6 +265,7 @@ void FCodeProjectEditor::InitCodeEditor(const EToolkitMode::Type Mode, const TSh
 	SetCurrentMode(CodeEditorModes::StandardMode);
 
 	RegenerateMenusAndToolbars();
+
 }
 
 void FCodeProjectEditor::BindCommands()
@@ -389,6 +391,26 @@ bool FCodeProjectEditor::CanSaveAll() const
 {
 	return true;
 }
+
+bool FCodeProjectEditor::CanSaveAsset()const
+{
+	return CanSave();
+}
+
+void FCodeProjectEditor::SaveAsset_Execute()
+{
+	Save();
+}
+
+void FCodeProjectEditor::FindInContentBrowser_Execute()
+{
+	if (DocumentManager.IsValid() && DocumentManager->GetActiveTab().IsValid())
+	{
+		TSharedRef<SCodeEditor> CodeEditorRef = StaticCastSharedRef<SCodeEditor>(DocumentManager->GetActiveTab()->GetContent());
+		CodeEditorRef->Browser();
+	}
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 

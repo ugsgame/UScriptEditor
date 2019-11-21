@@ -18,6 +18,7 @@
 
 #define LOCTEXT_NAMESPACE "CodeProjectTreeEditor"
 
+TWeakPtr<SCodeProjectTreeEditor> SCodeProjectTreeEditor::CodeProjectTreeEditor;
 
 void SCodeProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodeProject, UCodeProjectItem* InScriptProject)
 {
@@ -27,6 +28,10 @@ void SCodeProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectIte
 	ScriptProject = InScriptProject;
 
 	EditingProject = InScriptProject;
+
+	TSharedPtr<SCodeProjectTreeEditor> ThisPtr(SharedThis(this));
+	CodeProjectTreeEditor = ThisPtr;
+
 
 	if (!ProjectTree.IsValid())
 	{
@@ -96,6 +101,26 @@ void SCodeProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectIte
 	//
 }
 
+void SCodeProjectTreeEditor::ExpanedScriptItem(UCodeProjectItem* Item)
+{
+	if (Item)
+	{
+		ProjectTree->SetTreeItemsSource(&ScriptProject->Children);
+		EditingProject = ScriptProject;
+
+		ProjectTree->SetSelection(Item, ESelectInfo::OnMouseClick);
+		ExpanedItem(Item);
+	}
+}
+
+void SCodeProjectTreeEditor::ExpanedAllScriptItems()
+{
+	ProjectTree->SetTreeItemsSource(&ScriptProject->Children);
+	EditingProject = ScriptProject;
+
+	ExpanedItemChildren(EditingProject);
+}
+
 void SCodeProjectTreeEditor::Tick( const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime )
 {
 	if(FDirectoryScanner::Tick())
@@ -147,14 +172,33 @@ void SCodeProjectTreeEditor::HandleMouseButtonDoubleClick(UCodeProjectItem* Item
 	if(Item->Type == ECodeProjectItemType::File)
 	{
 		FCodeProjectEditor::Get()->OpenFileForEditing(Item);
+	}
+}
 
-		//TODO:Browser to Objects(move to browser button)
-		/*
-		if (Item->ScriptDataAsset)
+void SCodeProjectTreeEditor::ExpanedItem(UCodeProjectItem* Item) const
+{
+	if (Item)
+	{
+		ProjectTree->SetItemExpansion(Item, true);
+		if (Item->Parent)
 		{
-			CodeEditorUtils::BrowserToScriptAsset(Item->ScriptDataAsset);
+			ExpanedItem(Item->Parent);
 		}
-		*/
+	}
+}
+
+void SCodeProjectTreeEditor::ExpanedItemChildren(UCodeProjectItem* Item) const
+{
+	if (Item)
+	{
+		ProjectTree->SetItemExpansion(Item, true);
+		if (Item->Children.Num()>0)
+		{
+			for (UCodeProjectItem* Child: Item->Children)
+			{
+				ExpanedItemChildren(Child);
+			}
+		}
 	}
 }
 
