@@ -23,5 +23,9 @@ namespace CodeEditorUtils
 
     FString CovertContentPathToGamePath(FString ContentPath);
 
-	FString CovertContentFilePathToAssetPath(FString ContentFilePath);
+	FString CovertGamePathToContentPath(FString GamePath);
+
+	FString CovertContentPathToAssetPath(FString ContentFilePath);
+
+	FString CovertAssetPathToContentPath(FString AssetPath);
 }

@@ -30,7 +30,6 @@ public:
 	//
 
 protected:
-
 	void OnTextChanged(const FText& NewText);
 	void OnTextCommitted(const FText &NewText, ETextCommit::Type CommitInfo);
 	void OnVerticalScroll(float Offset);

@@ -41,8 +41,11 @@ private:
 		CreatedAssetTypeActions.Add(Action);
 	};
 
-	void OnAssetDeleted(UObject*  AssetObject);
+	void OnScriptAssetDeleted(UObject*  AssetObject);
 
+	void OnScriptAssetRenamed(const FAssetData& RenamedAsset, const FString& OldObjectPath);
+
+	void OnClearInvalidScriptAssets();
 private:
 	EAssetTypeCategories::Type AssetCategoryBit;
 

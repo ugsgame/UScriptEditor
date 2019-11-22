@@ -255,7 +255,7 @@ bool UCodeProjectItem::BuildScriptAssetContext()
 	if (Extension == "lua")
 	{
 		//Check file exist?
-		FString ScriptAssetPath = CodeEditorUtils::CovertContentFilePathToAssetPath(Path);
+		FString ScriptAssetPath = CodeEditorUtils::CovertContentPathToAssetPath(Path);
 
 		if (UEditorAssetLibrary::DoesAssetExist(ScriptAssetPath))
 		{

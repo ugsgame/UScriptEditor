@@ -47,6 +47,13 @@ public:
 
 	/** Try to open a new file for editing */
 	void OpenFileForEditing(class UCodeProjectItem* Item);
+	/** Try to close a editing file */
+	void CloseEditingFile(class UCodeProjectItem* Item);
+	/** Try to close a all editing files */
+	void CloseAllEditingFiles();
+
+	/** Rescan all script files */
+	void RescanScriptProject();
 
 	/** Get the current project being edited by this code editor */
 	UCodeProjectItem* GetCodeProjectBeingEdited() const { return CodeProjectBeingEdited.Get(); }

@@ -34,39 +34,37 @@ void FLuaScriptAssetTypeActions::OpenAssetEditor(const TArray<UObject*>& InObjec
 {
 	if (UScriptDataAsset* ScriptAsset = Cast<UScriptDataAsset>(InObjects[0]))
 	{
-		FGlobalTabmanager::Get()->InvokeTab(FCodeEditor::CodeEditorTabName);
-
-		TSharedPtr<FCodeProjectEditor> ProjectEditor = FCodeProjectEditor::Get();
-		if (ProjectEditor.IsValid())
+		if (ScriptAsset->EFlag_IsValid)
 		{
-			if (UCodeProjectItem* Item = Cast<UCodeProjectItem>(ScriptAsset->UserObject))
+			FGlobalTabmanager::Get()->InvokeTab(FCodeEditor::CodeEditorTabName);
+			TSharedPtr<FCodeProjectEditor> ProjectEditor = FCodeProjectEditor::Get();
+			if (ProjectEditor.IsValid())
 			{
-				//Goto item tab
-				FCodeProjectEditor::Get()->OpenFileForEditing(Item);
-				//Expaned this item
-				if (SCodeProjectTreeEditor::Get().IsValid())
+				if (UCodeProjectItem* Item = Cast<UCodeProjectItem>(ScriptAsset->UserObject))
 				{
-					SCodeProjectTreeEditor::Get()->ExpanedScriptItem(Item);
+					//Goto item tab
+					FCodeProjectEditor::Get()->OpenFileForEditing(Item);
+					//Expaned this item
+					if (SCodeProjectTreeEditor::Get().IsValid())
+					{
+						SCodeProjectTreeEditor::Get()->ExpanedScriptItem(Item);
+					}
+					//
 				}
-				//
+				else
+				{
+					////Show Waring Dialog
+				}
 			}
 			else
 			{
-				//Check file is exist
-				uint32 Flags = 0;
-				FArchive* Reader = IFileManager::Get().CreateFileReader(*ScriptAsset->Path, Flags);
-				if (Reader && Flags > 0)
-				{
-
-				}
-				// Unlegalized Asset File!!
-				else
-				{
-
-				}
+				//TODO:Add the item to open after ProjectEditor was inited!!!
 			}
 		}
-
+		else
+		{
+			//Show Waring Dialog
+		}
 	}
 }
 

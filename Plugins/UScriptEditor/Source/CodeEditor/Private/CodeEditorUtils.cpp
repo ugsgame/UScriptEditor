@@ -90,11 +90,29 @@ namespace CodeEditorUtils
 		return ContentPath;
 	}
 
-	FString CovertContentFilePathToAssetPath(FString ContentFilePath)
+	FString CovertGamePathToContentPath(FString GamePath)
+	{
+		if (GamePath.Contains("/Game"))
+		{
+			int32 FirstIndex = GamePath.Find("/Game/");
+			GamePath.RemoveAt(0, FirstIndex + 6);
+			GamePath = FPaths::ProjectContentDir() + GamePath;
+		}
+		return GamePath;
+	}
+
+	FString CovertContentPathToAssetPath(FString ContentFilePath)
 	{
 		FString AssetFilePath = CovertContentPathToGamePath(FPaths::GetPath(ContentFilePath));
 		AssetFilePath = AssetFilePath + "/" + FPaths::GetBaseFilename(ContentFilePath);
 		return AssetFilePath;
+	}
+
+	FString CovertAssetPathToContentPath(FString AssetPath)
+	{
+		FString ContentFilePath = CovertGamePathToContentPath(FPaths::GetPath(AssetPath));
+		ContentFilePath = ContentFilePath + "/" + FPaths::GetBaseFilename(AssetPath);
+		return ContentFilePath;
 	}
 
 }

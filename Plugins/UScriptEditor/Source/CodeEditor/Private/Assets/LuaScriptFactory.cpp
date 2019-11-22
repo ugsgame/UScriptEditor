@@ -37,8 +37,7 @@ UObject* ULuaScriptFactory::FactoryCreateNew(UClass* InClass, UObject* InParent,
 	TSharedPtr<FCodeProjectEditor> ProjectEditor = FCodeProjectEditor::Get();
 	if (ProjectEditor.IsValid())
 	{
-		ProjectEditor->GetScriptProjectBeingEdited()->Children.Empty();
-		ProjectEditor->GetScriptProjectBeingEdited()->RescanChildren();
+		ProjectEditor->RescanScriptProject();
 	}
 	else
 	{

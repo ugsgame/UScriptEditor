@@ -4,5 +4,8 @@
 UScriptDataAsset::UScriptDataAsset(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-
+#if WITH_EDITORONLY_DATA
+	EFlag_IsEditing = false;
+	EFlag_IsValid = true;
+#endif // WITH_EDITORONLY_DATA
 }

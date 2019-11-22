@@ -22,11 +22,16 @@ public:
 		return CodeProjectTreeEditor.Pin();
 	}
 
-	void ExpanedScriptItem(class UCodeProjectItem* Item);
+	void ExpanedScriptItem(class UCodeProjectItem* Item, bool ShouldExpandItem = true, bool Always = true);
 
 	void ExpanedAllScriptItems();
 
+	void RescanScripts();
+	void RescanCodes();
+
 	void RescanAllFiles();
+
+	void RequestRefresh();
 private:
 	/** Begin SWidget interface */
 	void Tick( const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime ) override;
@@ -40,7 +45,7 @@ private:
 
 	FName GetIconForItem(class UCodeProjectItem* Item) const;
 
-	void ExpanedItem(class UCodeProjectItem* Item) const;
+	void ExpanedItem(class UCodeProjectItem* Item,bool ShouldExpandItem = true) const;
 
 	void ExpanedItemChildren(class UCodeProjectItem* Item) const;
 

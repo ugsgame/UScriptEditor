@@ -286,6 +286,39 @@ void FCodeProjectEditor::OpenFileForEditing(UCodeProjectItem* Item)
 	DocumentManager->OpenDocument(Payload, FDocumentTracker::OpenNewDocument);
 }
 
+void FCodeProjectEditor::CloseEditingFile(UCodeProjectItem* Item)
+{
+	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(Item);
+	DocumentManager->CloseTab(Payload);
+}
+
+void FCodeProjectEditor::CloseAllEditingFiles()
+{
+	TArray<TSharedPtr<SDockTab>> Tabs = DocumentManager->GetAllDocumentTabs();
+	for (TSharedPtr<SDockTab> Tab:Tabs)
+	{
+		if (Tab.IsValid())
+		{
+			Tab->RequestCloseTab();
+		}
+	}
+}
+
+void FCodeProjectEditor::RescanScriptProject()
+{
+	this->CloseAllEditingFiles();
+	TSharedPtr<SCodeProjectTreeEditor> ProjectTreeEditor = SCodeProjectTreeEditor::Get();
+	if (ProjectTreeEditor.IsValid())
+	{
+		ProjectTreeEditor->RescanScripts();
+		ProjectTreeEditor->RequestRefresh();
+	}
+	//TODO:
+	//Open all old edited files
+	//
+	//
+}
+
 FName FCodeProjectEditor::GetToolkitFName() const
 {
 	return FName("CodeEditor");

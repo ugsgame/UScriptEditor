@@ -113,7 +113,7 @@ void SCodeProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectIte
 	
 }
 
-void SCodeProjectTreeEditor::ExpanedScriptItem(UCodeProjectItem* Item)
+void SCodeProjectTreeEditor::ExpanedScriptItem(UCodeProjectItem* Item,bool ShouldExpandItem, bool Always)
 {
 	if (Item)
 	{
@@ -121,7 +121,11 @@ void SCodeProjectTreeEditor::ExpanedScriptItem(UCodeProjectItem* Item)
 		EditingProject = ScriptProject;
 
 		ProjectTree->SetSelection(Item, ESelectInfo::OnMouseClick);
-		ExpanedItem(Item);
+
+		if (Always)
+			ExpanedItem(Item, ShouldExpandItem);
+		else
+			ProjectTree->SetItemExpansion(Item, ShouldExpandItem);
 	}
 }
 
@@ -133,16 +137,30 @@ void SCodeProjectTreeEditor::ExpanedAllScriptItems()
 	ExpanedItemChildren(EditingProject);
 }
 
-void SCodeProjectTreeEditor::RescanAllFiles()
+void SCodeProjectTreeEditor::RescanScripts()
+{
+	ScriptProject->Children.Empty();
+	ScriptProject->RescanChildren();
+}
+
+void SCodeProjectTreeEditor::RescanCodes()
 {
 	CodeProject->Children.Empty();
-	ScriptProject->Children.Empty();
-
 	CodeProject->RescanChildren();
-	ScriptProject->RescanChildren();
+}
+
+void SCodeProjectTreeEditor::RescanAllFiles()
+{
+	RescanScripts();
+	RescanCodes();
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	AssetRegistryModule.Get().OnFilesLoaded().RemoveAll(this);
+}
+
+void SCodeProjectTreeEditor::RequestRefresh()
+{
+	ProjectTree->RequestTreeRefresh();
 }
 
 void SCodeProjectTreeEditor::Tick( const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime )
@@ -199,14 +217,14 @@ void SCodeProjectTreeEditor::HandleMouseButtonDoubleClick(UCodeProjectItem* Item
 	}
 }
 
-void SCodeProjectTreeEditor::ExpanedItem(UCodeProjectItem* Item) const
+void SCodeProjectTreeEditor::ExpanedItem(UCodeProjectItem* Item, bool ShouldExpandItem) const
 {
 	if (Item)
 	{
-		ProjectTree->SetItemExpansion(Item, true);
+		ProjectTree->SetItemExpansion(Item, ShouldExpandItem);
 		if (Item->Parent)
 		{
-			ExpanedItem(Item->Parent);
+			ExpanedItem(Item->Parent, ShouldExpandItem);
 		}
 	}
 }
@@ -230,6 +248,7 @@ FReply SCodeProjectTreeEditor::OnClickedCodeProject()
 {
 	ProjectTree->SetTreeItemsSource(&CodeProject->Children);
 	EditingProject = CodeProject;
+
 	return FReply::Handled();
 }
 
@@ -237,6 +256,7 @@ FReply SCodeProjectTreeEditor::OnClickedScriptProject()
 {
 	ProjectTree->SetTreeItemsSource(&ScriptProject->Children);
 	EditingProject = ScriptProject;
+
 	return FReply::Handled();
 }
 
