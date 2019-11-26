@@ -6,7 +6,11 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Assets/LuaScriptFactory.h"
+
+#include "ScriptDataAsset.h"
 #include "LuaWrapper/LuaScript.h"
+
+#include "IPluginManager.h"
 
 DEFINE_LOG_CATEGORY(UScriptEditor);
 
@@ -29,12 +33,12 @@ namespace CodeEditorUtils
 	}
 
 
-	FString CreateLuaFileFromLuaScriptAsset(class ULuaScript* ScriptAsset)
+	FString CreateLuaFileFromLuaScriptAsset(class ULuaScript* ScriptAsset ,EScriptTemplateType TemplateType)
 	{
 		FString FullPath = ScriptAsset->GetPathName();
-		FullPath.RemoveFromStart("/Game");
+		FullPath.RemoveFromStart(TEXT("/Game"));
 		FullPath.RemoveFromEnd(ScriptAsset->GetName());
-		FullPath = FPaths::ProjectContentDir() + FullPath + "lua";
+		FullPath = FPaths::ProjectContentDir() + FullPath + TEXT("lua");
 
 		FString CodeText;
 		if (FFileHelper::LoadFileToString(CodeText, *FullPath))
@@ -43,7 +47,8 @@ namespace CodeEditorUtils
 		}
 		else
 		{
-			FFileHelper::SaveStringToFile(TEXT("\n\n\n\n\n"), *FullPath);
+			FString LuaTemp = CreateLuaTemplate(TemplateType, ScriptAsset->GetName());
+			FFileHelper::SaveStringToFile(*LuaTemp, *FullPath);
 		}
 		ScriptAsset->Path = FullPath;
 
@@ -61,7 +66,7 @@ namespace CodeEditorUtils
 			ULuaScriptFactory* NewFactory = NewObject<ULuaScriptFactory>();
 
 			FAssetToolsModule& AssetToolsModule = FAssetToolsModule::GetModule();
-			ULuaScript* NewAsset = Cast<ULuaScript>(AssetToolsModule.Get().CreateAsset(AssetName, AssetPath, NewFactory->GetSupportedClass(), NewFactory,"CreateFromLuaFile"));
+			ULuaScript* NewAsset = Cast<ULuaScript>(AssetToolsModule.Get().CreateAsset(AssetName, AssetPath, NewFactory->GetSupportedClass(), NewFactory, "CreateFromLuaFile"));
 
 			if (NewAsset)
 			{
@@ -77,6 +82,30 @@ namespace CodeEditorUtils
 		}
 
 		return nullptr;
+	}
+
+	FString CreateLuaTemplate(EScriptTemplateType TempType, FString TemplateName)
+	{
+		FString ContentDir = IPluginManager::Get().FindPlugin(TEXT("UnLua"))->GetContentDir();
+		FString TemplatePath;
+
+		switch (TempType)
+		{
+		case EScriptTemplateType::ActorComponent:
+			TemplatePath = ContentDir + TEXT("/ActorComponentTemplate.lua");
+		case EScriptTemplateType::Actor:
+			TemplatePath = ContentDir + TEXT("/ActorTemplate.lua");
+		case  EScriptTemplateType::AnimInstance:
+			TemplatePath = ContentDir + TEXT("/AnimInstanceTemplate.lua");
+		case EScriptTemplateType::UserWidget:
+			TemplatePath = ContentDir + TEXT("/UserWidgetTemplate.lua");
+		default:
+			TemplatePath = ContentDir + TEXT("/ActorTemplate.lua");
+			break;
+		}
+		FString Content;
+		FFileHelper::LoadFileToString(Content, *TemplatePath);
+		return Content.Replace(TEXT("TemplateName"), *TemplateName);
 	}
 
 	FString CovertContentPathToGamePath(FString ContentPath)

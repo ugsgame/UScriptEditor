@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "ScriptEditorType.h"
+
 DECLARE_LOG_CATEGORY_EXTERN(UScriptEditor, Log, All);
 
 namespace CodeEditorUtils
@@ -17,9 +19,11 @@ namespace CodeEditorUtils
 	/*
 	*
 	*/
-	FString CreateLuaFileFromLuaScriptAsset(class ULuaScript* ScriptAsset);
+	FString CreateLuaFileFromLuaScriptAsset(class ULuaScript* ScriptAsset, EScriptTemplateType TemplateType = EScriptTemplateType::Actor);
 	
 	class ULuaScript* CreateLuaScriptAssetFromLuaFile(FString LuaScriptFilePath);
+
+	FString CreateLuaTemplate(EScriptTemplateType TempType, FString TemplateName);
 
     FString CovertContentPathToGamePath(FString ContentPath);
 

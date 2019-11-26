@@ -2,6 +2,7 @@
 
 
 #include "LuaScriptFactory.h"
+#include "ScriptEditorType.h"
 #include "CodeEditor.h"
 #include "CodeEditorUtils.h"
 #include "AssetToolsModule.h"
@@ -29,7 +30,8 @@ UObject* ULuaScriptFactory::FactoryCreateNew(UClass* InClass, UObject* InParent,
 	check(InClass == ULuaScript::StaticClass() || InClass->IsChildOf(ULuaScript::StaticClass()));
 	ULuaScript* ScriptAsset = NewObject<ULuaScript>(InParent, InClass, InName, Flags);
 	//create *.lua in this directory
-	CodeEditorUtils::CreateLuaFileFromLuaScriptAsset(ScriptAsset);
+	//TODO:Display a dialog to selecte template to create
+	CodeEditorUtils::CreateLuaFileFromLuaScriptAsset(ScriptAsset,EScriptTemplateType::Actor);
 	//save asset
 	CodeEditorUtils::SaveScriptAsset(ScriptAsset);
 
