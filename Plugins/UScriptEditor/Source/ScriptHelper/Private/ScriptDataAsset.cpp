@@ -9,3 +9,14 @@ UScriptDataAsset::UScriptDataAsset(const FObjectInitializer& ObjectInitializer)
 	EFlag_IsValid = true;
 #endif // WITH_EDITORONLY_DATA
 }
+
+FString UScriptDataAsset::GetPath() const
+{
+	return Path;
+}
+
+FString UScriptDataAsset::GetCode() const
+{
+	return CodeText;
+}
+

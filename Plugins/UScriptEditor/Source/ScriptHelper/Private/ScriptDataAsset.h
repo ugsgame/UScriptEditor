@@ -20,6 +20,12 @@ public:
 	bool EFlag_IsValid;
 #endif // WITH_EDITORONLY_DATA
 
+	UFUNCTION(BlueprintCallable)
+	FString GetPath() const;
+
+	UFUNCTION(BlueprintCallable)
+	FString GetCode() const;
+
 public:
 	UPROPERTY()
 	FString Path;
