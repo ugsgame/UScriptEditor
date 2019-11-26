@@ -1,4 +1,4 @@
-// Tencent is pleased to support the open source community by making UnLua available.
+﻿// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -27,7 +27,7 @@ class UUnLuaManager : public UObject
 public:
     UUnLuaManager();
 
-    bool Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR *InModuleName, int32 InitializerTableRef = INDEX_NONE);
+    bool Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR *InModuleName, const TCHAR *InModuleCode, int32 InitializerTableRef = INDEX_NONE);
 
     bool OnModuleHotfixed(const TCHAR *InModuleName);
 

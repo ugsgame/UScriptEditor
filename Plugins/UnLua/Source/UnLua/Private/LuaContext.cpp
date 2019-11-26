@@ -1,4 +1,4 @@
-// Tencent is pleased to support the open source community by making UnLua available.
+﻿// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -193,6 +193,7 @@ void FLuaContext::CreateState()
         lua_register(L, "NewObject", Global_NewObject);
 
         lua_register(L, "UEPrint", Global_Print);
+		lua_register(L, "LoadString", Global_LoadString);
         if (FPlatformProperties::RequiresCookedData())
         {
             lua_register(L, "require", Global_Require);             // override 'require' when running with cooked data
@@ -394,21 +395,25 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
         }
         if (Class->ImplementsInterface(InterfaceClass))                             // static binding
         {
-            UFunction *Func = Class->FindFunctionByName(FName("GetModuleName"));    // find UFunction 'GetModuleName'. hard coded!!!
-            if (Func)
+            UFunction *GetNameFunc = Class->FindFunctionByName(FName("GetModuleName"));    // find UFunction 'GetModuleName'. hard coded!!!
+			UFunction *GetCodeFunc = Class->FindFunctionByName(FName("GetModuleCode"));    // find UFunction 'GetModuleCode'. hard coded!!!
+            if (GetNameFunc && GetCodeFunc)
             {
-                if (Func->GetNativeFunc() && IsInGameThread())
+                if (GetNameFunc->GetNativeFunc() && GetCodeFunc->GetNativeFunc()  && IsInGameThread())
                 {
                     FString ModuleName;
+					FString ModuleCode;
                     UObject *DefaultObject = Class->GetDefaultObject();             // get CDO
-                    DefaultObject->UObject::ProcessEvent(Func, &ModuleName);        // force to invoke UObject::ProcessEvent(...)
-                    UClass *OuterClass = Func->GetOuterUClass();                    // get UFunction's outer class
+                    DefaultObject->UObject::ProcessEvent(GetNameFunc, &ModuleName);        // force to invoke UObject::ProcessEvent(...)
+					DefaultObject->UObject::ProcessEvent(GetCodeFunc, &ModuleCode);        // force to invoke UObject::ProcessEvent(...)
+                    UClass *OuterClass = GetNameFunc->GetOuterUClass();                    // get UFunction's outer class
                     Class = OuterClass == InterfaceClass ? Class : OuterClass;      // select the target UClass to bind Lua module
                     if (ModuleName.Len() < 1)
                     {
                         ModuleName = Class->GetName();
                     }
-                    return Manager->Bind(Object, Class, *ModuleName, GLuaDynamicBinding.InitializerTableRef);   // bind!!!
+
+					return Manager->Bind(Object, Class, *ModuleName, *ModuleCode, GLuaDynamicBinding.InitializerTableRef);
                 }
                 else
                 {
@@ -421,9 +426,9 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
                 }
             }
         }
-        else if (GLuaDynamicBinding.IsValid(Class))                                 // dynamic binding
+        else if (GLuaDynamicBinding.IsValid(Class))                                 // dynamic binding(TODO:Bind code)
         {
-            return Manager->Bind(Object, Class, *GLuaDynamicBinding.ModuleName, GLuaDynamicBinding.InitializerTableRef);
+            return Manager->Bind(Object, Class, *GLuaDynamicBinding.ModuleName, TEXT(""), GLuaDynamicBinding.InitializerTableRef);
         }
     }
     return false;
@@ -616,7 +621,8 @@ void FLuaContext::OnAsyncLoadingFlushUpdate()
                 {
                     ModuleName = Class->GetName();
                 }
-                Manager->Bind(Object, Class, *ModuleName);
+
+                Manager->Bind(Object, Class, *ModuleName, TEXT(""));
                 Candidates.RemoveAt(i);
             }
         }
