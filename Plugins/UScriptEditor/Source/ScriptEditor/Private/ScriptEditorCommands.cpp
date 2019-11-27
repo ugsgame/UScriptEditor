@@ -1,0 +1,25 @@
+﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+
+#include "ScriptEditorCommands.h"
+#include "ScriptEditorStyle.h"
+
+
+#define LOCTEXT_NAMESPACE "ScriptEditorCommands"
+
+
+FScriptEditorCommands::FScriptEditorCommands() 
+	: TCommands<FScriptEditorCommands>("ScriptEditor", LOCTEXT("General", "General"), NAME_None, FScriptEditorStyle::GetStyleSetName())
+{
+}
+
+
+void FScriptEditorCommands::RegisterCommands()
+{
+	UI_COMMAND(OpenPluginWindow, "UScriptEditor", "Bring up UScriptEditor", EUserInterfaceActionType::Button, FInputGesture());
+
+	UI_COMMAND(Save, "Save", "Save the currently active document.", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control, EKeys::S));
+	UI_COMMAND(SaveAll, "Save All", "Save all open documents.", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control | EModifierKey::Shift, EKeys::S));
+}
+
+
+#undef LOCTEXT_NAMESPACE
