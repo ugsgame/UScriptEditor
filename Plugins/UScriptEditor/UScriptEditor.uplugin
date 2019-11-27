@@ -21,7 +21,7 @@
       "LoadingPhase": "PreDefault"
     },
     {
-      "Name": "CodeEditor",
+      "Name": "ScriptEditor",
       "Type": "Editor",
       "LoadingPhase": "Default"
     }
