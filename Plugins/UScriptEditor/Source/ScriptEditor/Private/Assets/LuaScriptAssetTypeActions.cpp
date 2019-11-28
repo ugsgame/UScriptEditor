@@ -36,7 +36,9 @@ void FLuaScriptAssetTypeActions::OpenAssetEditor(const TArray<UObject*>& InObjec
 	{
 		if (ScriptAsset->EFlag_IsValid)
 		{
-			FGlobalTabmanager::Get()->InvokeTab(FScriptEditorModule::ScriptEditorTabName);
+			//FGlobalTabmanager::Get()->InvokeTab(FScriptEditorModule::ScriptEditorTabName);
+			FScriptEditorModule::GetInstance()->OpenEditorWindow();
+
 			TSharedPtr<FScriptEditor> ProjectEditor = FScriptEditor::Get();
 			if (ProjectEditor.IsValid())
 			{

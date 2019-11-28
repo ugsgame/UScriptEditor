@@ -229,7 +229,7 @@ void FScriptEditor::RegisterToolbarTab(const TSharedRef<class FTabManager>& InTa
 void FScriptEditor::InitScriptEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, class UCodeProjectItem* CodeProject, class UCodeProjectItem* ScriptProject)
 {
 	//FAssetEditorManager::Get().CloseOtherEditors(CodeProject, this);
-	//FAssetEditorManager::Get().CloseOtherEditors(ScriptProject, this);
+	FAssetEditorManager::Get().CloseOtherEditors(ScriptProject, this);
 	CodeProjectBeingEdited = CodeProject;
 	ScriptProjectBeingEdited = ScriptProject;
 

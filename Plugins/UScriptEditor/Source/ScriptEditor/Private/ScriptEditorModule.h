@@ -25,7 +25,7 @@ public:
 	virtual void ShutdownModule() override;
 
 	/** This function will be bound to Command (by default it will bring up plugin window) */
-	void PluginButtonClicked();
+	void OpenEditorWindow();
 
 	EAssetTypeCategories::Type GetAssetCategoryBit() const { return AssetCategoryBit; };
 private:
@@ -46,6 +46,8 @@ private:
 	void OnScriptAssetRenamed(const FAssetData& RenamedAsset, const FString& OldObjectPath);
 
 	void OnClearInvalidScriptAssets();
+
+	void OnScriptEditorClosed(TSharedRef<class SDockTab> ScriptEditorTab);
 private:
 	EAssetTypeCategories::Type AssetCategoryBit;
 
@@ -56,6 +58,7 @@ private:
 
 	//TSharedPtr<FCodeProjectEditor> CodeProjectEditorInstance;
 
+	TSharedPtr<class SDockTab> CurrentScriptEditorTab;
 public:
 	static const FName ScriptEditorTabName;
 };

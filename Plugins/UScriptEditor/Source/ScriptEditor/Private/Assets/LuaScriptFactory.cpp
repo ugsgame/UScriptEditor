@@ -44,7 +44,8 @@ UObject* ULuaScriptFactory::FactoryCreateNew(UClass* InClass, UObject* InParent,
 	else
 	{
 		//Open Editor
-		FGlobalTabmanager::Get()->InvokeTab(FScriptEditorModule::ScriptEditorTabName);
+		//FGlobalTabmanager::Get()->InvokeTab(FScriptEditorModule::ScriptEditorTabName);
+		FScriptEditorModule::GetInstance()->OpenEditorWindow();
 	}
 
 	return ScriptAsset;

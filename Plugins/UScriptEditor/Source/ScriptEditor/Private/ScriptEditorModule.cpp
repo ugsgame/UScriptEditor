@@ -43,7 +43,7 @@ void FScriptEditorModule::StartupModule()
 
 	PluginCommands->MapAction(
 		FScriptEditorCommands::Get().OpenPluginWindow,
-		FExecuteAction::CreateRaw(this, &FScriptEditorModule::PluginButtonClicked),
+		FExecuteAction::CreateRaw(this, &FScriptEditorModule::OpenEditorWindow),
 		FCanExecuteAction());
 
 	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
@@ -110,8 +110,10 @@ TSharedRef<SDockTab> FScriptEditorModule::OnSpawnPluginTab(const FSpawnTabArgs& 
 	TSharedRef<FScriptEditor> NewScriptEditor = MakeShareable(new FScriptEditor());
 	NewScriptEditor->InitScriptEditor(EToolkitMode::Standalone, TSharedPtr<class IToolkitHost>(), GetMutableDefault<USourceProject>(), GetMutableDefault<UScriptProject>());
 
-	return FGlobalTabmanager::Get()->GetMajorTabForTabManager(NewScriptEditor->GetTabManager().ToSharedRef()).ToSharedRef();
+	CurrentScriptEditorTab = FGlobalTabmanager::Get()->GetMajorTabForTabManager(NewScriptEditor->GetTabManager().ToSharedRef());
+	CurrentScriptEditorTab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &FScriptEditorModule::OnScriptEditorClosed));
 
+	return CurrentScriptEditorTab.ToSharedRef();
 }
 
 void FScriptEditorModule::OnScriptAssetDeleted(UObject*  AssetObject)
@@ -290,9 +292,26 @@ void FScriptEditorModule::OnClearInvalidScriptAssets()
 
 }
 
-void FScriptEditorModule::PluginButtonClicked()
+void FScriptEditorModule::OnScriptEditorClosed(TSharedRef<class SDockTab> ScriptEditorTab)
 {
-	FGlobalTabmanager::Get()->InvokeTab(ScriptEditorTabName);
+	if (CurrentScriptEditorTab == ScriptEditorTab)
+	{
+		CurrentScriptEditorTab = nullptr;
+	}
+}
+
+void FScriptEditorModule::OpenEditorWindow()
+{
+	//FGlobalTabmanager::Get()->InvokeTab(ScriptEditorTabName);
+	if (!CurrentScriptEditorTab.IsValid())
+	{	
+		OnSpawnPluginTab(FSpawnTabArgs(TSharedPtr<SWindow>(), FTabId()));
+	}
+	else
+	{
+		CurrentScriptEditorTab->ActivateInParent(ETabActivationCause::UserClickedOnTab);
+		FGlobalTabmanager::Get()->DrawAttention(CurrentScriptEditorTab.ToSharedRef());
+	}
 }
 
 void FScriptEditorModule::AddMenuExtension(FMenuBuilder& Builder)
