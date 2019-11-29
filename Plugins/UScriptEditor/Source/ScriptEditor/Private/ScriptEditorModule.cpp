@@ -78,7 +78,7 @@ void FScriptEditorModule::StartupModule()
 	FGlobalTabmanager::Get()->RegisterTabSpawner(ScriptEditorTabName, FOnSpawnTab::CreateRaw(this, &FScriptEditorModule::OnSpawnPluginTab))
 		.SetDisplayName(LOCTEXT("UScriptEditorTabTitle", "UScriptEditor"))
 		.SetTooltipText(LOCTEXT("UScriptEditorTooltipText", "Open the UScriptEditor tab."))
-		.SetIcon(FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ScriptEditor.TabIcon"));
+		.SetIcon(FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ScriptEditor.TabIcon"))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
 
 
@@ -94,6 +94,7 @@ void FScriptEditorModule::StartupModule()
 	AssetRegistryModule.Get().OnInMemoryAssetDeleted().AddRaw(this, &FScriptEditorModule::OnScriptAssetDeleted);
 	AssetRegistryModule.Get().OnAssetRenamed().AddRaw(this, &FScriptEditorModule::OnScriptAssetRenamed);
 	AssetRegistryModule.Get().OnFilesLoaded().AddRaw(this, &FScriptEditorModule::OnClearInvalidScriptAssets);
+	//
 }
 
 void FScriptEditorModule::ShutdownModule()

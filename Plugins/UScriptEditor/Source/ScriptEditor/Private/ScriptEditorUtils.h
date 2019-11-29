@@ -6,6 +6,13 @@ DECLARE_LOG_CATEGORY_EXTERN(UScriptEditor, Log, All);
 
 namespace ScriptEditorUtils
 {
+	/************************************************************************/
+	/* Log Helper                                                                      
+	/************************************************************************/
+
+	/************************************************************************/
+	/*File Helper                                                                  
+
 	/*
 	*
 	*/
@@ -32,4 +39,5 @@ namespace ScriptEditorUtils
 	FString CovertContentPathToAssetPath(FString ContentFilePath);
 
 	FString CovertAssetPathToContentPath(FString AssetPath);
+	/************************************************************************/
 }
