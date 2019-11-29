@@ -26,16 +26,19 @@
 #include "AssetToolsModule.h"
 
 #include "Assets/LuaScriptAssetTypeActions.h"
+#include "SScriptEditorLog.h"
 
 #define LOCTEXT_NAMESPACE "ScriptEditorModule"
 
-const FName FScriptEditorModule::ScriptEditorTabName(TEXT("ScriptEditor"));
+const FName FScriptEditorModule::ScriptEditorTabName(TEXT("UScriptEditor"));
 
 /** IModuleInterface implementation */
 void FScriptEditorModule::StartupModule()
 {
 	FScriptEditorStyle::Initialize();
 	FScriptEditorStyle::ReloadTextures();
+
+	ScriptLogHistory = MakeShareable(new FScriptLogHistory());
 
 	FScriptEditorCommands::Register();
 
@@ -72,11 +75,11 @@ void FScriptEditorModule::StartupModule()
 		LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolbarExtender);
 	}
 
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(ScriptEditorTabName, FOnSpawnTab::CreateRaw(this, &FScriptEditorModule::OnSpawnPluginTab))
+	FGlobalTabmanager::Get()->RegisterTabSpawner(ScriptEditorTabName, FOnSpawnTab::CreateRaw(this, &FScriptEditorModule::OnSpawnPluginTab))
 		.SetDisplayName(LOCTEXT("UScriptEditorTabTitle", "UScriptEditor"))
 		.SetTooltipText(LOCTEXT("UScriptEditorTooltipText", "Open the UScriptEditor tab."))
 		.SetIcon(FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ScriptEditor.TabIcon"));
-		//.SetMenuType(ETabSpawnerMenuType::Hidden);
+		.SetMenuType(ETabSpawnerMenuType::Hidden);
 
 
 	// Register asset types
@@ -91,7 +94,6 @@ void FScriptEditorModule::StartupModule()
 	AssetRegistryModule.Get().OnInMemoryAssetDeleted().AddRaw(this, &FScriptEditorModule::OnScriptAssetDeleted);
 	AssetRegistryModule.Get().OnAssetRenamed().AddRaw(this, &FScriptEditorModule::OnScriptAssetRenamed);
 	AssetRegistryModule.Get().OnFilesLoaded().AddRaw(this, &FScriptEditorModule::OnClearInvalidScriptAssets);
-
 }
 
 void FScriptEditorModule::ShutdownModule()
@@ -105,8 +107,16 @@ void FScriptEditorModule::ShutdownModule()
 
 }
 
+TSharedRef< SWidget > FScriptEditorModule::MakeConsoleInputBox(TSharedPtr< SEditableTextBox >& OutExposedEditableTextBox) const
+{
+	TSharedRef< SScriptEditorConsoleInputBox > NewConsoleInputBox = SNew(SScriptEditorConsoleInputBox);
+	OutExposedEditableTextBox = NewConsoleInputBox->GetEditableTextBox();
+	return NewConsoleInputBox;
+}
+
 TSharedRef<SDockTab> FScriptEditorModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
+
 	TSharedRef<FScriptEditor> NewScriptEditor = MakeShareable(new FScriptEditor());
 	NewScriptEditor->InitScriptEditor(EToolkitMode::Standalone, TSharedPtr<class IToolkitHost>(), GetMutableDefault<USourceProject>(), GetMutableDefault<UScriptProject>());
 

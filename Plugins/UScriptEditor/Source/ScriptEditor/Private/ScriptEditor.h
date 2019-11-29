@@ -14,6 +14,7 @@ class FTabInfo;
 class USourceProject;
 class UCodeProjectItem;
 
+
 class FScriptEditor : public FWorkflowCentricApplication, public FGCObject
 {
 public:

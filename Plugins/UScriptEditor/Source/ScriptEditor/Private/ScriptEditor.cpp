@@ -37,6 +37,7 @@ namespace ScriptEditorTabs
 	static const FName LogViewID(TEXT("Log"));
 };
 
+
 struct FCodeTabSummoner : public FDocumentTabFactoryForObjects<UCodeProjectItem>
 {
 public:
@@ -125,7 +126,8 @@ public:
 	FLogViewSummoner(TSharedPtr<class FAssetEditorToolkit> InHostingApp)
 		: FWorkflowTabFactory(ScriptEditorTabs::LogViewID, InHostingApp)
 	{
-		TabLabel = LOCTEXT("LogViewTabLabel", "Log");
+		TabLabel = NSLOCTEXT("ScriptConsole", "TabTitle", "Script Log");
+		//TabIcon = FEditorStyle::GetBrush("Log.TabIcon");
 
 		bIsSingleton = true;
 
@@ -135,7 +137,14 @@ public:
 
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override
 	{
-		return SNew(SScriptEditorLog);
+// 		return SNew(SDockTab)
+// 			.Icon(FEditorStyle::GetBrush("Log.TabIcon"))
+// 			.TabRole(ETabRole::NomadTab)
+// 			.Label(NSLOCTEXT("ScriptConsole", "TabTitle", "Script Console"))
+// 			[
+// 				SNew(SScriptEditorLog).Messages(FScriptEditorModule::GetInstance()->PythonLogHistory->GetMessages())
+// 			
+		return SNew(SScriptEditorLog).Messages(FScriptEditorModule::GetInstance()->ScriptLogHistory->GetMessages());
 	}
 };
 
@@ -188,10 +197,23 @@ FBasicScriptEditorMode::FBasicScriptEditorMode(TSharedPtr<class FScriptEditor> I
 				)
 				->Split
 				(
-					FTabManager::NewStack()
+					FTabManager::NewSplitter()
 					->SetSizeCoefficient(0.8f)
-					->SetHideTabWell(false)
-					->AddTab(ScriptEditorTabs::CodeViewID, ETabState::ClosedTab)
+					->SetOrientation(Orient_Vertical)
+					->Split
+					(
+						FTabManager::NewStack()
+						->SetSizeCoefficient(0.7f)
+						->SetHideTabWell(false)
+						->AddTab(ScriptEditorTabs::CodeViewID, ETabState::ClosedTab)
+					)
+					->Split
+					(
+						FTabManager::NewStack()
+						->SetSizeCoefficient(0.3f)
+						->SetHideTabWell(false)
+						->AddTab(ScriptEditorTabs::LogViewID, ETabState::OpenedTab)
+					)
 				)
 			)
 		);
@@ -321,27 +343,27 @@ void FScriptEditor::RescanScriptProject()
 
 FName FScriptEditor::GetToolkitFName() const
 {
-	return FName("ScriptEditor");
+	return FName("UScriptEditor");
 }
 
 FText FScriptEditor::GetBaseToolkitName() const
 {
-	return LOCTEXT("AppLabel", "ScriptEditor");
+	return LOCTEXT("UScriptEditorAppLabel", "UScriptEditor");
 }
 
 FText FScriptEditor::GetToolkitName() const
 {
-	return LOCTEXT("AppToolkitName", "ScriptEditor");
+	return LOCTEXT("UScriptEditorAppToolkitName", "UScriptEditor");
 }
 
 FText FScriptEditor::GetToolkitToolTipText() const
 {
-	return LOCTEXT("CodeAppLabel", "ScriptEditor");
+	return LOCTEXT("UScriptEditorAppLabel", "UScriptEditor");
 }
 
 FString FScriptEditor::GetWorldCentricTabPrefix() const
 {
-	return TEXT("ScriptEditor");
+	return TEXT("UScriptEditor");
 }
 
 FLinearColor FScriptEditor::GetWorldCentricTabColorScale() const
