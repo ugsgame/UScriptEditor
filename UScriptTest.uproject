@@ -1,4 +1,4 @@
-﻿{
+{
 	"FileVersion": 3,
 	"EngineAssociation": "4.23",
 	"Category": "",
@@ -15,8 +15,8 @@
 	],
 	"Plugins": [
 		{
-			"Name": "ScriptPlugin",
-			"Enabled": true
+			"Name": "LuaDebugger",
+			"Enabled": false
 		}
 	]
 }

@@ -21,6 +21,11 @@
       "LoadingPhase": "PreDefault"
     },
     {
+      "Name": "LuaDebugger",
+      "Type": "Editor",
+      "LoadingPhase": "Default"
+    },
+    {
       "Name": "ScriptEditor",
       "Type": "Editor",
       "LoadingPhase": "Default"
