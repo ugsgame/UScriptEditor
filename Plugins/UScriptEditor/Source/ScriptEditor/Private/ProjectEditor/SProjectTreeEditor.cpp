@@ -51,49 +51,44 @@ void SProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* I
 		SNew(SBorder)
 		.BorderImage(FScriptEditorStyle::Get().GetBrush("ProjectEditor.Border"))
 		[
-			SNew(SOverlay)
-			+ SOverlay::Slot()
-			.HAlign(HAlign_Fill)
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.AutoHeight()
 			[
-				SNew(SVerticalBox)
-				+ SVerticalBox::Slot()
-				.Padding(FMargin(0.0f, 5.0f))
-				.AutoHeight()
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.VAlign(VAlign_Center)
+				.FillWidth(2)
 				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()
-					.VAlign(VAlign_Center)
-					.FillWidth(2)
-					[
-						SNew(SButton)
-						.Text(LOCTEXT("ButtonScriptProject", "ScriptContent"))
-						.OnClicked(this, &SProjectTreeEditor::OnClickedScriptProject)
-					]
-					+ SHorizontalBox::Slot()
-					.VAlign(VAlign_Center)
-					.FillWidth(2)
-					[
-						SNew(SButton)
-						.Text(LOCTEXT("ButtonCodeProject", "SourceCode"))
-						.OnClicked(this,&SProjectTreeEditor::OnClickedCodeProject)
-					]
+					SAssignNew(ScriptProjectButton,SButton)
+					//.ButtonStyle(FCoreStyle::Get(), "ToggleButtonCheckbox")
+					.Text(LOCTEXT("ButtonScriptProject", "ScriptContent"))
+					.OnClicked(this, &SProjectTreeEditor::OnClickedScriptProject)
 				]
-	 			+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(1)
-	 			[
-					ProjectTree.ToSharedRef()
-	 			]
+				+ SHorizontalBox::Slot()
+				.VAlign(VAlign_Center)
+				.FillWidth(2)
+				[
+					SAssignNew(SourceProjectButton,SButton)
+					//.ButtonStyle(FCoreStyle::Get(), "ToggleButtonCheckbox")
+					.Text(LOCTEXT("ButtonCodeProject", "SourceCode"))
+					.OnClicked(this, &SProjectTreeEditor::OnClickedCodeProject)
+				]
  			]
-			+SOverlay::Slot()
-			.VAlign(VAlign_Bottom)
-			.Padding(10.0f)
+			+ SVerticalBox::Slot()
+			.FillHeight(1.0f)
 			[
-				SNew(SThrobber)
-				.Visibility(this, &SProjectTreeEditor::GetThrobberVisibility)
+				SNew(SBorder)
+				.Padding(0)
+				[
+					ProjectTree.ToSharedRef()
+				]
 			]
 		]
 	];
+
+	ScriptProjectButton->SetBorderBackgroundColor(SelectedColor);
+	SourceProjectButton->SetBorderBackgroundColor(UnSelectedColor);
 
 	//
 	
@@ -251,7 +246,8 @@ FReply SProjectTreeEditor::OnClickedCodeProject()
 {
 	ProjectTree->SetTreeItemsSource(&SourceProject->Children);
 	EditingProject = SourceProject;
-
+	SourceProjectButton->SetBorderBackgroundColor(SelectedColor);
+	ScriptProjectButton->SetBorderBackgroundColor(UnSelectedColor);
 	return FReply::Handled();
 }
 
@@ -259,7 +255,8 @@ FReply SProjectTreeEditor::OnClickedScriptProject()
 {
 	ProjectTree->SetTreeItemsSource(&ScriptProject->Children);
 	EditingProject = ScriptProject;
-
+	ScriptProjectButton->SetBorderBackgroundColor(SelectedColor);
+	SourceProjectButton->SetBorderBackgroundColor(UnSelectedColor);
 	return FReply::Handled();
 }
 

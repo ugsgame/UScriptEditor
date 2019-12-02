@@ -62,6 +62,12 @@ private:
 
 	TSharedPtr<STreeView<class UCodeProjectItem*>> ProjectTree;
 
+	TSharedPtr<SButton> ScriptProjectButton;
+	TSharedPtr<SButton> SourceProjectButton;
+
+	FColor SelectedColor  = FColor(244, 145, 65);
+	FColor UnSelectedColor = FColor(200, 200, 200);
+
 	static TWeakPtr<SProjectTreeEditor> ProjectTreeEditor;
 
 };

@@ -236,6 +236,7 @@ FBasicScriptEditorMode::FBasicScriptEditorMode(TSharedPtr<class FScriptEditor> I
 						FTabManager::NewStack()
 						->SetSizeCoefficient(0.3f)
 						->SetHideTabWell(false)
+						->AddTab(ScriptEditorTabs::DebuggerViewID, ETabState::ClosedTab)
 						->AddTab(ScriptEditorTabs::LogViewID, ETabState::OpenedTab)
 					)
 				)

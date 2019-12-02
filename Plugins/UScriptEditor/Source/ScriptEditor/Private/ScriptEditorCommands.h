@@ -14,6 +14,14 @@ public:
 	TSharedPtr<FUICommandInfo> SaveAll;
 	TSharedPtr< FUICommandInfo > OpenPluginWindow;
 
+	//////////////////////////////////////////////////////////////////////////
+	//Debug Commands       
+	TSharedPtr<FUICommandInfo> DebugContinue;
+	TSharedPtr<FUICommandInfo> DebugStepover;
+	TSharedPtr<FUICommandInfo> DebugStepin;
+	TSharedPtr<FUICommandInfo> DebugStepout;
+	//////////////////////////////////////////////////////////////////////////
+
 	/** Initialize commands */
 	virtual void RegisterCommands() override;
 
