@@ -1,4 +1,4 @@
-// Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
 
 #include "LuaDebugger.h"
 #include "LuaDebuggerStyle.h"
@@ -551,7 +551,7 @@ void FLuaDebuggerModule::RefreshStackList()
 FString FLuaDebuggerModule::GetLuaSourceDir()
 {
 	//return FPaths::ConvertRelativePathToFull(FPaths::GameContentDir() /"Plugins" / "UnrealLua" / TEXT("LuaSource"));
-	return FPaths::ConvertRelativePathToFull(FPaths::GameContentDir() / "Scripts");
+	return FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() / "Scripts");
 }
 
 FString FLuaDebuggerModule::LuaPathToFilePath(FString LuaFilePath)
@@ -990,8 +990,11 @@ void FLuaFileTreeNode::FindChildren()
 		{
 			if (!FileChildren.Find(Name))
 			{
-				FLuaFileTreeNode_Ref NewOne = MakeShareable(new FLuaFileTreeNode(false, Name, BasePath));
-				FileChildren.Add(Name, NewOne);
+				if (FPaths::GetExtension(Name) == "lua")
+				{
+					FLuaFileTreeNode_Ref NewOne = MakeShareable(new FLuaFileTreeNode(false, Name, BasePath));
+					FileChildren.Add(Name, NewOne);
+				}
 			}
 		}
 	}

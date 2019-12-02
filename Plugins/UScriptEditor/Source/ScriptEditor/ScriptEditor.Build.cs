@@ -17,6 +17,7 @@ namespace UnrealBuildTool.Rules
             PrivateIncludePaths.AddRange(
 				new string[] {
 					"ScriptEditor/Private/Assets",
+                    "ScriptEditor/Private/Debugger",
                     "ScriptEditor/Private/CodeEditor",
                     "ScriptEditor/Private/ProjectEditor",
                 }

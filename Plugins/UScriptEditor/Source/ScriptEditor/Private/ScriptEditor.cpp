@@ -11,6 +11,7 @@
 #include "SCodeEditor.h"
 #include "SProjectTreeEditor.h"
 #include "SScriptEditorLog.h"
+#include "SScriptDebugger.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "ScriptEditorToolbar.h"
 #include "WorkflowOrientedApp/ApplicationMode.h"
@@ -35,6 +36,7 @@ namespace ScriptEditorTabs
 	static const FName ProjectViewID(TEXT("ProjectView"));
 	static const FName CodeViewID(TEXT("Document"));
 	static const FName LogViewID(TEXT("Log"));
+	static const FName DebuggerViewID(TEXT("Debugger"));
 };
 
 
@@ -148,6 +150,27 @@ public:
 	}
 };
 
+struct FDebuggerViewSummoner : public FWorkflowTabFactory
+{
+public:
+	FDebuggerViewSummoner(TSharedPtr<class FAssetEditorToolkit> InHostingApp)
+		: FWorkflowTabFactory(ScriptEditorTabs::DebuggerViewID, InHostingApp)
+	{
+		TabLabel = NSLOCTEXT("ScriptDebugger", "TabTitle", "Script Debugger");
+		//TabIcon = FEditorStyle::GetBrush("Log.TabIcon");
+
+		bIsSingleton = true;
+
+		ViewMenuDescription = LOCTEXT("DebuggerViewTabMenu_Description", "Debugger");
+		ViewMenuTooltip = LOCTEXT("DebuggerViewTabMenu_ToolTip", "The Script Debugger");
+	}
+
+	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override
+	{		
+		return SNew(SScriptDebugger);
+	}
+};
+
 class FBasicScriptEditorMode : public FApplicationMode
 {
 public:
@@ -170,6 +193,7 @@ FBasicScriptEditorMode::FBasicScriptEditorMode(TSharedPtr<class FScriptEditor> I
 
 	TabFactories.RegisterFactory(MakeShareable(new FProjectViewSummoner(InScriptEditor)));
 	TabFactories.RegisterFactory(MakeShareable(new FLogViewSummoner(InScriptEditor)));
+	TabFactories.RegisterFactory(MakeShareable(new FDebuggerViewSummoner(InScriptEditor)));
 
 	TabLayout = FTabManager::NewLayout("Standalone_ScriptEditor_Layout_v1.1")
 		->AddArea
