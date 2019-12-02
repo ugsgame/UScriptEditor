@@ -990,7 +990,7 @@ void FLuaFileTreeNode::FindChildren()
 		{
 			if (!FileChildren.Find(Name))
 			{
-				if (FPaths::GetExtension(Name) == "lua")
+				if (FPaths::GetExtension(Name) == "lua") 
 				{
 					FLuaFileTreeNode_Ref NewOne = MakeShareable(new FLuaFileTreeNode(false, Name, BasePath));
 					FileChildren.Add(Name, NewOne);
