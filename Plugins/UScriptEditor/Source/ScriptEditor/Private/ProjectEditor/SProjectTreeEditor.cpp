@@ -173,17 +173,7 @@ void SProjectTreeEditor::Tick( const FGeometry& AllottedGeometry, const double I
 
 FName SProjectTreeEditor::GetIconForItem(UCodeProjectItem* Item) const
 {
-	switch(Item->Type)
-	{
-	case ECodeProjectItemType::Project:
-		return "ProjectEditor.Icon.Project";
-	case ECodeProjectItemType::Folder:
-		return "ProjectEditor.Icon.Folder";
-	case ECodeProjectItemType::File:
-		return "ProjectEditor.Icon.File";
-	default:
-		return "ProjectEditor.Icon.GenericFile";
-	}
+	return Item->GetBrush();
 }
 
 TSharedRef<class ITableRow> SProjectTreeEditor::OnGenerateRow(UCodeProjectItem* Item, const TSharedRef<STableViewBase >& OwnerTable)

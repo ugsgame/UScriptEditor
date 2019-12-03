@@ -87,6 +87,10 @@ protected:
 
 	virtual const FSlateBrush* GetTabIconForObject(const FWorkflowTabSpawnInfo& Info, UCodeProjectItem* DocumentID) const override
 	{
+		if (DocumentID)
+		{
+			return FScriptEditorStyle::Get().GetBrush(DocumentID->GetBrush());
+		}
 		return FScriptEditorStyle::Get().GetBrush("ProjectEditor.Icon.File");
 	}
 
@@ -128,8 +132,8 @@ public:
 	FLogViewSummoner(TSharedPtr<class FAssetEditorToolkit> InHostingApp)
 		: FWorkflowTabFactory(ScriptEditorTabs::LogViewID, InHostingApp)
 	{
-		TabLabel = NSLOCTEXT("ScriptConsole", "TabTitle", "Script Log");
-		//TabIcon = FEditorStyle::GetBrush("Log.TabIcon");
+		TabLabel = NSLOCTEXT("ScriptConsole", "TabTitle", "Log");
+		TabIcon = FSlateIcon(FEditorStyle::GetStyleSetName(),"Log.TabIcon");
 
 		bIsSingleton = true;
 
@@ -138,14 +142,7 @@ public:
 	}
 
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override
-	{
-// 		return SNew(SDockTab)
-// 			.Icon(FEditorStyle::GetBrush("Log.TabIcon"))
-// 			.TabRole(ETabRole::NomadTab)
-// 			.Label(NSLOCTEXT("ScriptConsole", "TabTitle", "Script Console"))
-// 			[
-// 				SNew(SScriptEditorLog).Messages(FScriptEditorModule::GetInstance()->PythonLogHistory->GetMessages())
-// 			
+	{		
 		return SNew(SScriptEditorLog).Messages(FScriptEditorModule::GetInstance()->ScriptLogHistory->GetMessages());
 	}
 };
@@ -156,7 +153,7 @@ public:
 	FDebuggerViewSummoner(TSharedPtr<class FAssetEditorToolkit> InHostingApp)
 		: FWorkflowTabFactory(ScriptEditorTabs::DebuggerViewID, InHostingApp)
 	{
-		TabLabel = NSLOCTEXT("ScriptDebugger", "TabTitle", "Script Debugger");
+		TabLabel = NSLOCTEXT("ScriptDebugger", "TabTitle", "Debugger");
 		//TabIcon = FEditorStyle::GetBrush("Log.TabIcon");
 
 		bIsSingleton = true;
@@ -325,12 +322,49 @@ void FScriptEditor::BindCommands()
 			FExecuteAction::CreateSP(this, &FScriptEditor::SaveAll_Internal),
 			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanSaveAll)
 			);
+
+	ToolkitCommands->MapAction(FScriptEditorCommands::Get().Reload,
+			FExecuteAction::CreateSP(this, &FScriptEditor::Reload_Internal),
+			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanReload)
+			);
+
+	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugContinue,
+			FExecuteAction::CreateSP(this, &FScriptEditor::DegbugContinue),
+			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDegbugContinue)
+			);
+
+	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugStepover,
+			FExecuteAction::CreateSP(this, &FScriptEditor::DebugStepover),
+			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugStepover)
+			);
+
+	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugStepin,
+			FExecuteAction::CreateSP(this, &FScriptEditor::DebugStepin),
+			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugStepin)
+			);
+
+	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugStepout,
+			FExecuteAction::CreateSP(this, &FScriptEditor::DebugStepout),
+			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugStepout)
+			);
 }
 
 void FScriptEditor::OpenFileForEditing(UCodeProjectItem* Item)
 {
 	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(Item);
 	DocumentManager->OpenDocument(Payload, FDocumentTracker::OpenNewDocument);
+}
+
+void FScriptEditor::OpenFileAndGotoLine(UCodeProjectItem* Item, int32 Line)
+{
+	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(Item);
+	TSharedPtr<SDockTab> DocTab = DocumentManager->OpenDocument(Payload, FDocumentTracker::OpenNewDocument);
+
+	if (DocTab.IsValid())
+	{
+		TSharedRef<SCodeEditor> CodeEditor = StaticCastSharedRef<SCodeEditor>(DocTab->GetContent());
+		CodeEditor->GotoLineAndColumn(Line, 1);
+	}
 }
 
 void FScriptEditor::CloseEditingFile(UCodeProjectItem* Item)
@@ -443,6 +477,11 @@ void FScriptEditor::SaveAll_Internal()
 	SaveAll();
 }
 
+void FScriptEditor::Reload_Internal()
+{
+	Reload();
+}
+
 bool FScriptEditor::SaveAll()
 {
 	bool bResult = true;
@@ -466,7 +505,57 @@ bool FScriptEditor::SaveAll()
 	return bResult;
 }
 
+bool FScriptEditor::Reload()
+{
+	return true;
+}
+
 bool FScriptEditor::CanSaveAll() const
+{
+	return true;
+}
+
+bool FScriptEditor::CanReload() const
+{
+	return true;
+}
+
+void FScriptEditor::DegbugContinue()
+{
+
+}
+
+void FScriptEditor::DebugStepover()
+{
+
+}
+
+void FScriptEditor::DebugStepin()
+{
+
+}
+
+void FScriptEditor::DebugStepout()
+{
+
+}
+
+bool FScriptEditor::CanDegbugContinue()const
+{
+	return true;
+}
+
+bool FScriptEditor::CanDebugStepover() const
+{
+	return true;
+}
+
+bool FScriptEditor::CanDebugStepin() const
+{
+	return true;
+}
+
+bool FScriptEditor::CanDebugStepout() const
 {
 	return true;
 }

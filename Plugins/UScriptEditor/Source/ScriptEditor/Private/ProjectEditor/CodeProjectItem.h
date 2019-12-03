@@ -41,6 +41,8 @@ public:
 	bool IsEmptyFolder()const;
 
 	UCodeProjectItem* FindChild(FString ChildFullPath);
+
+	FName GetBrush() const;
 protected:
 
 	bool BuildScriptAssetContext();

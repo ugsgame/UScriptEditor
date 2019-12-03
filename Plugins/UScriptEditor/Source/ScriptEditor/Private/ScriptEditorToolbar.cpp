@@ -18,6 +18,25 @@ void FScriptEditorToolbar::AddEditorToolbar(TSharedPtr<FExtender> Extender)
 		EExtensionHook::After,
 		CodeProjectEditorPtr->GetToolkitCommands(),
 		FToolBarExtensionDelegate::CreateSP( this, &FScriptEditorToolbar::FillEditorToolbar ) );
+
+	Extender->AddToolBarExtension(
+		"Asset",
+		EExtensionHook::Before,
+		CodeProjectEditorPtr->GetToolkitCommands(),
+		FToolBarExtensionDelegate::CreateSP(this, &FScriptEditorToolbar::FillEditToolbar));
+}
+
+void FScriptEditorToolbar::FillEditToolbar(FToolBarBuilder& ToolbarBuilder)
+{
+	TSharedPtr<FScriptEditor> CodeProjectEditorPtr = ScriptEditor.Pin();
+
+	ToolbarBuilder.BeginSection(TEXT("Edit"));
+	{
+		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().Backward);
+		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().Forward);
+	}
+	ToolbarBuilder.EndSection();
+
 }
 
 void FScriptEditorToolbar::FillEditorToolbar(FToolBarBuilder& ToolbarBuilder)
@@ -26,7 +45,7 @@ void FScriptEditorToolbar::FillEditorToolbar(FToolBarBuilder& ToolbarBuilder)
 
 	ToolbarBuilder.BeginSection(TEXT("FileManagement"));
 	{
-		//ToolbarBuilder.AddToolBarButton(FCodeProjectEditorCommands::Get().Save);
+		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().Reload);
 		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().SaveAll);
 	}
 	ToolbarBuilder.EndSection();
@@ -64,4 +83,14 @@ void FScriptEditorToolbar::FillEditorToolbar(FToolBarBuilder& ToolbarBuilder)
 		ToolbarBuilder.EndSection();
 		
 	}
+
+	//Debug
+	ToolbarBuilder.BeginSection(TEXT("Debug"));
+	{
+		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().DebugContinue);
+		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().DebugStepover);
+		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().DebugStepin);
+		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().DebugStepout);
+	}
+	ToolbarBuilder.EndSection();
 }
