@@ -19,6 +19,7 @@ TSharedPtr< FSlateStyleSet > FScriptEditorStyle::StyleSet = nullptr;
 static const FVector2D Icon8x8(8.0f, 8.0f);
 static const FVector2D Icon9x19(9.0f, 19.0f);
 static const FVector2D Icon16x16(16.0f, 16.0f);
+static const FVector2D Icon18x18(18.0f, 18.0f);
 static const FVector2D Icon20x20(20.0f, 20.0f);
 static const FVector2D Icon22x22(22.0f, 22.0f);
 static const FVector2D Icon24x24(24.0f, 24.0f);
@@ -48,15 +49,24 @@ void FScriptEditorStyle::Initialize()
 
 	// Icons
 	{
- 		StyleSet->Set("ScriptEditor.OpenPluginWindow", new IMAGE_BRUSH("UI/CodeEditor_16x", Icon16x16));
-
-		StyleSet->Set("ScriptEditor.TabIcon", new IMAGE_BRUSH("UI/ButtonIcon_40x", Icon40x40));
+ 		StyleSet->Set("ScriptEditor.OpenPluginWindow", new IMAGE_BRUSH("UI/Common/ButtonIcon_40x", Icon16x16));
+		StyleSet->Set("ScriptEditor.TabIcon", new IMAGE_BRUSH("UI/Common/ButtonIcon_40x", Icon40x40));
 	
-		StyleSet->Set("ScriptEditor.Save", new IMAGE_BRUSH("UI/Save_40x", Icon40x40));
-		StyleSet->Set("ScriptEditor.Save.Small", new IMAGE_BRUSH("UI/Save_40x", Icon16x16));
-		StyleSet->Set("ScriptEditor.SaveAll", new IMAGE_BRUSH("UI/SaveAll_40x", Icon40x40));
-		StyleSet->Set("ScriptEditor.SaveAll.Small", new IMAGE_BRUSH("UI/SaveAll_40x", Icon16x16));
-		}
+		StyleSet->Set("ScriptEditor.Reload", new IMAGE_BRUSH("UI/Common/icon_reload_40x", Icon40x40));
+		StyleSet->Set("ScriptEditor.Save", new IMAGE_BRUSH("UI/Common/Save_40x", Icon40x40));
+		StyleSet->Set("ScriptEditor.Save.Small", new IMAGE_BRUSH("UI/Common/Save_40x", Icon16x16));
+		StyleSet->Set("ScriptEditor.SaveAll", new IMAGE_BRUSH("UI/Common/SaveAll_40x", Icon40x40));
+		StyleSet->Set("ScriptEditor.SaveAll.Small", new IMAGE_BRUSH("UI/Common/SaveAll_40x", Icon16x16));
+
+		StyleSet->Set("ScriptEditor.Backward", new IMAGE_BRUSH("UI/Common/icon_nav_back_32x", Icon32x32));
+		StyleSet->Set("ScriptEditor.Forward", new IMAGE_BRUSH("UI/Common/icon_nav_fwd_32x", Icon32x32));
+
+		StyleSet->Set("ScriptEditor.DebugContinue", new IMAGE_BRUSH("UI/Debug/icon_debug_continue", Icon40x40));
+		StyleSet->Set("ScriptEditor.DebugStepover", new IMAGE_BRUSH("UI/Debug/icon_debug_step_over", Icon40x40));
+		StyleSet->Set("ScriptEditor.DebugStepin", new IMAGE_BRUSH("UI/Debug/icon_debug_step_into", Icon40x40));
+		StyleSet->Set("ScriptEditor.DebugStepout", new IMAGE_BRUSH("UI/Debug/icon_debug_step_out", Icon40x40));
+
+	}
 
 	const FSlateFontInfo Consolas10  = DEFAULT_FONT("Mono", 10);
 
@@ -66,7 +76,7 @@ void FScriptEditorStyle::Initialize()
 		.SetShadowOffset(FVector2D::ZeroVector)
 		.SetShadowColorAndOpacity(FLinearColor::Black)
 		.SetHighlightColor(FLinearColor(0.02f, 0.3f, 0.0f))
-		.SetHighlightShape(BOX_BRUSH("UI/TextBlockHighlightShape", FMargin(3.f / 8.f)));
+		.SetHighlightShape(BOX_BRUSH("UI/Widgets/TextBlockHighlightShape", FMargin(3.f / 8.f)));
 
 	// Text editor
 	{
@@ -80,7 +90,7 @@ void FScriptEditorStyle::Initialize()
 		StyleSet->Set("SyntaxHighlight.CPP.Comment", FTextBlockStyle(NormalText).SetColorAndOpacity(FLinearColor(FColor(0xff57a64a)))); // green
 		StyleSet->Set("SyntaxHighlight.CPP.PreProcessorKeyword", FTextBlockStyle(NormalText).SetColorAndOpacity(FLinearColor(FColor(0xffcfcfcf)))); // light grey
 
-		StyleSet->Set("TextEditor.Border", new BOX_BRUSH("UI/TextEditorBorder", FMargin(4.0f/16.0f), FLinearColor(0.02f,0.02f,0.02f,1)));
+		StyleSet->Set("TextEditor.Border", new BOX_BRUSH("UI/Widgets/TextEditorBorder", FMargin(4.0f/16.0f), FLinearColor(0.02f,0.02f,0.02f,1)));
 
 		const FEditableTextBoxStyle EditableTextBoxStyle = FEditableTextBoxStyle()
 			.SetBackgroundImageNormal( FSlateNoResource() )
@@ -93,17 +103,18 @@ void FScriptEditorStyle::Initialize()
 
 	// Project editor
 	{
-		StyleSet->Set("ProjectEditor.Border", new BOX_BRUSH("UI/TextEditorBorder", FMargin(4.0f/16.0f), FLinearColor(0.048f,0.048f,0.048f,1)));
+		StyleSet->Set("ProjectEditor.Border", new BOX_BRUSH("UI/Widgets/TextEditorBorder", FMargin(4.0f/16.0f), FLinearColor(0.048f,0.048f,0.048f,1)));
 
-		StyleSet->Set("ProjectEditor.Icon.Project", new IMAGE_BRUSH("UI/FolderClosed", Icon16x16, FLinearColor(0.25f,0.25f,0.25f,1)));
-		StyleSet->Set("ProjectEditor.Icon.Folder", new IMAGE_BRUSH("UI/FolderClosed", Icon16x16, FLinearColor(0.25f,0.25f,0.25f,1)));
-		StyleSet->Set("ProjectEditor.Icon.File", new IMAGE_BRUSH("UI/GenericFile", Icon16x16));
-		StyleSet->Set("ProjectEditor.Icon.GenericFile", new IMAGE_BRUSH("UI/GenericFile", Icon16x16));
+		StyleSet->Set("ProjectEditor.Icon.Project", new IMAGE_BRUSH("UI/Widgets/FolderClosed", Icon18x18, FLinearColor(0.25f,0.25f,0.25f,1)));
+		StyleSet->Set("ProjectEditor.Icon.Folder", new IMAGE_BRUSH("UI/Widgets/FolderClosed", Icon18x18, FLinearColor(0.25f,0.25f,0.25f,1)));
+		StyleSet->Set("ProjectEditor.Icon.File", new IMAGE_BRUSH("UI/Widgets/GenericFile_40x", Icon18x18));
+		StyleSet->Set("ProjectEditor.Icon.GenericFile", new IMAGE_BRUSH("UI/Widgets/GenericFile_40x", Icon18x18));
+		StyleSet->Set("ProjectEditor.Icon.lua", new IMAGE_BRUSH("UI/Widgets/icon_lua_40x", Icon18x18));
 	}
 	// Asset file
 	{
-		StyleSet->Set(FName(TEXT("ClassThumbnail.LuaScript")), new IMAGE_BRUSH("UI/GenericFile", Icon16x16));
-		StyleSet->Set(FName(TEXT("ClassIcon.LuaScript")), new IMAGE_BRUSH("UI/GenericFile", Icon16x16));
+		StyleSet->Set(FName(TEXT("ClassThumbnail.LuaScript")), new IMAGE_BRUSH("UI/Widgets/icon_lua_40x", Icon40x40));
+		StyleSet->Set(FName(TEXT("ClassIcon.LuaScript")), new IMAGE_BRUSH("UI/Widgets/icon_lua_40x", Icon40x40));
 	}
 
 	FSlateStyleRegistry::RegisterSlateStyle( *StyleSet.Get() );

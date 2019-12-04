@@ -859,7 +859,7 @@ void SScriptDebugger::RegisterKeyDown()
 
 void SScriptDebugger::BeforeExit()
 {
-	SaveDebuggerConfig();
+	//SaveDebuggerConfig();
 }
 
 void SScriptDebugger::SaveDebuggerConfig()

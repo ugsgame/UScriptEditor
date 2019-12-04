@@ -10,9 +10,13 @@ class FScriptEditorCommands : public TCommands<FScriptEditorCommands>
 public:
 	FScriptEditorCommands();
 
+	TSharedPtr<FUICommandInfo> Reload;
 	TSharedPtr<FUICommandInfo> Save;
 	TSharedPtr<FUICommandInfo> SaveAll;
 	TSharedPtr< FUICommandInfo > OpenPluginWindow;
+
+	TSharedPtr<FUICommandInfo> Backward;
+	TSharedPtr<FUICommandInfo> Forward;
 
 	//////////////////////////////////////////////////////////////////////////
 	//Debug Commands       

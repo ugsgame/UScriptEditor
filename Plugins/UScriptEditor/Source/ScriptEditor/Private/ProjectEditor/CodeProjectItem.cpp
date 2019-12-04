@@ -192,6 +192,27 @@ UCodeProjectItem* UCodeProjectItem::FindChild(FString ChildFullPath)
 }
 
 
+FName UCodeProjectItem::GetBrush() const
+{
+	switch (Type)
+	{
+	case ECodeProjectItemType::Project:
+		return "ProjectEditor.Icon.Project";
+	case ECodeProjectItemType::Folder:
+		return "ProjectEditor.Icon.Folder";
+	case ECodeProjectItemType::File:
+	{
+		if (Extension == "lua")
+		{
+			return "ProjectEditor.Icon.lua";
+		}
+		return "ProjectEditor.Icon.GenericFile";
+	}
+	default:
+		return "ProjectEditor.Icon.GenericFile";
+	}
+}
+
 void UCodeProjectItem::RescaParentIsLegal(UCodeProjectItem* InParent)
 {
 	InParent->bWithLegalFile = true;

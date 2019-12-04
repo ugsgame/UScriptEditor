@@ -48,6 +48,8 @@ public:
 
 	/** Try to open a new file for editing */
 	void OpenFileForEditing(class UCodeProjectItem* Item);
+	/** Try to open a new file for editing */
+	void OpenFileAndGotoLine(class UCodeProjectItem* Item,int32 Line);
 	/** Try to close a editing file */
 	void CloseEditingFile(class UCodeProjectItem* Item);
 	/** Try to close a all editing files */
@@ -68,20 +70,31 @@ public:
 	TSharedPtr<class FScriptEditorToolbar> GetToolbarBuilder() { return ToolbarBuilder; }
 
 	bool Save();
-
 	bool SaveAll();
+	bool Reload();
 
 private:
 	void BindCommands();
 
+	//File Actions
 	void Save_Internal();
-
 	void SaveAll_Internal();
+	void Reload_Internal();
 
 	bool CanSave() const;
-
 	bool CanSaveAll() const;
+	bool CanReload() const;
+	//Debug Actions
+	void DegbugContinue();
+	void DebugStepover();
+	void DebugStepin();
+	void DebugStepout();
 
+	bool CanDegbugContinue() const;
+	bool CanDebugStepover() const;
+	bool CanDebugStepin() const;
+	bool CanDebugStepout() const;
+	//
 protected:
 	//Overried Asset Editing
 	virtual bool CanSaveAsset()const;

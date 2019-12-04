@@ -1,4 +1,4 @@
-// Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
 
@@ -47,6 +47,7 @@ public class LuaDebugger : ModuleRules
                 "EditorStyle",
                 "Lua",
                 "Unlua",
+                "Lua",
                 //"LuaPluginRuntime",
                 //"Lua53",
 				// ... add private dependencies that you statically link with here ...	

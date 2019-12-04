@@ -16,6 +16,8 @@ public:
 	void AddEditorToolbar(TSharedPtr<FExtender> Extender);
 
 private:
+
+	void FillEditToolbar(FToolBarBuilder& ToolbarBuilder);
 	void FillEditorToolbar(FToolBarBuilder& ToolbarBuilder);
 
 protected:
