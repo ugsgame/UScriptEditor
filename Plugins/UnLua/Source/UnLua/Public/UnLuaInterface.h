@@ -20,6 +20,19 @@
 /**
  * Interface for binding UCLASS and Lua module
  */
+
+USTRUCT(BlueprintType)
+struct FCodeContext
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	FString Path;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	FString Code;
+};
+
 UINTERFACE()
 class UNLUA_API UUnLuaInterface : public UInterface
 {
@@ -40,5 +53,5 @@ public:
 	 * return a Lua code string
 	 */
 	UFUNCTION(BlueprintNativeEvent)
-	FString GetModuleCode() const;
+	FCodeContext GetModuleCode() const;
 };

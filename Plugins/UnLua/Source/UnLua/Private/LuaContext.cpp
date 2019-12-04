@@ -402,10 +402,11 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
                 if (GetNameFunc->GetNativeFunc() && GetCodeFunc->GetNativeFunc()  && IsInGameThread())
                 {
                     FString ModuleName;
-					FString ModuleCode;
+					FCodeContext CodeContext;
+
                     UObject *DefaultObject = Class->GetDefaultObject();             // get CDO
                     DefaultObject->UObject::ProcessEvent(GetNameFunc, &ModuleName);        // force to invoke UObject::ProcessEvent(...)
-					DefaultObject->UObject::ProcessEvent(GetCodeFunc, &ModuleCode);        // force to invoke UObject::ProcessEvent(...)
+					DefaultObject->UObject::ProcessEvent(GetCodeFunc, &CodeContext);        // force to invoke UObject::ProcessEvent(...)
                     UClass *OuterClass = GetNameFunc->GetOuterUClass();                    // get UFunction's outer class
                     Class = OuterClass == InterfaceClass ? Class : OuterClass;      // select the target UClass to bind Lua module
                     if (ModuleName.Len() < 1)
@@ -413,7 +414,7 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
                         ModuleName = Class->GetName();
                     }
 
-					return Manager->Bind(Object, Class, *ModuleName, *ModuleCode, GLuaDynamicBinding.InitializerTableRef);
+					return Manager->Bind(Object, Class, *ModuleName, CodeContext, GLuaDynamicBinding.InitializerTableRef);
                 }
                 else
                 {
@@ -428,7 +429,7 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
         }
         else if (GLuaDynamicBinding.IsValid(Class))                                 // dynamic binding(TODO:Bind code)
         {
-            return Manager->Bind(Object, Class, *GLuaDynamicBinding.ModuleName, TEXT(""), GLuaDynamicBinding.InitializerTableRef);
+            return Manager->Bind(Object, Class, *GLuaDynamicBinding.ModuleName, FCodeContext(), GLuaDynamicBinding.InitializerTableRef);
         }
     }
     return false;
@@ -622,7 +623,7 @@ void FLuaContext::OnAsyncLoadingFlushUpdate()
                     ModuleName = Class->GetName();
                 }
 
-                Manager->Bind(Object, Class, *ModuleName, TEXT(""));
+                Manager->Bind(Object, Class, *ModuleName, FCodeContext());
                 Candidates.RemoveAt(i);
             }
         }

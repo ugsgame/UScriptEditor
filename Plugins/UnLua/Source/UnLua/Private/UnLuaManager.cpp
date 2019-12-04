@@ -51,7 +51,7 @@ UUnLuaManager::UUnLuaManager()
 /**
  * Bind a Lua module for a UObject
  */
-bool UUnLuaManager::Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR *InModuleName, const TCHAR *InModuleCode, int32 InitializerTableRef)
+bool UUnLuaManager::Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR *InModuleName, const FCodeContext InModuleCodeContext, int32 InitializerTableRef)
 {
 	if (!Object || !Class || Object->HasAnyFlags(RF_ClassDefaultObject | RF_ArchetypeObject) || AttachedObjects.Find(Object))
 	{
@@ -77,9 +77,11 @@ bool UUnLuaManager::Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR 
 		UnLua::FLuaRetValues RetValues = UnLua::Call(L, "require", TCHAR_TO_ANSI(InModuleName));    // require Lua module
 		bSuccess = RetValues.IsValid();
 
-		if (!bSuccess && FString(InModuleCode).Len()>0)
+		if (!bSuccess && InModuleCodeContext.Code.Len()>0)
 		{
-			UnLua::FLuaRetValues LoadStringValues = UnLua::Call(L, "LoadString", TCHAR_TO_ANSI(InModuleName), TCHAR_TO_UTF8(InModuleCode));    // load Lua string
+			FString Path = InModuleCodeContext.Path;
+			FString Code = InModuleCodeContext.Code;
+			UnLua::FLuaRetValues LoadStringValues = UnLua::Call(L, "LoadString", TCHAR_TO_ANSI(InModuleName), TCHAR_TO_UTF8(*Code));    // load Lua string
 			bSuccess = LoadStringValues.IsValid();
 		}
 

@@ -17,6 +17,7 @@
 #include "InputCoreTypes.h"
 #include "Engine/EngineBaseTypes.h"
 #include "UnLuaCompatibility.h"
+#include "UnLuaInterface.h"
 #include "UnLuaManager.generated.h"
 
 UCLASS()
@@ -27,7 +28,7 @@ class UUnLuaManager : public UObject
 public:
     UUnLuaManager();
 
-    bool Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR *InModuleName, const TCHAR *InModuleCode, int32 InitializerTableRef = INDEX_NONE);
+    bool Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR *InModuleName, const FCodeContext InModuleCodeContext, int32 InitializerTableRef = INDEX_NONE);
 
     bool OnModuleHotfixed(const TCHAR *InModuleName);
 
