@@ -20,6 +20,8 @@
 #include "CPPRichTextSyntaxHighlighterTextLayoutMarshaller.h"
 #include "SCodeEditableText.h"
 
+#include "SScriptDebugger.h"
+
 #include "Editor/EditorStyle/Public/EditorStyle.h"
 
 #define LOCTEXT_NAMESPACE "CodeEditor"
@@ -111,7 +113,7 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 									//.BorderImage(FEditorStyle::GetBrush("Graph.Node.Body"))
 									.BorderImage(FEditorStyle::GetBrush("NoBorder"))
 									[
-										SAssignNew(LineCounter, SListView<TSharedPtr<FString>>)
+										SAssignNew(LineCounter, SListView<FCodeLineNode_Ptr>)
 										.OnSelectionChanged(this, &SCodeEditor::OnSelectedLineCounterItem)
 										.OnMouseButtonDoubleClick(this, &SCodeEditor::OnDoubleClickLineCounterItem)
 										.OnGenerateRow(this, &SCodeEditor::OnGenerateLineCounter)
@@ -228,18 +230,17 @@ void SCodeEditor::SetLineCountList(const int32 Count)
 	LineCount.Empty();
 	//
 	for (int32 I = 1; I <= Count; I++) {
-		FString ID = FString::Printf(TEXT("%i"), I);
-		LineCount.Add(MakeShareable(new FString(*ID)));
+		LineCount.Add(MakeShareable(new FCodeLineNode(I, CodeProjectItem->Path)));
 	}///
 	//
 	if (LineCounter.IsValid()) { LineCounter->RequestListRefresh(); }
 }
 
-void SCodeEditor::OnSelectedLineCounterItem(TSharedPtr<FString>Item, ESelectInfo::Type SelectInfo)
+void SCodeEditor::OnSelectedLineCounterItem(FCodeLineNode_Ptr Item, ESelectInfo::Type SelectInfo)
 {
 	if (!Item.IsValid()) { return; }
 	//
-	const int32 LineID = FCString::Atoi(**Item.Get());
+	const int32 LineID = Item->Line;
 	//
 	FSlateApplication::Get().SetKeyboardFocus(CodeEditableText.ToSharedRef());
 	CodeEditableText->GoToLineColumn(LineID - 1, 0);
@@ -248,35 +249,90 @@ void SCodeEditor::OnSelectedLineCounterItem(TSharedPtr<FString>Item, ESelectInfo
 	LineCounter->SetItemSelection(Item, false);
 }
 
-void SCodeEditor::OnDoubleClickLineCounterItem(TSharedPtr<FString>Item)
+void SCodeEditor::OnDoubleClickLineCounterItem(FCodeLineNode_Ptr Item)
 {
 	if (!Item.IsValid()) { return; }
 	//
-	const int32 LineID = FCString::Atoi(**Item.Get());
+	const int32 LineID = Item->Line;
 
 	//TODO:Add or remove breakpoint
-	LineCounter->SetItemHighlighted(Item, !LineCounter->Private_IsItemHighlighted(Item));
+	//LineCounter->SetItemHighlighted(Item, !LineCounter->Private_IsItemHighlighted(Item));
 
 	TSharedPtr<ITableRow> TableRow = LineCounter->WidgetFromItem(Item);
 	//
 }
 
-
-TSharedRef<ITableRow> SCodeEditor::OnGenerateLineCounter(TSharedPtr<FString>Item, const TSharedRef<STableViewBase>&OwnerTable) {
-	return
-	SNew(SComboRow<TSharedRef<FString>>, OwnerTable)
-	[
-		SNew(SBorder)
-		.BorderImage(FEditorStyle::GetBrush("Graph.Node.Body"))
-		.BorderBackgroundColor(FLinearColor(1.f, 1.f, 1.f, 0.f))
-		.Padding(FMargin(5.f, 0.f, 5.f, 0.f))
-		[
-			SNew(STextBlock)
-			.Text(FText::FromString(*Item.Get()))
-			.ColorAndOpacity(FSlateColor(FLinearColor(FColor(75, 185, 245, 225))))
-			.Font(FScriptEditorStyle::Get().GetWidgetStyle<FTextBlockStyle>("TextEditor.NormalText").Font)
-		]
-	];//
+TSharedRef<ITableRow> SCodeEditor::OnGenerateLineCounter(FCodeLineNode_Ptr Item, const TSharedRef<STableViewBase>&OwnerTable) 
+{
+	return SNew(SCodeLineItem, OwnerTable, Item);
 }
 
 #undef LOCTEXT_NAMESPACE
+
+void SCodeLineItem::Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FCodeLineNode_Ptr Line)
+{
+	CodeLine = Line;
+
+// 	if (SScriptDebugger::Get())
+// 	{
+// 		CodeLine->HasBreakPoint = SScriptDebugger::Get()->HasBreakPoint(CodeLine->FilePath, CodeLine->Line);
+// 	}
+
+	STableRow<FCodeLineNode_Ptr>::Construct(STableRow<FCodeLineNode_Ptr>::FArguments(), InOwnerTableView);
+	ChildSlot
+		[
+			SNew(SBorder)
+			//.BorderImage(FEditorStyle::GetBrush("Graph.Node.Body"))
+			.BorderBackgroundColor(FLinearColor(1.f, 1.f, 1.f, 0.f))
+			.ForegroundColor(FSlateColor::UseForeground())
+			.Padding(FMargin(5.f, 0.f, 5.f, 0.f))
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.HAlign(HAlign_Left)
+				[
+					SNew(SBox)
+					[
+						SAssignNew(BreakPointCheckBox, SCheckBox)
+						.IsChecked(CodeLine->HasBreakPoint ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
+						.OnCheckStateChanged(this, &SCodeLineItem::OnClickBreakPoint)
+						.CheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
+						.CheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
+						.CheckedPressedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
+						.UncheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Null"))
+						.UncheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Null"))
+					]
+				]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SBox)
+				[
+					SNew(STextBlock)
+					.Text(FText::FromString(FString::FormatAsNumber(CodeLine->Line)))
+					.ColorAndOpacity(FSlateColor(FLinearColor(FColor(75, 185, 245, 225))))
+					.Font(FScriptEditorStyle::Get().GetWidgetStyle<FTextBlockStyle>("TextEditor.NormalText").Font)
+				]
+			]
+		]
+	];
+}
+
+void SCodeLineItem::OnClickBreakPoint(const ECheckBoxState NewCheckedState)
+{
+	if (NewCheckedState == ECheckBoxState::Checked)
+	{
+		CodeLine->HasBreakPoint = true;
+	}
+	else
+	{
+		CodeLine->HasBreakPoint = false;
+	}
+}
+
+void SCodeLineItem::OnBreakConditionCommit(const FText& ConditionText, ETextCommit::Type CommitType)
+{
+
+}
+

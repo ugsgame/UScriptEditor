@@ -214,9 +214,13 @@ public:
 	TArray<FLuaFileTreeNode_Ref> AfterFilterLuaFiles;
 	TWeakPtr<SLuaFileTree> LuaFileTreePtr;
 
+	UPROPERTY()
 	FString NowLuaCodeFilePath;
 	FDateTime ModifyTimeOfNowFile;
+
+	UPROPERTY()
 	TArray<FCodeListNode_Ref> NowLuaCodes;
+	UPROPERTY()
 	TWeakPtr<SLuaCodeList> LuaCodeListPtr;
 
 	EStackListState StackListState;
@@ -226,8 +230,11 @@ public:
 	TArray<FBreakPointNode_Ref> BreakPointForView;
 	TWeakPtr<SBreakPointList> BreakPointListPtr;
 
+	UPROPERTY()
 	TArray<FDebuggerVarNode_Ref> NowVars;
+	UPROPERTY()
 	TWeakPtr<SDebuggerVarTree> DebuggerVarTree;
+	UPROPERTY()
 	FString RecentFilePath;
 
 	TMap<FString, TSet<int32>> EnableBreakPoint;

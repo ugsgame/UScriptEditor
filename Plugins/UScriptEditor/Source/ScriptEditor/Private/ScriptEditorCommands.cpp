@@ -18,6 +18,8 @@ void FScriptEditorCommands::RegisterCommands()
 	UI_COMMAND(OpenPluginWindow, "UScriptEditor", "Bring up UScriptEditor", EUserInterfaceActionType::Button, FInputGesture());
 
 	UI_COMMAND(Reload, "Reload", "Reload the currently active document file.", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(ReloadAll, "Reload All", "Reload all document file.", EUserInterfaceActionType::Button, FInputChord());
+
 	UI_COMMAND(Save, "Save", "Save the currently active document.", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control, EKeys::S));
 	UI_COMMAND(SaveAll, "Save All", "Save all open documents.", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control | EModifierKey::Shift, EKeys::S));
 

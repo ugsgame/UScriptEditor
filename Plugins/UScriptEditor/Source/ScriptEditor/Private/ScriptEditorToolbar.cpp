@@ -45,8 +45,9 @@ void FScriptEditorToolbar::FillEditorToolbar(FToolBarBuilder& ToolbarBuilder)
 
 	ToolbarBuilder.BeginSection(TEXT("FileManagement"));
 	{
-		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().Reload);
 		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().SaveAll);
+		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().Reload);
+		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().ReloadAll);
 	}
 	ToolbarBuilder.EndSection();
 

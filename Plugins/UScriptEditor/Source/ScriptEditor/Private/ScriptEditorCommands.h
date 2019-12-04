@@ -11,6 +11,7 @@ public:
 	FScriptEditorCommands();
 
 	TSharedPtr<FUICommandInfo> Reload;
+	TSharedPtr<FUICommandInfo> ReloadAll;
 	TSharedPtr<FUICommandInfo> Save;
 	TSharedPtr<FUICommandInfo> SaveAll;
 	TSharedPtr< FUICommandInfo > OpenPluginWindow;

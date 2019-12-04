@@ -53,6 +53,8 @@ void FScriptEditorStyle::Initialize()
 		StyleSet->Set("ScriptEditor.TabIcon", new IMAGE_BRUSH("UI/Common/ButtonIcon_40x", Icon40x40));
 	
 		StyleSet->Set("ScriptEditor.Reload", new IMAGE_BRUSH("UI/Common/icon_reload_40x", Icon40x40));
+		StyleSet->Set("ScriptEditor.ReloadAll", new IMAGE_BRUSH("UI/Common/icon_reload_40x", Icon40x40));
+
 		StyleSet->Set("ScriptEditor.Save", new IMAGE_BRUSH("UI/Common/Save_40x", Icon40x40));
 		StyleSet->Set("ScriptEditor.Save.Small", new IMAGE_BRUSH("UI/Common/Save_40x", Icon16x16));
 		StyleSet->Set("ScriptEditor.SaveAll", new IMAGE_BRUSH("UI/Common/SaveAll_40x", Icon40x40));
@@ -68,7 +70,7 @@ void FScriptEditorStyle::Initialize()
 
 	}
 
-	const FSlateFontInfo Consolas10  = DEFAULT_FONT("Mono", 10);
+	const FSlateFontInfo Consolas10  = DEFAULT_FONT("Mono", 11);
 
 	const FTextBlockStyle NormalText = FTextBlockStyle()
 		.SetFont(Consolas10)
@@ -99,6 +101,11 @@ void FScriptEditorStyle::Initialize()
 			.SetBackgroundImageReadOnly( FSlateNoResource() );
 		
 		StyleSet->Set("TextEditor.EditableTextBox", EditableTextBoxStyle);
+
+		StyleSet->Set("Breakpoint.On", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_on", Icon16x16));
+		StyleSet->Set("Breakpoint.Off", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_off", Icon16x16));
+		StyleSet->Set("Breakpoint.Hit", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_hit", Icon16x16));
+		StyleSet->Set("Breakpoint.Null", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_null", Icon16x16));
 	}
 
 	// Project editor
@@ -114,7 +121,7 @@ void FScriptEditorStyle::Initialize()
 	// Asset file
 	{
 		StyleSet->Set(FName(TEXT("ClassThumbnail.LuaScript")), new IMAGE_BRUSH("UI/Widgets/icon_lua_40x", Icon40x40));
-		StyleSet->Set(FName(TEXT("ClassIcon.LuaScript")), new IMAGE_BRUSH("UI/Widgets/icon_lua_40x", Icon40x40));
+		StyleSet->Set(FName(TEXT("ClassIcon.LuaScript")), new IMAGE_BRUSH("UI/Widgets/icon_lua_40x", Icon18x18));
 	}
 
 	FSlateStyleRegistry::RegisterSlateStyle( *StyleSet.Get() );

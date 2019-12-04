@@ -54,52 +54,11 @@ void SScriptDebugger::StartupModule()
 	}
 
 	FCoreDelegates::OnPreExit.AddRaw(this, &SScriptDebugger::BeforeExit);
-	/*
-	FLuaDebuggerStyle::Initialize();
-	FLuaDebuggerStyle::ReloadTextures();
 
-	FLuaDebuggerCommands::Register();
-
-	PluginCommands = MakeShareable(new FUICommandList);
-
-	/*
-	PluginCommands->MapAction(
-		FLuaDebuggerCommands::Get().OpenPluginWindow,
-		FExecuteAction::CreateRaw(this, &SDebugger::PluginButtonClicked),
-		FCanExecuteAction());
-
-	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-
-	{
-		TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
-		MenuExtender->AddMenuExtension("WindowLayout", EExtensionHook::After, PluginCommands, FMenuExtensionDelegate::CreateRaw(this, &SDebugger::AddMenuExtension));
-
-		LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
-	}
-	
-	// 	{
-	// 		TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
-	// 		ToolbarExtender->AddToolBarExtension("Settings", EExtensionHook::After, PluginCommands, FToolBarExtensionDelegate::CreateRaw(this, &SDebugger::AddToolbarExtension));
-	// 		
-	// 		LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolbarExtender);
-	// 	}
-
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(LuaDebuggerTabName, FOnSpawnTab::CreateRaw(this, &SDebugger::OnSpawnPluginTab))
-		.SetDisplayName(LOCTEXT("FLuaDebuggerTabTitle", "LuaDebugger"))
-		.SetMenuType(ETabSpawnerMenuType::Hidden);
-	*/
 }
 
 void SScriptDebugger::ShutdownModule()
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
-
-	//FLuaDebuggerStyle::Shutdown();
-
-	//FLuaDebuggerCommands::Unregister();
-
-	//FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(LuaDebuggerTabName);
 }
 
 void SScriptDebugger::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
@@ -109,9 +68,6 @@ void SScriptDebugger::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 	SyncState();
 	FSlateApplication::Get().RegisterInputPreProcessor(ptr_HandleKeyDown);
 
-// 	TSharedRef<SDockTab> Tab = SNew(SDockTab)
-// 		.TabRole(ETabRole::NomadTab)
-// 		.OnTabClosed_Raw(this, &SDebugger::DebugTabClose)
 	TSharedPtr<SOverlay>OverlayWidget; this->ChildSlot
 		[
 			SAssignNew(OverlayWidget, SOverlay)
@@ -859,7 +815,7 @@ void SScriptDebugger::RegisterKeyDown()
 
 void SScriptDebugger::BeforeExit()
 {
-	//SaveDebuggerConfig();
+	SaveDebuggerConfig();
 }
 
 void SScriptDebugger::SaveDebuggerConfig()
@@ -1037,46 +993,46 @@ void SCodeWidgetItem::Construct(const FArguments& InArgs, const TSharedRef<STabl
 			// 			.Padding(FMargin(0.0f, 0.0f, 5.0f,0.0f))
 			SNew(SBox)
 			.MinDesiredHeight(20)
-		.VAlign(VAlign_Center)
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.HAlign(HAlign_Left)
-		[
-			SNew(SBox)
+			.VAlign(VAlign_Center)
 			[
-				SNew(SBorder)
-				.OnMouseButtonUp(this, &SCodeWidgetItem::OnRightClickBreakpoint)
-		[
-			SNew(SButton)
-			.ForegroundColor(FSlateColor::UseForeground())
-		.OnClicked(this, &SCodeWidgetItem::HandleClickBreakPoint)
-		[
-			SNew(SImage)
-			.Image(FEditorStyle::GetBrush("Level.VisibleHighlightIcon16x"))
-		.Visibility(this, &SCodeWidgetItem::BreakPointVisible)
-		]
-		]
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.HAlign(HAlign_Left)
+				[
+					SNew(SBox)
+					[
+						SNew(SBorder)
+						.OnMouseButtonUp(this, &SCodeWidgetItem::OnRightClickBreakpoint)
+						[
+							SNew(SButton)
+							.ForegroundColor(FSlateColor::UseForeground())
+							.OnClicked(this, &SCodeWidgetItem::HandleClickBreakPoint)
+							[
+								SNew(SImage)
+								.Image(FEditorStyle::GetBrush("Level.VisibleHighlightIcon16x"))
+								.Visibility(this, &SCodeWidgetItem::BreakPointVisible)
+							]
+						]
+					]
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SBox)
+					.MinDesiredWidth(40)
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString(FString::Printf(TEXT("%d"), Node->Line)))
+					]
+				]
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
+				[
+					SNew(STextBlock)
+					.Text(FText::FromString(Node->Code))
+				]
 			]
-		]
-	+ SHorizontalBox::Slot()
-		.AutoWidth()
-		[
-			SNew(SBox)
-			.MinDesiredWidth(40)
-		[
-			SNew(STextBlock)
-			.Text(FText::FromString(FString::Printf(TEXT("%d"), Node->Line)))
-		]
-		]
-	+ SHorizontalBox::Slot()
-		.FillWidth(1.0f)
-		[
-			SNew(STextBlock)
-			.Text(FText::FromString(Node->Code))
-		]
-		]
 		];
 }
 
@@ -1185,7 +1141,10 @@ TSharedRef<SWidget> SDebuggerVarTreeWidgetItem::GenerateWidgetForColumn(const FN
 
 void SScriptDebugger::FHandleKeyDown::Tick(const float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICursor> MyCursor)
 {
-	SScriptDebugger::Get()->Tick(DeltaTime);
+	if (SScriptDebugger::Get())
+	{
+		SScriptDebugger::Get()->Tick(DeltaTime);
+	}
 }
 
 bool SScriptDebugger::FHandleKeyDown::HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
