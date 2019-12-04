@@ -35,9 +35,10 @@ void FLuaDebuggerModule::StartupModule()
 	IntervalToCheckFileChange = 0;
 	ptr_HandleKeyDown = MakeShareable(new FHandleKeyDown());
 	StackListState = EStackListState::CallStack;
-	LastTimeFileOffset = UDebuggerSetting::Get(IsDebugRemote)->LastTimeFileOffset;
-	RecentFilePath = UDebuggerSetting::Get(IsDebugRemote)->RecentFilePath;
-	for (FBreakPointNode &Node : UDebuggerSetting::Get(IsDebugRemote)->RecentBreakPoint)
+
+	LastTimeFileOffset = UDebuggerSetting::Get(false)->LastTimeFileOffset;
+	RecentFilePath = UDebuggerSetting::Get(false)->RecentFilePath;
+	for (FBreakPointNode &Node : UDebuggerSetting::Get(false)->RecentBreakPoint)
 	{
 		TSet<int32>& Set = EnableBreakPoint.FindOrAdd(Node.FilePath);
 		Set.Add(Node.Line);
@@ -45,6 +46,7 @@ void FLuaDebuggerModule::StartupModule()
 		NewNode->HitCondition = Node.HitCondition;
 		BreakPointForView.Add(NewNode);
 	}
+
 	FCoreDelegates::OnPreExit.AddRaw(this, &FLuaDebuggerModule::BeforeExit);
 	FLuaDebuggerStyle::Initialize();
 	FLuaDebuggerStyle::ReloadTextures();
@@ -66,7 +68,6 @@ void FLuaDebuggerModule::StartupModule()
 
 		LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 	}
-	
 // 	{
 // 		TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 // 		ToolbarExtender->AddToolBarExtension("Settings", EExtensionHook::After, PluginCommands, FToolBarExtensionDelegate::CreateRaw(this, &FLuaDebuggerModule::AddToolbarExtension));
@@ -77,6 +78,8 @@ void FLuaDebuggerModule::StartupModule()
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(LuaDebuggerTabName, FOnSpawnTab::CreateRaw(this, &FLuaDebuggerModule::OnSpawnPluginTab))
 		.SetDisplayName(LOCTEXT("FLuaDebuggerTabTitle", "LuaDebugger"))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
+
+	
 }
 
 void FLuaDebuggerModule::ShutdownModule()
@@ -94,7 +97,7 @@ void FLuaDebuggerModule::ShutdownModule()
 TSharedRef<SDockTab> FLuaDebuggerModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
 	UDebuggerSetting::Get(false)->SetTabIsOpen(true);
-	UDebuggerSetting::Get(true)->SetTabIsOpen(true);
+	//UDebuggerSetting::Get(true)->SetTabIsOpen(true);
 	SyncState();
 	FSlateApplication::Get().RegisterInputPreProcessor(ptr_HandleKeyDown);
 	TSharedRef<SDockTab> Tab = SNew(SDockTab)
@@ -354,6 +357,7 @@ TSharedRef<SDockTab> FLuaDebuggerModule::OnSpawnPluginTab(const FSpawnTabArgs& S
 									.OnGenerateRow_Raw(this, &FLuaDebuggerModule::HandleStackListGenerateRow)
 									.OnSelectionChanged_Raw(this, &FLuaDebuggerModule::HandleStackListSelectionChanged)
 								]
+						
 								+ SVerticalBox::Slot()
 								[
 									SAssignNew(BreakPointListPtr, SBreakPointList)
@@ -364,6 +368,7 @@ TSharedRef<SDockTab> FLuaDebuggerModule::OnSpawnPluginTab(const FSpawnTabArgs& S
 									.OnGenerateRow_Raw(this, &FLuaDebuggerModule::HandleBreakPointListGenerateRow)
 									.OnSelectionChanged_Raw(this, &FLuaDebuggerModule::HandleBreakPointListSelectionChanged)
 								]
+								
 								+ SVerticalBox::Slot()
 								.VAlign(VAlign_Bottom)
 								.AutoHeight()
@@ -508,7 +513,7 @@ void FLuaDebuggerModule::BreakPointChange()
 	if (BreakPointListPtr.IsValid())
 		BreakPointListPtr.Pin()->RequestListRefresh();
 	RefreshCodeList();
-	UDebuggerSetting::Get(true)->UpdateBreakPoint(EnableBreakPoint);
+	//UDebuggerSetting::Get(true)->UpdateBreakPoint(EnableBreakPoint);
 	UDebuggerSetting::Get(false)->UpdateBreakPoint(EnableBreakPoint);
 }
 
@@ -516,7 +521,7 @@ void FLuaDebuggerModule::BreakPointChange()
 void FLuaDebuggerModule::DebugStateChange()
 {
 	DebugContinue();
-	UDebuggerSetting::Get(true)->ToggleDebugStart(IsDebugRun && IsDebugRemote);
+	//UDebuggerSetting::Get(true)->ToggleDebugStart(IsDebugRun && IsDebugRemote);
 	UDebuggerSetting::Get(false)->ToggleDebugStart(IsDebugRun&& !IsDebugRemote);
 }
 
@@ -662,7 +667,7 @@ void FLuaDebuggerModule::ShowStackVars(int32 StackIndex)
 		if (!LastShowVarFuncName.IsEmpty() && LastShowVarFuncName != NowFuncName)
 			NowVars.Reset();
 		LastShowVarFuncName = NowFuncName;
-		UDebuggerSetting::Get(IsDebugRemote)->GetStackVars(StackIndex, NowVars);
+		UDebuggerSetting::Get(false)->GetStackVars(StackIndex, NowVars);
 
 	}
 	if (DebuggerVarTree.IsValid())
@@ -784,7 +789,7 @@ FReply FLuaDebuggerModule::DebugContinue()
 		FSlateApplication::Get().LeaveDebuggingMode();
 		IsEnterDebugMode = false;
 	}
-	UDebuggerSetting::Get(IsDebugRemote)->DebugContinue();
+	UDebuggerSetting::Get(false)->Continue();
 	return FReply::Handled();
 }
 
@@ -796,7 +801,7 @@ FReply FLuaDebuggerModule::DebugStepover()
 		CleanDebugInfo();
 		FSlateApplication::Get().LeaveDebuggingMode();
 		IsEnterDebugMode = false;
-		UDebuggerSetting::Get(IsDebugRemote)->StepOver();
+		UDebuggerSetting::Get(false)->StepOver();
 	}
 	return FReply::Handled();
 }
@@ -809,7 +814,7 @@ FReply FLuaDebuggerModule::DebugStepin()
 		CleanDebugInfo();
 		FSlateApplication::Get().LeaveDebuggingMode();
 		IsEnterDebugMode = false;
-		UDebuggerSetting::Get(IsDebugRemote)->StepIn();
+		UDebuggerSetting::Get(false)->StepIn();
 	}
 	return FReply::Handled();
 }
@@ -822,7 +827,7 @@ FReply FLuaDebuggerModule::DebugStepout()
 		CleanDebugInfo();
 		FSlateApplication::Get().LeaveDebuggingMode();
 		IsEnterDebugMode = false;
-		UDebuggerSetting::Get(IsDebugRemote)->StepOut();
+		UDebuggerSetting::Get(false)->StepOut();
 	}
 	return FReply::Handled();
 }
@@ -830,7 +835,7 @@ FReply FLuaDebuggerModule::DebugStepout()
 void FLuaDebuggerModule::DebugTabClose(TSharedRef<SDockTab> DockTab)
 {
 	UDebuggerSetting::Get(false)->SetTabIsOpen(false);
-	UDebuggerSetting::Get(true)->SetTabIsOpen(false);
+	//UDebuggerSetting::Get(true)->SetTabIsOpen(false);
 	DebugContinue();
 	FSlateApplication::Get().UnregisterInputPreProcessor(ptr_HandleKeyDown);
 	SaveDebuggerConfig();
@@ -856,14 +861,14 @@ void FLuaDebuggerModule::SaveDebuggerConfig()
 		float NowOffset = LuaCodeListPtr.Pin()->GetScrollOffset();
 		LastTimeFileOffset.Add(NowLuaCodeFilePath, NowOffset);
 	}
-	UDebuggerSetting::Get(IsDebugRemote)->LastTimeFileOffset = LastTimeFileOffset;
-	UDebuggerSetting::Get(IsDebugRemote)->RecentFilePath = RecentFilePath;
-	UDebuggerSetting::Get(IsDebugRemote)->RecentBreakPoint.Reset();
+	UDebuggerSetting::Get(false)->LastTimeFileOffset = LastTimeFileOffset;
+	UDebuggerSetting::Get(false)->RecentFilePath = RecentFilePath;
+	UDebuggerSetting::Get(false)->RecentBreakPoint.Reset();
 	for (FBreakPointNode_Ref &Node : BreakPointForView)
 	{
-		UDebuggerSetting::Get(IsDebugRemote)->RecentBreakPoint.Add(*Node);
+		UDebuggerSetting::Get(false)->RecentBreakPoint.Add(*Node);
 	}
-	UDebuggerSetting::Get(IsDebugRemote)->SaveConfig();
+	UDebuggerSetting::Get(false)->SaveConfig();
 }
 
 void FLuaDebuggerModule::OnFileFilterTextChanged(const FText& InFilterText)
@@ -1119,7 +1124,7 @@ void SCodeWidgetItem::OnBreakConditionCommit(const FText& ConditionText, ETextCo
 	{
 		BreakPointNode->HitCondition = ConditionText;
 		UDebuggerSetting::Get(false)->BreakConditionChange();
-		UDebuggerSetting::Get(true)->BreakConditionChange();
+		//UDebuggerSetting::Get(true)->BreakConditionChange();
 	}
 	
 }

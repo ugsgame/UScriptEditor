@@ -45,6 +45,7 @@ public class LuaDebugger : ModuleRules
 				"Slate",
 				"SlateCore",
                 "EditorStyle",
+                "Lua",
                 "Unlua",
                 //"LuaPluginRuntime",
                 //"Lua53",

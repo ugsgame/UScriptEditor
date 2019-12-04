@@ -6,7 +6,11 @@
 #include "UObject/NoExportTypes.h"
 #include "STreeView.h"
 //#include "LuaDelegateMulti.h"
+
 #include "DebuggerSetting.generated.h"
+
+
+
 
 USTRUCT()
 struct LUADEBUGGER_API FDebuggerVarNode
@@ -62,12 +66,14 @@ UCLASS(config=Editor)
 class LUADEBUGGER_API UDebuggerSetting : public UObject
 {
 	GENERATED_BODY()
+public:
+
 	TMap<FString, TSet<int32>> BreakPoints;
 	bool bIsStart;
 	bool bTabIsOpen;
-	struct lua_State *HookingLuaState;
+	struct lua_State *L;
 public:
-	UDebuggerSetting():HookingLuaState(nullptr){}
+	UDebuggerSetting():L(nullptr){}
 	UFUNCTION()
 		static UDebuggerSetting* Get(bool IsRemoteDebugger = false);
 	UFUNCTION()
@@ -91,10 +97,7 @@ public:
 		virtual FText GetBreakPointHitConditionText(FString& FilePath, int32 CodeLine);
 
 	void CombineNodeArr(TArray<FDebuggerVarNode_Ref>& PreVars, TArray<FDebuggerVarNode>& NowVars);
-	virtual void DebugContinue() {};
-	virtual void StepOver();
-	virtual void StepIn();
-	virtual void StepOut();
+
 	virtual void BreakConditionChange();
 	UPROPERTY(config)
 	TMap<FString, float> LastTimeFileOffset;
@@ -104,4 +107,13 @@ public:
 	
 	UPROPERTY(config)
 		TArray<FBreakPointNode> RecentBreakPoint;
+
+	void RegisterLuaState(lua_State* State);
+	virtual void Continue();
+	virtual void StepOver();
+	virtual void StepIn();
+	virtual void StepOut();
+	void UnRegisterLuaState(bool bFullCleanup);
+
+
 };
