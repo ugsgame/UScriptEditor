@@ -166,6 +166,19 @@ public:
 	{		
 		return SNew(SScriptDebugger);
 	}
+
+	virtual TSharedRef<SDockTab> SpawnTab(const FWorkflowTabSpawnInfo& Info) const override
+	{
+		TSharedRef<SDockTab> Tab = FWorkflowTabFactory::SpawnTab(Info);
+		Tab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &FDebuggerViewSummoner::OnTabClosed));
+
+		return Tab;
+	}
+
+	void OnTabClosed(TSharedRef<class SDockTab> DebugTab)
+	{
+		SScriptDebugger::Get()->DebugTabClose(DebugTab);
+	}
 };
 
 class FBasicScriptEditorMode : public FApplicationMode
@@ -274,8 +287,20 @@ void FScriptEditor::InitScriptEditor(const EToolkitMode::Type Mode, const TShare
 {
 	//FAssetEditorManager::Get().CloseOtherEditors(CodeProject, this);
 	FAssetEditorManager::Get().CloseOtherEditors(ScriptProject, this);
+
 	CodeProjectBeingEdited = CodeProject;
 	ScriptProjectBeingEdited = ScriptProject;
+
+	//
+	for (FScriptBreakPointNode &Node : UScriptDebuggerSetting::Get(false)->RecentBreakPoint)
+	{
+		TSet<int32>& Set = EnableBreakPoint.FindOrAdd(Node.FilePath);
+		Set.Add(Node.Line);
+		FBreakPointNode_Ref NewNode = MakeShareable(new FScriptBreakPointNode(Node.Line, Node.FilePath));
+		NewNode->HitCondition = Node.HitCondition;
+		BreakPointForView.Add(NewNode);
+	}
+	//
 
 	TSharedPtr<FScriptEditor> ThisPtr(SharedThis(this));
 	if(!DocumentManager.IsValid())
@@ -306,6 +331,7 @@ void FScriptEditor::InitScriptEditor(const EToolkitMode::Type Mode, const TShare
 	AddApplicationMode(
 		ScriptEditorModes::StandardMode, 
 		MakeShareable(new FBasicScriptEditorMode(ThisPtr, ScriptEditorModes::StandardMode)));
+
 	SetCurrentMode(ScriptEditorModes::StandardMode);
 
 	RegenerateMenusAndToolbars();
@@ -329,8 +355,8 @@ void FScriptEditor::BindCommands()
 			);
 
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugContinue,
-			FExecuteAction::CreateSP(this, &FScriptEditor::DegbugContinue),
-			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDegbugContinue)
+			FExecuteAction::CreateSP(this, &FScriptEditor::DebugContinue),
+			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugContinue)
 			);
 
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugStepover,
@@ -520,44 +546,72 @@ bool FScriptEditor::CanReload() const
 	return true;
 }
 
-void FScriptEditor::DegbugContinue()
+void FScriptEditor::DebugContinue()
 {
-
+	if (SScriptDebugger::Get())
+	{
+		return SScriptDebugger::Get()->DebugContinue();
+	}
 }
 
 void FScriptEditor::DebugStepover()
 {
-
+	if (SScriptDebugger::Get())
+	{
+		return SScriptDebugger::Get()->DebugStepover();
+	}
 }
 
 void FScriptEditor::DebugStepin()
 {
-
+	if (SScriptDebugger::Get())
+	{
+		return SScriptDebugger::Get()->DebugStepin();
+	}
 }
 
 void FScriptEditor::DebugStepout()
 {
-
+	if (SScriptDebugger::Get())
+	{
+		return SScriptDebugger::Get()->DebugStepout();
+	}
 }
 
-bool FScriptEditor::CanDegbugContinue()const
+bool FScriptEditor::CanDebugContinue()const
 {
-	return true;
+	if (SScriptDebugger::Get())
+	{
+		return SScriptDebugger::Get()->IsEnterDebugMode;
+	}
+	return false;
 }
 
 bool FScriptEditor::CanDebugStepover() const
 {
-	return true;
+	if (SScriptDebugger::Get())
+	{
+		return SScriptDebugger::Get()->IsEnterDebugMode;
+	}
+	return false;
 }
 
 bool FScriptEditor::CanDebugStepin() const
 {
-	return true;
+	if (SScriptDebugger::Get())
+	{
+		return SScriptDebugger::Get()->IsEnterDebugMode;
+	}
+	return false;
 }
 
 bool FScriptEditor::CanDebugStepout() const
 {
-	return true;
+	if (SScriptDebugger::Get())
+	{
+		return SScriptDebugger::Get()->IsEnterDebugMode;
+	}
+	return false;
 }
 
 bool FScriptEditor::CanSaveAsset()const
@@ -579,6 +633,54 @@ void FScriptEditor::FindInContentBrowser_Execute()
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////
+bool FScriptEditor::HasBreakPoint(FString& FilePath, int32 CodeLine)
+{
+	if (TSet<int32>* p = EnableBreakPoint.Find(FilePath))
+	{
+		if (p->Contains(CodeLine))
+			return true;
+	}
+	return false;
+}
+
+void FScriptEditor::ToggleBreakPoint(FString& FilePath, int32 CodeLine)
+{
+	TSet<int32>& Set = EnableBreakPoint.FindOrAdd(FilePath);
+	if (Set.Contains(CodeLine))
+	{
+		Set.Remove(CodeLine);
+
+		for (int32 i = 0; i < BreakPointForView.Num(); i++)
+		{
+			FBreakPointNode_Ref&Node = BreakPointForView[i];
+			if (Node->FilePath == FilePath && Node->Line == CodeLine)
+			{
+				BreakPointForView.RemoveAt(i);
+				break;
+			}
+		}
+	}
+	else
+	{
+		Set.Add(CodeLine);
+		FBreakPointNode_Ref NewNode = MakeShareable(new FScriptBreakPointNode(CodeLine, FilePath));
+		BreakPointForView.Add(NewNode);
+	}
+}
+
+TSharedPtr<FScriptBreakPointNode> FScriptEditor::GetViewBreakPoint(FString& FilePath, int32 CodeLine)
+{
+	for (int32 i = 0; i < BreakPointForView.Num(); i++)
+	{
+		FBreakPointNode_Ref&Node = BreakPointForView[i];
+		if (Node->FilePath == FilePath && Node->Line == CodeLine)
+		{
+			return Node;
+		}
+	}
+	return nullptr;
+}
 
 //////////////////////////////////////////////////////////////////////////
 

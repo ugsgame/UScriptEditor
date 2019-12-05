@@ -10,94 +10,6 @@
 #include "IInputProcessor.h"
 #include "Regex.h"
 
-class FToolBarBuilder;
-class FMenuBuilder;
-
-struct FLuaFileTreeNode
-{
-	FLuaFileTreeNode(bool bIsDir, FString Name, FString Path)
-		: FileName(Name), BasePath(Path), IsDir(bIsDir)
-	{
-	}
-
-	void FindChildren();
-	void GetAllChildren(TArray<TSharedRef<FLuaFileTreeNode>>& OutArr);
-	FString GetFilePath()
-	{
-		return BasePath / FileName;
-	}
-	FString FileName;
-	FString BasePath;
-	bool IsDir;
-	// 	TArray<TSharedRef<FLuaFileTreeNode>> DirChildren;
-	// 	TArray<TSharedRef<FLuaFileTreeNode>> FileChildren;
-
-	TMap<FString, TSharedRef<FLuaFileTreeNode>> DirChildren;
-	TMap<FString, TSharedRef<FLuaFileTreeNode>> FileChildren;
-};
-
-using FLuaFileTreeNode_Ref = TSharedRef<FLuaFileTreeNode>;
-using SLuaFileTree = STreeView<FLuaFileTreeNode_Ref>;
-
-class SLuaFileTreeWidgetItem :public STableRow<FLuaFileTreeNode_Ref>
-{
-public:
-
-	SLATE_BEGIN_ARGS(SLuaFileTreeWidgetItem)
-	{}
-	SLATE_END_ARGS()
-
-		void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FLuaFileTreeNode_Ref Node)
-	{
-		STableRow<FLuaFileTreeNode_Ref>::Construct(STableRow<FLuaFileTreeNode_Ref>::FArguments(), InOwnerTableView);
-		ChildSlot
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.VAlign(VAlign_Center)
-			[
-				SNew(SExpanderArrow, SharedThis(this))
-			]
-		+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				SNew(STextBlock)
-				.Text(FText::FromString(Node->FileName))
-			]
-			];
-	}
-};
-
-struct FCodeListNode
-{
-	FCodeListNode(FString _Code, int32 _Line, FString _FilePath)
-		:FilePath(_FilePath), Code(_Code), Line(_Line), HasBreakPoint(false)
-	{}
-	FString FilePath;
-	FString Code;
-	int32 Line;
-	bool HasBreakPoint;
-};
-using FCodeListNode_Ref = TSharedRef<FCodeListNode>;
-using SLuaCodeList = SListView<FCodeListNode_Ref>;
-
-class SCodeWidgetItem :public STableRow<FCodeListNode_Ref>
-{
-public:
-
-	SLATE_BEGIN_ARGS(SCodeWidgetItem)
-	{}
-	SLATE_END_ARGS()
-		TSharedPtr<FCodeListNode> CodeNode;
-	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FCodeListNode_Ref Node);
-
-	EVisibility BreakPointVisible() const;
-	FReply HandleClickBreakPoint();
-	FReply OnRightClickBreakpoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent);
-	void OnBreakConditionCommit(const FText& ConditionText, ETextCommit::Type CommitType);
-
-};
 
 struct FStackListNode
 {
@@ -124,9 +36,6 @@ public:
 		void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FStackListNode_Ref Node);
 
 };
-
-
-
 
 class SDebuggerVarTreeWidgetItem :public SMultiColumnTableRow<TSharedRef<FScriptDebuggerVarNode>>
 {
@@ -203,33 +112,16 @@ public:
 public:
 	static SScriptDebugger* Ptr;
 	static SScriptDebugger* Get() { return Ptr; }
-	/** IModuleInterface implementation */
-	void StartupModule() ;
-	void ShutdownModule();
 
-	/** This function will be bound to Command (by default it will bring up plugin window) */
-	void PluginButtonClicked();
-
-	TArray<FLuaFileTreeNode_Ref> LuaFiles;
-	TArray<FLuaFileTreeNode_Ref> AfterFilterLuaFiles;
-	TWeakPtr<SLuaFileTree> LuaFileTreePtr;
-
-	UPROPERTY()
-	FString NowLuaCodeFilePath;
 	FDateTime ModifyTimeOfNowFile;
-
-	UPROPERTY()
-	TArray<FCodeListNode_Ref> NowLuaCodes;
-	UPROPERTY()
-	TWeakPtr<SLuaCodeList> LuaCodeListPtr;
-
 	EStackListState StackListState;
 	TArray<FStackListNode_Ref> NowLuaStack;
 	TWeakPtr<SLuaStackList> LuaStackListPtr;
 
-	TArray<FBreakPointNode_Ref> BreakPointForView;
 	TWeakPtr<SBreakPointList> BreakPointListPtr;
 
+	UPROPERTY()
+	FString NowLuaCodeFilePath;
 	UPROPERTY()
 	TArray<FDebuggerVarNode_Ref> NowVars;
 	UPROPERTY()
@@ -237,15 +129,13 @@ public:
 	UPROPERTY()
 	FString RecentFilePath;
 
-	TMap<FString, TSet<int32>> EnableBreakPoint;
 	bool IsDebugRun;
 	bool IsDebugRemote;
 	bool IsEnterDebugMode;
-	bool HasBreakPoint(FString& FilePath, int32 CodeLine);
+
 	FString LastShowVarFuncName;
 	TMap<FString, float> LastTimeFileOffset;
-	void ToggleBreakPoint(FString& FilePath, int32 CodeLine);
-	TSharedPtr<FScriptBreakPointNode> GetViewBreakPoint(FString& FilePath, int32 CodeLine);
+
 	FText GetBreakPointHitConditionText(FString& FilePath, int32 CodeLine);
 	void ToggleStartDebug(const ECheckBoxState NewState);
 	void ToggleRemoteDebug(const ECheckBoxState NewState);
@@ -254,22 +144,12 @@ public:
 	void DebugStateChange();
 	void RemoteStateChange();
 	void SyncState();
-	void RefreshCodeList();
 	void RefreshStackList();
 	static FString GetLuaSourceDir();
-	static FString LuaPathToFilePath(FString LuaFilePath);
 	void EnterDebug(const FString& LuaFilePath, int32 Line);
 	void SetStackData(const TArray<FString>& Content, const TArray<int32>& Lines, const TArray<FString>& FilePaths, const TArray<int32>& StackIndex, const TArray<FString>& FuncInfos);
 	void ShowCode(const FString& FilePath, int32 Line = 0);
 	void ShowStackVars(int32 StackIndex);
-
-	TSharedRef<ITableRow> HandleFileTreeGenerateRow(FLuaFileTreeNode_Ref InNode, const TSharedRef<STableViewBase>& OwnerTable);
-	void HandleFileTreeGetChildren(FLuaFileTreeNode_Ref InNode, TArray<FLuaFileTreeNode_Ref>& OutChildren);
-	void HandleFileTreeSelectionChanged(TSharedPtr<FLuaFileTreeNode>, ESelectInfo::Type);
-	void HandleFileNodeExpansion(FLuaFileTreeNode_Ref InNode, bool bIsExpaned);
-
-	TSharedRef<ITableRow> HandleCodeListGenerateRow(FCodeListNode_Ref InNode, const TSharedRef<STableViewBase>& OwnerTable);
-	void HandleCodeListSelectionChanged(TSharedPtr<FCodeListNode>, ESelectInfo::Type);
 
 	TSharedRef<ITableRow> HandleStackListGenerateRow(FStackListNode_Ref InNode, const TSharedRef<STableViewBase>& OwnerTable);
 	void HandleStackListSelectionChanged(TSharedPtr<FStackListNode>, ESelectInfo::Type);
@@ -281,17 +161,16 @@ public:
 	void HandleVarsTreeGetChildren(FDebuggerVarNode_Ref InNode, TArray<FDebuggerVarNode_Ref>& OutChildren);
 	void HandleVarsTreeSelectionChanged(TSharedPtr<FScriptDebuggerVarNode>, ESelectInfo::Type);
 
-	void RefreshLuaFileData();
-
 	void CleanDebugInfo();
-	FReply DebugContinue();
-	FReply DebugStepover();
-	FReply DebugStepin();
-	FReply DebugStepout();
+	void DebugContinue();
+	void DebugStepover();
+	void DebugStepin();
+	void DebugStepout();
 	void DebugTabClose(TSharedRef<SDockTab> DockTab);
 	void RegisterKeyDown();
 	void BeforeExit();
 	void SaveDebuggerConfig();
+
 	class FHandleKeyDown :public IInputProcessor
 	{
 		virtual void Tick(const float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICursor> Cursor);
@@ -300,18 +179,9 @@ public:
 	};
 	TSharedPtr<FHandleKeyDown> ptr_HandleKeyDown;
 
-	void OnFileFilterTextChanged(const FText& InFilterText);
-	void OnSearchLineChange(const FText& LineText);
-	void FielterFileNode(FRegexPattern& Pattern, FLuaFileTreeNode_Ref& FileNode);
 	float IntervalToCheckFileChange;
 	void Tick(float Delta);
 private:
 
-	void AddToolbarExtension(FToolBarBuilder& Builder);
-	void AddMenuExtension(FMenuBuilder& Builder);
-
 	void OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);
-
-private:
-	//TSharedPtr<class FUICommandList> PluginCommands;
 };

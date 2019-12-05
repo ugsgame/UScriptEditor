@@ -96,12 +96,13 @@ public:
 	virtual void StepIn();
 	virtual void StepOut();
 	virtual void BreakConditionChange();
-	UPROPERTY(config)
-		TMap<FString, float> LastTimeFileOffset;
 
 	UPROPERTY(config)
-		FString RecentFilePath;
+	TMap<FString, float> LastTimeFileOffset;
 
 	UPROPERTY(config)
-		TArray<FScriptBreakPointNode> RecentBreakPoint;
+	FString RecentFilePath;
+
+	UPROPERTY(config)
+	TArray<FScriptBreakPointNode> RecentBreakPoint;
 };

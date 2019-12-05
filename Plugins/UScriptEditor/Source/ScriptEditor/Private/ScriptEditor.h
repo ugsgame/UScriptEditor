@@ -8,6 +8,8 @@
 #include "Toolkits/IToolkitHost.h"
 #include "WorkflowOrientedApp/WorkflowCentricApplication.h"
 
+#include "SScriptDebugger.h"
+
 class FScriptEditorToolbar;
 class FDocumentTracker;
 class FTabInfo;
@@ -85,12 +87,12 @@ private:
 	bool CanSaveAll() const;
 	bool CanReload() const;
 	//Debug Actions
-	void DegbugContinue();
+	void DebugContinue();
 	void DebugStepover();
 	void DebugStepin();
 	void DebugStepout();
 
-	bool CanDegbugContinue() const;
+	bool CanDebugContinue() const;
 	bool CanDebugStepover() const;
 	bool CanDebugStepin() const;
 	bool CanDebugStepout() const;
@@ -101,6 +103,16 @@ protected:
 	virtual void SaveAsset_Execute();
 
 	virtual void FindInContentBrowser_Execute();
+
+	//
+public:
+	//Debug
+	TMap<FString, TSet<int32>> EnableBreakPoint;
+	TArray<FBreakPointNode_Ref> BreakPointForView;
+	//
+	bool HasBreakPoint(FString& FilePath, int32 CodeLine);
+	void ToggleBreakPoint(FString& FilePath, int32 CodeLine);
+	TSharedPtr<FScriptBreakPointNode> GetViewBreakPoint(FString& FilePath, int32 CodeLine);
 	//
 protected:
 	TSharedPtr<FDocumentTracker> DocumentManager;

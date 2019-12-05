@@ -20,6 +20,7 @@
 #include "CPPRichTextSyntaxHighlighterTextLayoutMarshaller.h"
 #include "SCodeEditableText.h"
 
+#include "ScriptEditor.h"
 #include "SScriptDebugger.h"
 
 #include "Editor/EditorStyle/Public/EditorStyle.h"
@@ -110,7 +111,7 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 								[
 									SNew(SBorder)
 									.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
-									//.BorderImage(FEditorStyle::GetBrush("Graph.Node.Body"))
+									//.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
 									.BorderImage(FEditorStyle::GetBrush("NoBorder"))
 									[
 										SAssignNew(LineCounter, SListView<FCodeLineNode_Ptr>)
@@ -264,6 +265,8 @@ void SCodeEditor::OnDoubleClickLineCounterItem(FCodeLineNode_Ptr Item)
 
 TSharedRef<ITableRow> SCodeEditor::OnGenerateLineCounter(FCodeLineNode_Ptr Item, const TSharedRef<STableViewBase>&OwnerTable) 
 {
+	Item->FilePath = CodeProjectItem->Path;
+
 	return SNew(SCodeLineItem, OwnerTable, Item);
 }
 
@@ -272,11 +275,7 @@ TSharedRef<ITableRow> SCodeEditor::OnGenerateLineCounter(FCodeLineNode_Ptr Item,
 void SCodeLineItem::Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FCodeLineNode_Ptr Line)
 {
 	CodeLine = Line;
-
-// 	if (SScriptDebugger::Get())
-// 	{
-// 		CodeLine->HasBreakPoint = SScriptDebugger::Get()->HasBreakPoint(CodeLine->FilePath, CodeLine->Line);
-// 	}
+ 	CodeLine->HasBreakPoint = FScriptEditor::Get()->HasBreakPoint(CodeLine->FilePath, CodeLine->Line);
 
 	STableRow<FCodeLineNode_Ptr>::Construct(STableRow<FCodeLineNode_Ptr>::FArguments(), InOwnerTableView);
 	ChildSlot
@@ -329,10 +328,19 @@ void SCodeLineItem::OnClickBreakPoint(const ECheckBoxState NewCheckedState)
 	{
 		CodeLine->HasBreakPoint = false;
 	}
+
+	FScriptEditor::Get()->ToggleBreakPoint(CodeLine->FilePath, CodeLine->Line);
+	SScriptDebugger::Get()->SaveDebuggerConfig();
 }
 
 void SCodeLineItem::OnBreakConditionCommit(const FText& ConditionText, ETextCommit::Type CommitType)
 {
-
+	TSharedPtr<FScriptBreakPointNode> BreakPointNode = FScriptEditor::Get()->GetViewBreakPoint(CodeLine->FilePath, CodeLine->Line);
+	if (BreakPointNode.IsValid())
+	{
+		BreakPointNode->HitCondition = ConditionText;
+		UScriptDebuggerSetting::Get(false)->BreakConditionChange();
+		UScriptDebuggerSetting::Get(true)->BreakConditionChange();
+	}
 }
 
