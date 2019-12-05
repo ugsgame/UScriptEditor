@@ -26,9 +26,12 @@ void SScriptDebugger::Construct(const FArguments& InArgs)
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	Ptr = this;
+
 	IsDebugRun = true;
 	IsDebugRemote = false;
 	IsEnterDebugMode = false;
+	IsDebugerClosed = false;
+
 	IntervalToCheckFileChange = 0;
 	ptr_HandleKeyDown = MakeShareable(new FHandleKeyDown());
 	StackListState = EStackListState::CallStack;
@@ -473,6 +476,7 @@ void SScriptDebugger::DebugTabClose(TSharedRef<SDockTab> DockTab)
 	SaveDebuggerConfig();
 	NowLuaCodeFilePath = "";
 
+	IsDebugerClosed = true;
 	Ptr = nullptr;
 }
 
@@ -490,7 +494,7 @@ void SScriptDebugger::BeforeExit()
 
 void SScriptDebugger::SaveDebuggerConfig()
 {
-	if(!Ptr)return;
+	if(IsDebugerClosed)return;
 	
 // 	if (LuaCodeListPtr.IsValid())
 // 	{
@@ -511,8 +515,9 @@ void SScriptDebugger::SaveDebuggerConfig()
 }
 
 
-void SScriptDebugger::Tick(float Delta)
+void SScriptDebugger::Update(float Delta)
 {
+	if (IsDebugerClosed)return;
 	//TODO:Not here, Move to CodeEditor
 	/*
 	IntervalToCheckFileChange += Delta;
@@ -540,11 +545,11 @@ void SLuaStackWidgetItem::Construct(const FArguments& InArgs, const TSharedRef<S
 		[
 			SNew(SBox)
 			.MinDesiredHeight(20)
-		.VAlign(VAlign_Center)
-		[
-			SNew(STextBlock)
-			.Text(FText::FromString(Node->Code))
-		]
+			.VAlign(VAlign_Center)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(Node->Code))
+			]
 		];
 }
 
@@ -581,7 +586,7 @@ void SScriptDebugger::FHandleKeyDown::Tick(const float DeltaTime, FSlateApplicat
 {
 	if (SScriptDebugger::Get())
 	{
-		SScriptDebugger::Get()->Tick(DeltaTime);
+		SScriptDebugger::Get()->Update(DeltaTime);
 	}
 }
 

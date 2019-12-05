@@ -132,6 +132,7 @@ public:
 	bool IsDebugRun;
 	bool IsDebugRemote;
 	bool IsEnterDebugMode;
+	bool IsDebugerClosed;
 
 	FString LastShowVarFuncName;
 	TMap<FString, float> LastTimeFileOffset;
@@ -180,7 +181,7 @@ public:
 	TSharedPtr<FHandleKeyDown> ptr_HandleKeyDown;
 
 	float IntervalToCheckFileChange;
-	void Tick(float Delta);
+	void Update(float Delta);
 private:
 
 	void OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);
