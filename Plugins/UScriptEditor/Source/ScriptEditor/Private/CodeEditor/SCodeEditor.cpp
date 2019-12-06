@@ -57,7 +57,7 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 	ChildSlot
 	[
 		SNew(SBorder)
-		.BorderImage(FCodeEditorStyle::Get().GetBrush("TextEditor.Border"))
+		.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
 		[
 			SNew(SGridPanel)
 			.FillColumn(0, 1.0f)
@@ -82,19 +82,21 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 			]
 		]
 	];
-*/
+	*/
+	
+	
 	TSharedPtr<SOverlay>OverlayWidget; this->ChildSlot
 		[
-			SAssignNew(OverlayWidget, SOverlay)
-			+ SOverlay::Slot()
-			[
-				SNew(SVerticalBox)
-				+ SVerticalBox::Slot()
-				[
-					SNew(SBox)
-					.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
-					.MinDesiredWidth(500.f).MinDesiredHeight(300.f)
-					[
+// 			SAssignNew(OverlayWidget, SOverlay)
+// 			+ SOverlay::Slot()
+// 			[
+// 				SNew(SVerticalBox)
+// 				+ SVerticalBox::Slot()
+// 				[
+// 					SNew(SBox)
+// 					.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
+// 					.MinDesiredWidth(500.f).MinDesiredHeight(300.f)
+// 					[
 						SNew(SBorder)
 						.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
 						.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
@@ -124,7 +126,7 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 									]
 								]
 								+ SHorizontalBox::Slot()
-								.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
+								.VAlign(VAlign_Fill).HAlign(HAlign_Fill).AutoWidth()
 								[
 									SAssignNew(CodeEditableText, SCodeEditableText)
 									.OnTextChanged(this, &SCodeEditor::OnTextChanged)
@@ -139,11 +141,11 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 								]
 							]
 						]
-					]
-				]
-			]
+// 					]
+// 				]
+// 			]
 		];
-	
+
 	//Add Line Number
 	SetLineCountList(GetLineCount());
 }
@@ -223,7 +225,22 @@ int32 SCodeEditor::GetLineCount() const
 
 void SCodeEditor::GotoLineAndColumn(int32 LineNumber, int32 ColumnNumber)
 {
+	FSlateApplication::Get().SetKeyboardFocus(CodeEditableText.ToSharedRef());
 	CodeEditableText->GoToLineColumn(LineNumber, ColumnNumber);
+	CodeEditableText->SelectLine();
+
+	VS_SCROLL_BOX->SetScrollOffset((VS_SCROLL_BOX->GetScrollOffsetOfEnd()/ (float)GetLineCount ())* LineNumber);
+}
+
+FText SCodeEditor::GetLineAndColumn() const
+{
+	int32 Line;
+	int32 Column;
+	CodeEditableText->GetLineAndColumn(Line, Column);
+
+	FString LineAndColumn = FString::Printf(TEXT("Line: %d Column: %d"), Line + 1, Column);
+
+	return FText::FromString(LineAndColumn);
 }
 
 void SCodeEditor::SetLineCountList(const int32 Count) 

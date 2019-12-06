@@ -155,8 +155,8 @@ bool UCodeProjectItem::IsEmptyFolder()const
 
 UCodeProjectItem* UCodeProjectItem::FindChild(FString ChildFullPath)
 {
-	/*
 	//层序遍历
+	/*
 	TArray<UCodeProjectItem*> Quece;
 	UCodeProjectItem* CurrentNode = this;
 	while (CurrentNode)
@@ -179,6 +179,7 @@ UCodeProjectItem* UCodeProjectItem::FindChild(FString ChildFullPath)
 	}
 	return nullptr;
 	*/
+	
 	UCodeProjectItem* OutChild = nullptr;
 	if (this->Path == ChildFullPath)
 	{
@@ -187,8 +188,10 @@ UCodeProjectItem* UCodeProjectItem::FindChild(FString ChildFullPath)
 	else
 	{
 		FindChild(this, ChildFullPath, OutChild);
+
 	}
 	return OutChild;
+	
 }
 
 
@@ -252,7 +255,7 @@ void UCodeProjectItem::DeleteUnlegalChildren(UCodeProjectItem* InParent)
 	}
 }
 
-void UCodeProjectItem::FindChild(UCodeProjectItem* InParent, FString ChildFullPath, OUT UCodeProjectItem*  OutChild)
+void UCodeProjectItem::FindChild(UCodeProjectItem* InParent, FString ChildFullPath, OUT UCodeProjectItem*  &OutChild)
 {
 	if (InParent && InParent->Children.Num() > 0)
 	{

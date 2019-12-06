@@ -59,6 +59,8 @@ public:
 	//
 	int32 GetLineCount() const;
 	void GotoLineAndColumn(int32 LineNumber, int32 ColumnNumber);
+	FText GetLineAndColumn() const;
+
 	//
 
 protected:

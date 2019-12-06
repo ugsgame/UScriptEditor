@@ -17,14 +17,27 @@ void SCodeEditableText::Construct( const FArguments& InArgs )
 		.HScrollBar(InArgs._HScrollBar)
 		.VScrollBar(InArgs._VScrollBar)
 		.OnTextChanged(InArgs._OnTextChanged)
+		.OnCursorMoved(this, &SCodeEditableText::OnCursorMoved)
 	);
 }
 
-void SCodeEditableText::GoToLineColumn(int32 Line, int32 Column) {
+void SCodeEditableText::GoToLineColumn(int32 Line, int32 Column)
+{
 	FTextLocation Location(Line, Column);
 	//
 	GoTo(Location);
 	ScrollTo(Location);
+
+	GEditor->AddOnScreenDebugMessage(1, 5, FColor::Red, FString("Line:") + FString::FromInt(Line) + ":" + FString::FromInt(Column));
+
+
+}
+
+
+void SCodeEditableText::GetLineAndColumn(int32 & Line, int32 & Column)
+{
+	Line = CurrentLine;
+	Column = CurrentColumn;
 }
 
 void SCodeEditableText::SelectLine() {

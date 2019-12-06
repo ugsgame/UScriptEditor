@@ -52,7 +52,7 @@ private:
 
 	void DeleteUnlegalChildren(UCodeProjectItem* InParent);
 
-	void FindChild(UCodeProjectItem* InParent, FString ChildFullPath, OUT UCodeProjectItem*  OutChild);
+	void FindChild(UCodeProjectItem* InParent, FString ChildFullPath, OUT UCodeProjectItem* & OutChild);
 public:
 	UPROPERTY(Transient)
 	TEnumAsByte<ECodeProjectItemType::Type> Type;

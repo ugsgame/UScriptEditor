@@ -47,7 +47,15 @@ public:
 	void SelectLine();
 	void DeleteSelectedText();
 	void GoToLineColumn(int32 Line, int32 Column);
+	void GetLineAndColumn(int32 & Line, int32 & Column);
 
+	void OnCursorMoved(const FTextLocation & Location) {
+		CurrentLine = Location.GetLineIndex();
+		CurrentColumn = Location.GetOffset();
+	}
 private:
 	virtual FReply OnKeyChar(const FGeometry& MyGeometry,const FCharacterEvent& InCharacterEvent) override;
+
+	int32 CurrentLine;
+	int32 CurrentColumn;
 };

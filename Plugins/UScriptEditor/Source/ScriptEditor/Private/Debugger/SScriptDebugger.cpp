@@ -334,6 +334,13 @@ void SScriptDebugger::SetStackData(const TArray<FString>& Content, const TArray<
 void SScriptDebugger::ShowCode(const FString& FilePath, int32 Line /*= 0*/)
 {
 	//TODO
+	UCodeProjectItem* ScriptProject = FScriptEditor::Get()->GetScriptProjectBeingEdited();
+	UCodeProjectItem* CodeItem = ScriptProject->FindChild(FilePath);
+
+	if (CodeItem)
+	{
+		FScriptEditor::Get()->OpenFileAndGotoLine(CodeItem, Line);
+	}
 }
 
 

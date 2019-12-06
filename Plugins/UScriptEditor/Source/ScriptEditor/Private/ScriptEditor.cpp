@@ -389,7 +389,7 @@ void FScriptEditor::OpenFileAndGotoLine(UCodeProjectItem* Item, int32 Line)
 	if (DocTab.IsValid())
 	{
 		TSharedRef<SCodeEditor> CodeEditor = StaticCastSharedRef<SCodeEditor>(DocTab->GetContent());
-		CodeEditor->GotoLineAndColumn(Line, 1);
+		CodeEditor->GotoLineAndColumn(Line - 1, 0);
 	}
 }
 
