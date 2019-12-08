@@ -131,7 +131,7 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 									SAssignNew(CodeEditableText, SCodeEditableText)
 									.OnTextChanged(this, &SCodeEditor::OnTextChanged)
 									.OnTextCommitted(this, &SCodeEditor::OnTextCommitted)
-									//.IsEnabled(this,&SMGC_CodeEditorCore::IsScriptEditable)
+									//.IsEnabled(this,&SCodeEditor::IsCodeEditable)
 									.Text(FText::FromString(FileText))
 									.VScrollBar(VerticalScrollbar)
 									.HScrollBar(HorizontalScrollbar)
