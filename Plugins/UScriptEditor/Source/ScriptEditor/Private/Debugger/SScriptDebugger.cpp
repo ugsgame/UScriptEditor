@@ -339,6 +339,7 @@ void SScriptDebugger::ShowCode(const FString& FilePath, int32 Line /*= 0*/)
 
 	if (CodeItem)
 	{
+		SProjectTreeEditor::Get()->ExpanedScriptItem(CodeItem);
 		FScriptEditor::Get()->OpenFileAndGotoLine(CodeItem, Line);
 	}
 }

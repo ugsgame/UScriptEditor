@@ -229,6 +229,7 @@ void SCodeEditor::GotoLineAndColumn(int32 LineNumber, int32 ColumnNumber)
 	CodeEditableText->GoToLineColumn(LineNumber, ColumnNumber);
 	CodeEditableText->SelectLine();
 
+	LineNumber = LineNumber > 1?LineNumber + 1 : LineNumber;
 	VS_SCROLL_BOX->SetScrollOffset((VS_SCROLL_BOX->GetScrollOffsetOfEnd()/GetLineCount ())* LineNumber);
 }
 
