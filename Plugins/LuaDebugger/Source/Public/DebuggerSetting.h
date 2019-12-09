@@ -10,35 +10,58 @@
 #include "DebuggerSetting.generated.h"
 
 
-
+UENUM()
+enum class EVarNodeType : uint8
+{
+	Local = 0,
+	UpValue,
+	Global,
+	UEObject
+};
 
 USTRUCT()
 struct LUADEBUGGER_API FDebuggerVarNode
 {
 	GENERATED_BODY()
 
-	FDebuggerVarNode():
-	NameWeakIndex(-1), ValueWeakIndex(-1)
-	{}
+public:
+
+	FDebuggerVarNode() {}
 
 	UPROPERTY()
-	FText Name;
+		EVarNodeType NodeType;
 
 	UPROPERTY()
-	FText Value;
+		int32 StackLevel;
 
 	UPROPERTY()
-	int32 NameWeakIndex;
+		int32 VarType;
 
 	UPROPERTY()
-	int32 ValueWeakIndex;
+		FText VarName;
 
-	class UDebuggerSetting* DebuggerSetting;
+	UPROPERTY()
+		FText VarValue;
+
+	UPROPERTY()
+		TArray<FString> NameList;
+
+	TMap<FString, TSharedRef<FDebuggerVarNode>> NodeChildren;
 
 	void GetChildren(TArray<TSharedRef<FDebuggerVarNode>>& OutChildren);
 
-	TArray<TSharedRef<FDebuggerVarNode>> KeyChildren;
-	TArray<TSharedRef<FDebuggerVarNode>> ValueChildren;
+	bool IsEditable();
+
+	FString ToString()
+	{
+		FString NameListString;
+		for (auto NameStr : NameList)
+		{
+			NameListString += FString("-->").Append(NameStr);
+		}
+		return FString::Printf(TEXT("unlua_Debug VarNode VarName[%s] NameList[%s]"), *VarName.ToString(), *NameListString);
+	}
+
 };
 
 using FDebuggerVarNode_Ref = TSharedRef<FDebuggerVarNode>;
@@ -48,21 +71,21 @@ USTRUCT()
 struct LUADEBUGGER_API FBreakPointNode
 {
 	GENERATED_BODY()
-	FBreakPointNode() {};
+		FBreakPointNode() {};
 	FBreakPointNode(int32 _Line, FString _FilePath)
 		:FilePath(_FilePath), Line(_Line)
 	{}
 	UPROPERTY()
-	FString FilePath;
+		FString FilePath;
 
 	UPROPERTY()
-	int32 Line;
+		int32 Line;
 
 	UPROPERTY()
-	FText HitCondition;
+		FText HitCondition;
 };
 
-UCLASS(config=Editor)
+UCLASS(config = Editor)
 class LUADEBUGGER_API UDebuggerSetting : public UObject
 {
 	GENERATED_BODY()
@@ -73,7 +96,7 @@ public:
 	bool bTabIsOpen;
 	struct lua_State *L;
 public:
-	UDebuggerSetting():L(nullptr){}
+	UDebuggerSetting() :L(nullptr) {}
 	UFUNCTION()
 		static UDebuggerSetting* Get(bool IsRemoteDebugger = false);
 	UFUNCTION()
@@ -84,11 +107,8 @@ public:
 	virtual void UpdateBreakPoint(TMap<FString, TSet<int32>>& BreakPoint);
 	virtual void ToggleDebugStart(bool IsStart);
 	virtual void SetTabIsOpen(bool IsOpen);
-	virtual void GetStackVars(int32 StackIndex, TArray<FDebuggerVarNode_Ref>& Vars);
-	virtual void GetVarsChildren(FDebuggerVarNode Node, TArray<FDebuggerVarNode_Ref>& OutChildren);
 
-	
-		virtual void EnterDebug(lua_State* State);
+
 
 	UFUNCTION()
 		virtual void SetStackData(const TArray<FString>& Content, const TArray<int32>& Lines, const TArray<FString>& FilePaths, const TArray<int32>& StackIndex, const TArray<FString>& FuncInfos);
@@ -100,11 +120,11 @@ public:
 
 	virtual void BreakConditionChange();
 	UPROPERTY(config)
-	TMap<FString, float> LastTimeFileOffset;
+		TMap<FString, float> LastTimeFileOffset;
 
 	UPROPERTY(config)
 		FString RecentFilePath;
-	
+
 	UPROPERTY(config)
 		TArray<FBreakPointNode> RecentBreakPoint;
 
@@ -114,6 +134,26 @@ public:
 	virtual void StepIn();
 	virtual void StepOut();
 	void UnRegisterLuaState(bool bFullCleanup);
+
+	bool NameTranslate(int32 VarType, FString& VarName, int32 StackIndex);
+
+	void ValueTranslate(int32 VarType, FString& VarValue, int32 StackIndex);
+
+	void IteraionTable(FDebuggerVarNode& InNode, int32 NameIndex);
+
+	void LocalListen(FDebuggerVarNode& InNode);
+
+	void UpvalueListen(FDebuggerVarNode& InNode);
+
+	void GlobalListen(FDebuggerVarNode& InNode);
+
+	void UEObjectListen();
+
+	void EnterDebug(const FString& LuaFilePath, int32 Line);
+
+	virtual void GetStackVars(int32 StackIndex, TArray<FDebuggerVarNode_Ref>& Vars);
+
+	virtual void GetVarsChildren(FDebuggerVarNode& Node);
 
 
 };

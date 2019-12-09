@@ -326,6 +326,7 @@ TSharedRef<SDockTab> FLuaDebuggerModule::OnSpawnPluginTab(const FSpawnTabArgs& S
 								.OnGenerateRow_Raw(this, &FLuaDebuggerModule::HandleVarsTreeGenerateRow)
 								.OnGetChildren_Raw(this, &FLuaDebuggerModule::HandleVarsTreeGetChildren)
 								.OnSelectionChanged_Raw(this, &FLuaDebuggerModule::HandleVarsTreeSelectionChanged)
+								.OnExpansionChanged_Raw(this, &FLuaDebuggerModule::HandleVarsTreeExpansion)
 								.HeaderRow
 								(
 									SNew(SHeaderRow)
@@ -580,20 +581,19 @@ FString FLuaDebuggerModule::LuaPathToFilePath(FString LuaFilePath)
 void FLuaDebuggerModule::EnterDebug(const FString& LuaFilePath, int32 Line)
 {
 	ShowCode(LuaFilePath, Line);
-// todo
-	if (NowLuaStack.Num()>0)
-		ShowStackVars(NowLuaStack[0]->StackIndex);
+	//Show Current Func debug
+	ShowStackVars(0);
 	IsEnterDebugMode = true;
 	FSlateApplication::Get().EnterDebuggingMode();
 }
 
 
-void FLuaDebuggerModule::SetStackData(const TArray<FString>& Content, const TArray<int32>& Lines, const TArray<FString>& FilePaths, const TArray<int32>& StackIndex, const TArray<FString>& FuncInfos)
+void FLuaDebuggerModule::SetStackData(TArray<TTuple<int32, int32, FString, FString>>& StackInfos)
 {
 	NowLuaStack.Reset();
-	for (int i = 0; i < Content.Num(); i++)
+	for (auto StackItem : StackInfos)
 	{
-		FStackListNode_Ref NewNode = MakeShareable(new FStackListNode(Content[i], Lines[i], FilePaths[i], StackIndex[i], FuncInfos[i]));
+		FStackListNode_Ref NewNode = MakeShareable(new FStackListNode(StackItem.Get<0>(), StackItem.Get<1>(), StackItem.Get<2>(), StackItem.Get<3>()));
 		NowLuaStack.Add(NewNode);
 	}
 	RefreshStackList();
@@ -651,6 +651,10 @@ void FLuaDebuggerModule::ShowCode(const FString& FilePath, int32 Line /*= 0*/)
 
 void FLuaDebuggerModule::ShowStackVars(int32 StackIndex)
 {
+	NowVars.Reset();
+	//NowLuaStack.Reset();
+	UDebuggerSetting::Get(false)->GetStackVars(StackIndex, NowVars);
+#if 0
 	if (StackIndex == -1)
 	{
 		NowVars.Reset();
@@ -670,10 +674,15 @@ void FLuaDebuggerModule::ShowStackVars(int32 StackIndex)
 		UDebuggerSetting::Get(false)->GetStackVars(StackIndex, NowVars);
 
 	}
+#endif
 	if (DebuggerVarTree.IsValid())
 	{
 		DebuggerVarTree.Pin()->RequestTreeRefresh();
 	}
+	/*if (LuaStackListPtr.IsValid())
+	{
+		LuaStackListPtr.Pin()->RequestListRefresh();
+	}*/
 }
 
 TSharedRef<ITableRow> FLuaDebuggerModule::HandleFileTreeGenerateRow(FLuaFileTreeNode_Ref InNode, const TSharedRef<STableViewBase>& OwnerTable)
@@ -759,6 +768,11 @@ void FLuaDebuggerModule::HandleVarsTreeGetChildren(FDebuggerVarNode_Ref InNode, 
 
 
 void FLuaDebuggerModule::HandleVarsTreeSelectionChanged(TSharedPtr<FDebuggerVarNode>, ESelectInfo::Type)
+{
+
+}
+
+void FLuaDebuggerModule::HandleVarsTreeExpansion(FDebuggerVarNode_Ref InNode, bool bIsExpaned)
 {
 
 }
@@ -852,6 +866,20 @@ void FLuaDebuggerModule::RegisterKeyDown()
 void FLuaDebuggerModule::BeforeExit()
 {
 	SaveDebuggerConfig();
+}
+
+void FLuaDebuggerModule::ClearStackInfo()
+{
+	NowLuaStack.Reset();
+	if (LuaStackListPtr.IsValid())
+	{
+		LuaStackListPtr.Pin()->RequestListRefresh();
+	}
+	NowVars.Reset();
+	if (DebuggerVarTree.IsValid())
+	{
+		DebuggerVarTree.Pin()->RequestTreeRefresh();
+	}
 }
 
 void FLuaDebuggerModule::SaveDebuggerConfig()
@@ -1163,13 +1191,13 @@ TSharedRef<SWidget> SDebuggerVarTreeWidgetItem::GenerateWidgetForColumn(const FN
 			.AutoWidth()
 			[
 				SNew(STextBlock)
-				.Text_Lambda([&]()->FText {return VarInfoNode->Name; })
+				.Text_Lambda([&]()->FText {return VarInfoNode->VarName; })
 			];
 	}
 	else
 	{
 		return SNew(STextBlock)
-			.Text_Lambda([&]()->FText {return VarInfoNode->Value; })
+			.Text_Lambda([&]()->FText {return VarInfoNode->VarValue; })
 			;
 	}
 }

@@ -29,8 +29,8 @@ struct FLuaFileTreeNode
 	FString FileName;
 	FString BasePath;
 	bool IsDir;
-// 	TArray<TSharedRef<FLuaFileTreeNode>> DirChildren;
-// 	TArray<TSharedRef<FLuaFileTreeNode>> FileChildren;
+	// 	TArray<TSharedRef<FLuaFileTreeNode>> DirChildren;
+	// 	TArray<TSharedRef<FLuaFileTreeNode>> FileChildren;
 
 	TMap<FString, TSharedRef<FLuaFileTreeNode>> DirChildren;
 	TMap<FString, TSharedRef<FLuaFileTreeNode>> FileChildren;
@@ -42,37 +42,37 @@ using SLuaFileTree = STreeView<FLuaFileTreeNode_Ref>;
 class SLuaFileTreeWidgetItem :public STableRow<FLuaFileTreeNode_Ref>
 {
 public:
-	
+
 	SLATE_BEGIN_ARGS(SLuaFileTreeWidgetItem)
 	{}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FLuaFileTreeNode_Ref Node)
+		void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FLuaFileTreeNode_Ref Node)
 	{
 		STableRow<FLuaFileTreeNode_Ref>::Construct(STableRow<FLuaFileTreeNode_Ref>::FArguments(), InOwnerTableView);
 		ChildSlot
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
 			.AutoWidth()
 			.VAlign(VAlign_Center)
 			[
 				SNew(SExpanderArrow, SharedThis(this))
 			]
-			+ SHorizontalBox::Slot()
+		+ SHorizontalBox::Slot()
 			.AutoWidth()
 			[
 				SNew(STextBlock)
 				.Text(FText::FromString(Node->FileName))
 			]
-		];
+			];
 	}
 };
 
 struct FCodeListNode
 {
 	FCodeListNode(FString _Code, int32 _Line, FString _FilePath)
-		:FilePath(_FilePath), Code(_Code), Line(_Line),  HasBreakPoint(false)
+		:FilePath(_FilePath), Code(_Code), Line(_Line), HasBreakPoint(false)
 	{}
 	FString FilePath;
 	FString Code;
@@ -89,26 +89,29 @@ public:
 	SLATE_BEGIN_ARGS(SCodeWidgetItem)
 	{}
 	SLATE_END_ARGS()
-	TSharedPtr<FCodeListNode> CodeNode;
+		TSharedPtr<FCodeListNode> CodeNode;
 	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FCodeListNode_Ref Node);
-	
+
 	EVisibility BreakPointVisible() const;
 	FReply HandleClickBreakPoint();
 	FReply OnRightClickBreakpoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent);
 	void OnBreakConditionCommit(const FText& ConditionText, ETextCommit::Type CommitType);
-	
+
 };
 
 struct FStackListNode
 {
-	FStackListNode(FString _Code, int32 _Line, FString _FilePath, int32 _StackIndex, const FString& _FuncInfo)
-		:FilePath(_FilePath), Code(_Code), Line(_Line), StackIndex(_StackIndex), FuncInfo(_FuncInfo)
-	{}
 	FString FilePath;
 	FString Code;
 	int32 Line;
 	int32 StackIndex;
 	FString FuncInfo;
+
+	FStackListNode(int32 _StackIndex, int32 _Line, FString _FilePath, const FString& _FuncInfo)
+		:StackIndex(_StackIndex), Line(_Line), FilePath(_FilePath), FuncInfo(_FuncInfo)
+	{
+		Code = FString::Printf(TEXT("%s::%s line[%d]"), *FPaths::GetCleanFilename(FilePath), *FuncInfo, Line);
+	}
 };
 
 using FStackListNode_Ref = TSharedRef<FStackListNode>;
@@ -121,7 +124,7 @@ public:
 	SLATE_BEGIN_ARGS(SLuaStackWidgetItem)
 	{}
 	SLATE_END_ARGS()
-	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FStackListNode_Ref Node);
+		void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FStackListNode_Ref Node);
 
 };
 
@@ -201,7 +204,7 @@ public:
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-	
+
 	/** This function will be bound to Command (by default it will bring up plugin window) */
 	void PluginButtonClicked();
 
@@ -247,7 +250,7 @@ public:
 	static FString GetLuaSourceDir();
 	static FString LuaPathToFilePath(FString LuaFilePath);
 	void EnterDebug(const FString& LuaFilePath, int32 Line);
-	void SetStackData(const TArray<FString>& Content, const TArray<int32>& Lines, const TArray<FString>& FilePaths, const TArray<int32>& StackIndex, const TArray<FString>& FuncInfos);
+	void SetStackData(TArray<TTuple<int32, int32, FString, FString>>& StackInfos);
 	void ShowCode(const FString& FilePath, int32 Line = 0);
 	void ShowStackVars(int32 StackIndex);
 
@@ -268,6 +271,7 @@ public:
 	TSharedRef<ITableRow> HandleVarsTreeGenerateRow(FDebuggerVarNode_Ref InNode, const TSharedRef<STableViewBase>& OwnerTable);
 	void HandleVarsTreeGetChildren(FDebuggerVarNode_Ref InNode, TArray<FDebuggerVarNode_Ref>& OutChildren);
 	void HandleVarsTreeSelectionChanged(TSharedPtr<FDebuggerVarNode>, ESelectInfo::Type);
+	void HandleVarsTreeExpansion(FDebuggerVarNode_Ref InNode, bool bIsExpaned);
 
 	void RefreshLuaFileData();
 
@@ -279,6 +283,7 @@ public:
 	void DebugTabClose(TSharedRef<SDockTab> DockTab);
 	void RegisterKeyDown();
 	void BeforeExit();
+	void ClearStackInfo();
 	void SaveDebuggerConfig();
 	class FHandleKeyDown :public IInputProcessor
 	{
