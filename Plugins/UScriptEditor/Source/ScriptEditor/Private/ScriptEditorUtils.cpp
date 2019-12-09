@@ -12,11 +12,10 @@
 
 #include "IPluginManager.h"
 
-DEFINE_LOG_CATEGORY(UScriptEditor);
+//DEFINE_LOG_CATEGORY(UScriptEditor);
 
 namespace ScriptEditorUtils
 {
-
 
 	bool SaveScriptAsset(UScriptDataAsset* ScriptAsset)
 	{

@@ -138,13 +138,6 @@ bool FScriptDebuggerVarNode::IsEditable()
 	return (VarType == LUA_TSTRING || VarType == LUA_TNUMBER || VarType == LUA_TBOOLEAN);
 }
 
-
-/*
-LUA_GLUE_EXPAND_BEGIN(UDebuggerSetting)
-LUA_GLUE_FUNCTION(EnterDebug)
-LUA_GLUE_EXPAND_END(UDebuggerSetting)
-*/
-
 /********Hook Debug Statement********/
 
 static const FString TempVarName("(*temporary)");

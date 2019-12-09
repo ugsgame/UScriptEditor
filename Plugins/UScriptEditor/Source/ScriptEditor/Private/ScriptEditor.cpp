@@ -12,6 +12,7 @@
 #include "SProjectTreeEditor.h"
 #include "SScriptEditorLog.h"
 #include "SScriptDebugger.h"
+#include "VarWatcher.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "ScriptEditorToolbar.h"
 #include "WorkflowOrientedApp/ApplicationMode.h"
@@ -37,6 +38,7 @@ namespace ScriptEditorTabs
 	static const FName CodeViewID(TEXT("Document"));
 	static const FName LogViewID(TEXT("Log"));
 	static const FName DebuggerViewID(TEXT("Debugger"));
+	static const FName VarWathcerViewID(TEXT("VarWathcer"));
 };
 
 
@@ -181,6 +183,27 @@ public:
 	}
 };
 
+struct FVarWatcherViewSummoner : public FWorkflowTabFactory
+{
+public:
+	FVarWatcherViewSummoner(TSharedPtr<class FAssetEditorToolkit> InHostingApp)
+		: FWorkflowTabFactory(ScriptEditorTabs::VarWathcerViewID, InHostingApp)
+	{
+		TabLabel = NSLOCTEXT("VarWatcher_Tile", "TabTitle", "VarWatcher");
+		//TabIcon = FSlateIcon(FEditorStyle::GetStyleSetName(), "Log.TabIcon");
+
+		bIsSingleton = true;
+
+		ViewMenuDescription = LOCTEXT("VarWatcherTabMenu_Description", "VarWatcher");
+		ViewMenuTooltip = LOCTEXT("VarWatcherTabMenu_ToolTip", "Shows the script VarWatcher");
+	}
+
+	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override
+	{
+		return SNew(SVarWatcher);
+	}
+};
+
 class FBasicScriptEditorMode : public FApplicationMode
 {
 public:
@@ -204,6 +227,7 @@ FBasicScriptEditorMode::FBasicScriptEditorMode(TSharedPtr<class FScriptEditor> I
 	TabFactories.RegisterFactory(MakeShareable(new FProjectViewSummoner(InScriptEditor)));
 	TabFactories.RegisterFactory(MakeShareable(new FLogViewSummoner(InScriptEditor)));
 	TabFactories.RegisterFactory(MakeShareable(new FDebuggerViewSummoner(InScriptEditor)));
+	TabFactories.RegisterFactory(MakeShareable(new FVarWatcherViewSummoner(InScriptEditor)));
 
 	TabLayout = FTabManager::NewLayout("Standalone_ScriptEditor_Layout_v1.1")
 		->AddArea
