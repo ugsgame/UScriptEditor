@@ -1,33 +1,29 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "UScriptDebuggerSetting.h"
-//#include "UnrealLua.h"
-#include "SScriptDebugger.h"
 #include "UScriptRemoteDebuggerSetting.h"
+#include "ScriptEditor.h"
+#include "SScriptDebugger.h"
+
+#include "UnLuaDelegates.h"
+#include "lua.hpp"
 // #include "DebuggerVarNode.lua.h"
+
 
 UScriptDebuggerSetting* UScriptDebuggerSetting::Get(bool IsRemoteDebugger)
 {
-	if (IsRemoteDebugger == false)
+	static UScriptDebuggerSetting* Singleton = nullptr;
+	if (Singleton == nullptr)
 	{
-		static UScriptDebuggerSetting* Singleton = nullptr;
-		if (Singleton == nullptr)
-		{
-			Singleton = NewObject<UScriptDebuggerSetting>();
-			Singleton->AddToRoot();
-		}
-		return Singleton;
+		Singleton = NewObject<UScriptDebuggerSetting>();
+		Singleton->AddToRoot();
+
+		//Bind UnLUa Create Lua_State delegate
+		FUnLuaDelegates::OnLuaStateCreated.AddUObject(Singleton, &UScriptDebuggerSetting::RegisterLuaState);
+
+		FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(Singleton, &UScriptDebuggerSetting::UnRegisterLuaState);
 	}
-	else
-	{
-		static UScriptRemoteDebuggerSetting* Singleton = nullptr;
-		if (Singleton == nullptr)
-		{
-			Singleton = NewObject<UScriptRemoteDebuggerSetting>();
-			Singleton->AddToRoot();
-		}
-		return Singleton;
-	}
+	return Singleton;
 }
 
 FString UScriptDebuggerSetting::GetLuaSourceDir()
@@ -62,7 +58,8 @@ void UScriptDebuggerSetting::SetTabIsOpen(bool IsOpen)
 
 void UScriptDebuggerSetting::CombineNodeArr(TArray<FDebuggerVarNode_Ref>& PreVars, TArray<FScriptDebuggerVarNode>& NowVars)
 {
-	TMap<FString, FScriptDebuggerVarNode> NameToNowVarNode;
+#if 0
+	TMap<FString, FDebuggerVarNode> NameToNowVarNode;
 	TMap<FString, FDebuggerVarNode_Ref> NameToPreVarNode;
 
 	for (auto& Node : NowVars)
@@ -74,7 +71,7 @@ void UScriptDebuggerSetting::CombineNodeArr(TArray<FDebuggerVarNode_Ref>& PreVar
 	{
 		FString NodeName(Node.Get().Name.ToString());
 		NameToPreVarNode.Add(NodeName, Node);
-		FScriptDebuggerVarNode* NodePtr = NameToNowVarNode.Find(NodeName);
+		FDebuggerVarNode* NodePtr = NameToNowVarNode.Find(NodeName);
 		if (NodePtr == nullptr)
 		{
 			Node.Get().Name = FText::FromString("nil");
@@ -102,58 +99,18 @@ void UScriptDebuggerSetting::CombineNodeArr(TArray<FDebuggerVarNode_Ref>& PreVar
 		if (PreNodePtr == nullptr)
 		{
 			Node.DebuggerSetting = this;
-			PreVars.Add(MakeShareable(new FScriptDebuggerVarNode(Node)));
+			PreVars.Add(MakeShareable(new FDebuggerVarNode(Node)));
 		}
 	}
+#endif
 }
 
-void UScriptDebuggerSetting::GetStackVars(int32 StackIndex, TArray<FDebuggerVarNode_Ref>& Vars)
-{
-	// 	TArray<FDebuggerVarNode> Result = LuaCallr_State(HookingLuaState, TArray<FDebuggerVarNode>, "GetStackVars", this, StackIndex);
-	//	CombineNodeArr(Vars, Result);
-}
 
-void UScriptDebuggerSetting::GetVarsChildren(FScriptDebuggerVarNode InNode, TArray<FDebuggerVarNode_Ref>& OutChildren)
-{
-	/*
-	TArray<FDebuggerVarNode> Result = LuaCallr_State(HookingLuaState, TArray<FDebuggerVarNode>, "GetVarNodeChildren", this, InNode);
-	Result.StableSort([&](const FDebuggerVarNode& a, const FDebuggerVarNode& b)
-	{
-		bool aIsFunc = a.Value.ToString().Contains("function:");
-		bool bIsFunc = b.Value.ToString().Contains("function:");
-		if (aIsFunc != bIsFunc)
-			return bIsFunc;
-		FString a_KeyString = a.Name.ToString();
-		FString b_KeyString = b.Name.ToString();
-		if (a_KeyString.IsNumeric() != b_KeyString.IsNumeric())
-		{
-			return b_KeyString.IsNumeric();
-		}
-		else if (a_KeyString.IsNumeric())
-		{
-			return FCString::Atoi(*a_KeyString) < FCString::Atoi(*b_KeyString);
-		}
-		else
-			return a.Name.CompareTo(b.Name)<0;
-	});
 
-	CombineNodeArr(OutChildren, Result);
-	*/
-}
-
-void UScriptDebuggerSetting::EnterDebug(lua_State* inL)
-{
-	/*
-	HookingLuaState = inL;
-	FString LuaFilePath = UTableUtil::pop<FString>(inL, 2);
-	int32 Line = UTableUtil::pop<int32>(inL, 3);
-	FLuaDebuggerModule::Get()->EnterDebug(LuaFilePath, Line);
-	*/
-}
 
 void UScriptDebuggerSetting::SetStackData(const TArray<FString>& Content, const TArray<int32>& Lines, const TArray<FString>& FilePaths, const TArray<int32>& StackIndex, const TArray<FString>& FuncInfos)
 {
-	SScriptDebugger::Get()->SetStackData(Content, Lines, FilePaths, StackIndex, FuncInfos);
+	//FLuaDebuggerModule::Get()->SetStackData(Content, Lines, FilePaths, StackIndex, FuncInfos);
 }
 
 FText UScriptDebuggerSetting::GetBreakPointHitConditionText(FString& FilePath, int32 CodeLine)
@@ -161,43 +118,780 @@ FText UScriptDebuggerSetting::GetBreakPointHitConditionText(FString& FilePath, i
 	return SScriptDebugger::Get()->GetBreakPointHitConditionText(FilePath, CodeLine);
 }
 
-void UScriptDebuggerSetting::StepOver()
-{
-	if (HookingLuaState)
-	{
-		//LuaCall_State(HookingLuaState, "StepOver", this);
-	}
-}
-
-void UScriptDebuggerSetting::StepIn()
-{
-	if (HookingLuaState)
-	{
-		//LuaCall_State(HookingLuaState, "StepIn", this);
-	}
-}
-
-void UScriptDebuggerSetting::StepOut()
-{
-	if (HookingLuaState)
-	{
-		//		LuaCall_State(HookingLuaState, "StepOut", this);
-	}
-}
 
 void UScriptDebuggerSetting::BreakConditionChange()
 {
 	//	LuaCall_AllState("BreakConditionChange", this);
 }
 
+
 void FScriptDebuggerVarNode::GetChildren(TArray<TSharedRef<FScriptDebuggerVarNode>>& OutChildren)
 {
-	if (DebuggerSetting && ValueWeakIndex > 0)
-		DebuggerSetting->GetVarsChildren(*this, ValueChildren);
-	OutChildren = ValueChildren;
+	UScriptDebuggerSetting::Get()->GetVarsChildren(*this);
+
+	NodeChildren.GenerateValueArray(OutChildren);
 }
+
+
+bool FScriptDebuggerVarNode::IsEditable()
+{
+	return (VarType == LUA_TSTRING || VarType == LUA_TNUMBER || VarType == LUA_TBOOLEAN);
+}
+
+
 /*
 LUA_GLUE_EXPAND_BEGIN(UDebuggerSetting)
 LUA_GLUE_FUNCTION(EnterDebug)
 LUA_GLUE_EXPAND_END(UDebuggerSetting)
 */
+
+/********Hook Debug Statement********/
+
+static const FString TempVarName("(*temporary)");
+
+struct unlua_State
+{
+	FString source;
+	FString name;
+	int32 currentline;
+
+	void Init(lua_Debug* ar)
+	{
+		FString sourcePath = UTF8_TO_TCHAR(++ar->source);
+		source = sourcePath.Replace(*FString("\\"), *FString("/"));
+		name = UTF8_TO_TCHAR(ar->name);
+		currentline = ar->currentline;
+	}
+
+	FString ToString(bool IsShort = true)
+	{
+		return FString::Printf(TEXT("unlua_Debug currentline[%d] ; source[%s]"), currentline, *source);
+	}
+};
+
+struct unlua_Debug
+{
+	int32 event;
+	FString source;
+	FString short_src;
+	int32 linedefined;
+	int32 lastlinedefined;
+	FString what;
+	FString name;
+	FString namewhat;
+	int32 currentline;
+
+	void Init(lua_Debug* ar)
+	{
+		event = ar->event;
+		FString sourcePath = UTF8_TO_TCHAR(++ar->source);
+		source = sourcePath.Replace(*FString("\\"), *FString("/"));
+		short_src = UTF8_TO_TCHAR(ar->short_src);
+		linedefined = ar->linedefined;
+		lastlinedefined = ar->lastlinedefined;
+		what = UTF8_TO_TCHAR(ar->what);
+		name = UTF8_TO_TCHAR(ar->name);
+		namewhat = UTF8_TO_TCHAR(ar->namewhat);
+		currentline = ar->currentline;
+	}
+
+	FString ToString(bool IsShort = true)
+	{
+		if (IsShort)
+			return FString::Printf(TEXT("unlua_Debug event[%s] ; currentline[%d] ; source[%s] ; name[%s] ; namewhat[%s]"), *EventFormat(), currentline, *source, *name, *namewhat);
+		return FString::Printf(TEXT("unlua_Debug event[%s] ; currentline[%d] ; source[%s] ; name[%s] ; namewhat[%s] ; linedefined[%d] ; lastlinedefined[%d] ; short_src[%s] ; what[%s]"), *EventFormat(), currentline, *source, *name, *namewhat, linedefined, lastlinedefined, *short_src, *what);
+	}
+
+	FString EventFormat()
+	{
+		switch (event)
+		{
+		case LUA_HOOKCALL:
+			return FString("Call");
+		case LUA_HOOKRET:
+			return FString("Retu");
+		case LUA_HOOKLINE:
+			return FString("Line");
+		case LUA_HOOKCOUNT:
+			return FString("Cout");
+		case LUA_HOOKTAILCALL:
+			return FString("Tail");
+		}
+		return FString("None");
+	}
+};
+
+//#define UNLUA_DEBUG
+#ifdef UNLUA_DEBUG
+static unlua_Debug ur;
+#else
+static unlua_State ur;
+#endif // UNLUA_DEBUG
+
+
+struct unlua_over
+{
+	int32 level;
+
+	void Reset()
+	{
+		level = 0;
+	}
+
+	void CallOper()
+	{
+		level++;
+	}
+
+	void RetOper()
+	{
+		level--;
+	}
+
+	bool BreakPoint()
+	{
+		return level == 0 || level == -1;
+	}
+};
+
+struct unlua_out {
+
+	int32 level;
+
+	void Reset()
+	{
+		level = 1;
+	}
+
+	void CallOper()
+	{
+		level++;
+	}
+
+	void RetOper()
+	{
+		level--;
+	}
+
+	bool BreakPoint()
+	{
+		return level == 0;
+	}
+
+};
+
+enum EHookMode
+{
+	Continue,
+	StepIn,
+	StepOver,
+	StepOut
+};
+
+static unlua_over u_over;
+
+static unlua_out u_out;
+
+static EHookMode hook_mode = EHookMode::Continue;
+
+static void debugger_hook_c(lua_State *L, lua_Debug *ar);
+
+/********Hook Debug Statement********/
+
+void UScriptDebuggerSetting::RegisterLuaState(lua_State* State)
+{
+	L = State;
+
+#if 0
+
+	UE_LOG(LogTemp, Log, TEXT("unlua_Debug RegisterLuaState"));
+
+	lua_sethook(L, debugger_hook_c, LUA_MASKCALL | LUA_MASKRET | LUA_MASKLINE, 0);
+
+#else
+	if (BreakPoints.Num() > 0)
+	{
+		//Bind Lua Hook
+		lua_sethook(L, debugger_hook_c, LUA_MASKCALL | LUA_MASKRET | LUA_MASKLINE, 0);
+
+#ifdef UNLUA_DEBUG
+		for (TMap<FString, TSet<int32>>::TIterator It(BreakPoints); It; ++It)
+		{
+			for (auto Line : It->Value)
+			{
+				UE_LOG(LogTemp, Log, TEXT("unlua_Debug BreakPoints file[%s] line[%i]"), *It->Key, Line);
+			}
+		}
+#endif
+	}
+#endif
+
+	hook_mode = EHookMode::Continue;
+}
+
+void UScriptDebuggerSetting::UnRegisterLuaState(bool bFullCleanup)
+{
+	if (bFullCleanup)
+	{
+		UE_LOG(LogTemp, Log, TEXT("unlua_Debug UnRegisterLuaState FullCleanup"));
+	}
+	else
+		UE_LOG(LogTemp, Log, TEXT("unlua_Debug UnRegisterLuaState Not FullCleanup"));
+
+	lua_sethook(L, NULL, 0, 0);
+	// Clear Stack Info UseLess
+	SScriptDebugger::Get()->ClearStackInfo();
+
+	if (bFullCleanup)
+	{
+		hook_mode = EHookMode::Continue;
+		L = NULL;
+	}
+}
+
+bool UScriptDebuggerSetting::NameTranslate(int32 VarType, FString& VarName, int32 StackIndex)
+{
+	switch (VarType)
+	{
+	case LUA_TNUMBER:
+		VarName = FString::Printf(TEXT("[%lf]"), lua_tonumber(L, StackIndex));
+		return true;
+	case LUA_TSTRING:
+		VarName = UTF8_TO_TCHAR(lua_tostring(L, StackIndex));
+		return true;
+	}
+	return false;
+}
+
+
+void UScriptDebuggerSetting::ValueTranslate(int32 VarType, FString& VarValue, int32 StackIndex)
+{
+	switch (VarType)
+	{
+	case LUA_TNONE:
+		VarValue = TEXT("LUA_TNONE");
+		break;
+	case LUA_TNIL:
+		VarValue = TEXT("LUA_TNIL");
+		break;
+	case LUA_TBOOLEAN:
+		VarValue = lua_toboolean(L, StackIndex) == 0 ? TEXT("false") : TEXT("true");
+		VarValue = FString::Printf(TEXT("LUA_TBOOLEAN [%s]"), *VarValue);
+		break;
+	case LUA_TLIGHTUSERDATA:
+		VarValue = TEXT("LUA_TLIGHTUSERDATA");
+		break;
+	case LUA_TNUMBER:
+		VarValue = FString::Printf(TEXT("LUA_TNUMBER [%lf]"), lua_tonumber(L, StackIndex));
+		break;
+	case LUA_TSTRING:
+		VarValue = FString::Printf(TEXT("LUA_TSTRING [%s]"), UTF8_TO_TCHAR(lua_tostring(L, StackIndex)));
+		break;
+	case LUA_TTABLE:
+		VarValue = TEXT("LUA_TTABLE");
+		break;
+	case LUA_TFUNCTION:
+		VarValue = FString::Printf(TEXT("LUA_TFUNCTION [%d]"), lua_tocfunction(L, StackIndex));
+		break;
+	case LUA_TUSERDATA:
+		VarValue = FString::Printf(TEXT("LUA_TUSERDATA [%p]"), lua_touserdata(L, StackIndex));
+		break;
+	case LUA_TTHREAD:
+		VarValue = TEXT("LUA_TTHREAD");
+		break;
+	case LUA_NUMTAGS:
+		VarValue = TEXT("LUA_NUMTAGS");
+		break;
+	}
+}
+
+void UScriptDebuggerSetting::IteraionTable(FScriptDebuggerVarNode& InNode, int32 NameIndex)
+{
+	//UE_LOG(LogTemp, Log, TEXT("Itera Start [%d]"), lua_gettop(L));
+
+	FString VarName;
+	FString VarValue;
+	lua_pushnil(L);
+
+	//check is last index
+	if (InNode.NameList.Num() == NameIndex)
+	{
+#if 1
+		//UE_LOG(LogTemp, Log, TEXT("While Start [%d]"), lua_gettop(L));
+
+		//Generate New Node
+		while (lua_next(L, -2))
+		{
+			int32 NameType = lua_type(L, -2);
+
+			//UE_LOG(LogTemp, Log, TEXT("Names Start [%d]"), lua_gettop(L));
+
+			if (NameTranslate(NameType, VarName, -2))
+			{
+				//UE_LOG(LogTemp, Log, TEXT("Names Ended [%d]"), lua_gettop(L));
+
+				if (!TempVarName.Equals(VarName))
+				{
+
+					//UE_LOG(LogTemp, Log, TEXT("Value Start [%d]"), lua_gettop(L));
+
+					int ValueType = lua_type(L, -1);
+					ValueTranslate(ValueType, VarValue, -1);
+
+
+					//UE_LOG(LogTemp, Log, TEXT("Value Ended [%d]"), lua_gettop(L));
+
+					if (!InNode.NodeChildren.Contains(VarName))
+					{
+
+						FDebuggerVarNode_Ref NewNode = MakeShareable(new FScriptDebuggerVarNode);
+						NewNode->NodeType = InNode.NodeType;
+						NewNode->StackLevel = InNode.StackLevel;
+						NewNode->VarType = ValueType;
+						NewNode->VarName = FText::FromString(VarName);
+						NewNode->VarValue = FText::FromString(VarValue);
+						NewNode->NameList.Append(InNode.NameList);
+						NewNode->NameList.Add(VarName);
+
+						//UE_LOG(LogTemp, Log, TEXT("NewNode [%s]"), *NewNode->ToString());
+
+						InNode.NodeChildren.Add(VarName, NewNode);
+					}
+
+				}
+			}
+
+			//UE_LOG(LogTemp, Log, TEXT("Poped Start [%d]"), lua_gettop(L));
+
+			lua_pop(L, 1);
+
+			//UE_LOG(LogTemp, Log, TEXT("Poped Ended [%d]"), lua_gettop(L));
+
+			//break;
+		}
+
+		//UE_LOG(LogTemp, Log, TEXT("While Ended [%d]"), lua_gettop(L));
+#endif
+	}
+	else
+	{
+#if 1
+		// Continue IteraionTable
+		while (lua_next(L, -2) != 0)
+		{
+			int32 NameType = lua_type(L, -2);
+
+			if (NameTranslate(NameType, VarName, -2))
+			{
+				int ValueType = lua_type(L, -1);
+				if (VarName.Equals(InNode.NameList[NameIndex]))
+				{
+					if (ValueType == LUA_TTABLE)
+					{
+						IteraionTable(InNode, NameIndex + 1);
+					}
+				}
+			}
+
+			lua_pop(L, 1);
+		}
+#endif
+	}
+
+	//lua_pop(L, 1);
+
+	//UE_LOG(LogTemp, Log, TEXT("Itera Ended [%d]"), lua_gettop(L));
+}
+
+void UScriptDebuggerSetting::LocalListen(FScriptDebuggerVarNode& InNode)
+{
+	//UE_LOG(LogTemp, Log, TEXT("%s lua_top[%d]"), *InNode.ToString(), lua_gettop(L));
+
+	//Get Local Vars
+	lua_Debug ar;
+
+	if (lua_getstack(L, InNode.StackLevel, &ar) != 0)
+	{
+		int i = 1;
+		const char* VarName;
+		FString VarValue;
+		while ((VarName = lua_getlocal(L, &ar, i)) != NULL)
+		{
+			if (TempVarName.Equals(UTF8_TO_TCHAR(VarName)))
+			{
+				lua_pop(L, 1);
+				i++;
+				continue;
+			}
+
+
+			int32 VarType = lua_type(L, -1);
+			ValueTranslate(VarType, VarValue, -1);
+
+			if (InNode.NameList.Num() == 0)
+			{
+				if (!InNode.NodeChildren.Contains(VarName))
+				{
+					FDebuggerVarNode_Ref NewNode = MakeShareable(new FScriptDebuggerVarNode);
+					NewNode->NodeType = EScriptVarNodeType::Local;
+					NewNode->StackLevel = InNode.StackLevel;
+					NewNode->VarType = VarType;
+					NewNode->VarName = FText::FromString(UTF8_TO_TCHAR(VarName));
+					NewNode->VarValue = FText::FromString(VarValue);
+					NewNode->NameList.Add(UTF8_TO_TCHAR(VarName));
+					InNode.NodeChildren.Add(VarName, NewNode);
+				}
+			}
+			else
+			{
+				if (InNode.NameList[0].Equals(UTF8_TO_TCHAR(VarName)))
+				{
+					if (VarType == LUA_TTABLE)
+					{
+						IteraionTable(InNode, 1);
+						lua_pop(L, 1);
+						break;
+					}
+				}
+			}
+
+			lua_pop(L, 1);
+
+			i++;
+		}
+	}
+}
+
+void UScriptDebuggerSetting::UpvalueListen(FScriptDebuggerVarNode& InNode)
+{
+	int i = 1;
+	const char* VarName;
+	FString VarValue;
+	while ((VarName = lua_getupvalue(L, -1, i)) != NULL)
+	{
+
+		if (TempVarName.Equals(UTF8_TO_TCHAR(VarName)))
+		{
+			lua_pop(L, 1);
+			i++;
+			continue;
+		}
+
+		int VarType = lua_type(L, -1);
+
+		ValueTranslate(VarType, VarValue, -1);
+
+		if (InNode.NameList.Num() == 0)
+		{
+			if (!InNode.NodeChildren.Contains(VarName))
+			{
+				FDebuggerVarNode_Ref NewNode = MakeShareable(new FScriptDebuggerVarNode);
+				NewNode->NodeType = EScriptVarNodeType::UpValue;
+				NewNode->StackLevel = InNode.StackLevel;
+				NewNode->VarType = VarType;
+				NewNode->VarName = FText::FromString(UTF8_TO_TCHAR(VarName));
+				NewNode->VarValue = FText::FromString(VarValue);
+				NewNode->NameList.Add(UTF8_TO_TCHAR(VarName));
+				InNode.NodeChildren.Add(VarName, NewNode);
+			}
+		}
+		else
+		{
+			if (InNode.NameList[0].Equals(UTF8_TO_TCHAR(VarName)))
+			{
+				if (VarType == LUA_TTABLE)
+				{
+					IteraionTable(InNode, 1);
+					lua_pop(L, 1);
+					break;
+				}
+			}
+		}
+
+		lua_pop(L, 1);
+
+		i++;
+	}
+}
+
+void UScriptDebuggerSetting::GlobalListen(FScriptDebuggerVarNode& InNode)
+{
+	lua_pushglobaltable(L);
+	lua_pushnil(L);
+	const char* VarName;
+	FString VarValue;
+	int i = 0;
+	while (lua_next(L, -2) != 0)
+	{
+		VarName = lua_tostring(L, -2);
+
+		if (TempVarName.Equals(UTF8_TO_TCHAR(VarName)))
+		{
+			lua_pop(L, 1);
+			i++;
+			continue;
+		}
+
+		int VarType = lua_type(L, -1);
+
+		ValueTranslate(VarType, VarValue, -1);
+
+		if (InNode.NameList.Num() == 0)
+		{
+			if (!InNode.NodeChildren.Contains(VarName))
+			{
+				FDebuggerVarNode_Ref NewNode = MakeShareable(new FScriptDebuggerVarNode);
+				NewNode->NodeType = EScriptVarNodeType::Global;
+				NewNode->StackLevel = InNode.StackLevel;
+				NewNode->VarType = VarType;
+				NewNode->VarName = FText::FromString(UTF8_TO_TCHAR(VarName));
+				NewNode->VarValue = FText::FromString(VarValue);
+				NewNode->NameList.Add(UTF8_TO_TCHAR(VarName));
+				InNode.NodeChildren.Add(VarName, NewNode);
+			}
+		}
+		else
+		{
+			if (InNode.NameList[0].Equals(UTF8_TO_TCHAR(VarName)))
+			{
+				if (VarType == LUA_TTABLE)
+				{
+					IteraionTable(InNode, 1);
+					lua_pop(L, 1);
+					break;
+				}
+			}
+		}
+
+		//UE_LOG(LogTemp, Log, TEXT("unlua_Debug Get Global index[%d] name[%s] value[%s]"), i, UTF8_TO_TCHAR(VarName), *VarValue);
+
+		lua_pop(L, 1);
+		i++;
+	}
+	lua_pop(L, 1);
+}
+
+void UScriptDebuggerSetting::UEObjectListen()
+{
+
+}
+
+void UScriptDebuggerSetting::EnterDebug(const FString& LuaFilePath, int32 Line)
+{
+	//Collect Stack Info
+	//UE_LOG(LogTemp, Log, TEXT("stackInfo Start"));
+	TArray<TTuple<int32, int32, FString, FString>> StackInfos;
+	int i = 0;
+	lua_Debug ar;
+	while (lua_getstack(L, i, &ar) != 0 && i < 10)
+	{
+		if (lua_getinfo(L, "Snl", &ar) != 0)
+		{
+			ur.Init(&ar);
+			//UE_LOG(LogTemp, Log, TEXT("stackInfo [%d] %s"), i, *ur.ToString());
+			TTuple<int32, int32, FString, FString> StackItem(i, ur.currentline, ur.source, ur.name);
+			StackInfos.Add(StackItem);
+		}
+		i++;
+	}
+	//UE_LOG(LogTemp, Log, TEXT("stackInfo Ended"));
+	SScriptDebugger::Get()->SetStackData(StackInfos);
+
+	SScriptDebugger::Get()->EnterDebug(ur.source, ur.currentline);
+}
+
+void UScriptDebuggerSetting::GetStackVars(int32 StackIndex, TArray<FDebuggerVarNode_Ref>& Vars)
+{
+
+	FDebuggerVarNode_Ref LocalNode = MakeShareable(new FScriptDebuggerVarNode);
+	LocalNode->NodeType = EScriptVarNodeType::Local;
+	LocalNode->StackLevel = StackIndex;
+	LocalNode->VarName = FText::FromString("Local");
+
+	FDebuggerVarNode_Ref UpValueNode = MakeShareable(new FScriptDebuggerVarNode);
+	UpValueNode->NodeType = EScriptVarNodeType::UpValue;
+	UpValueNode->StackLevel = StackIndex;
+	UpValueNode->VarName = FText::FromString("UpValue");
+
+	FDebuggerVarNode_Ref GlobalNode = MakeShareable(new FScriptDebuggerVarNode);
+	GlobalNode->NodeType = EScriptVarNodeType::Global;
+	GlobalNode->StackLevel = StackIndex;
+	GlobalNode->VarName = FText::FromString("Global");
+
+	FDebuggerVarNode_Ref UEObjectNode = MakeShareable(new FScriptDebuggerVarNode);
+	UEObjectNode->NodeType = EScriptVarNodeType::UEObject;
+	UEObjectNode->StackLevel = StackIndex;
+	UEObjectNode->VarName = FText::FromString("UEObject");
+
+	Vars.Add(LocalNode);
+	Vars.Add(UpValueNode);
+	Vars.Add(GlobalNode);
+	Vars.Add(UEObjectNode);
+}
+
+void UScriptDebuggerSetting::GetVarsChildren(FScriptDebuggerVarNode& InNode)
+{
+	if (InNode.NameList.Num() > 0 && InNode.VarType != LUA_TTABLE)
+		return;
+
+	switch (InNode.NodeType)
+	{
+	case EScriptVarNodeType::Local:
+		LocalListen(InNode);
+		break;
+	case EScriptVarNodeType::UpValue:
+		UpvalueListen(InNode);
+		break;
+	case EScriptVarNodeType::Global:
+		GlobalListen(InNode);
+		break;
+	case EScriptVarNodeType::UEObject:
+		break;
+	}
+}
+
+void UScriptDebuggerSetting::Continue()
+{
+	if (L == NULL)
+		return;
+	lua_sethook(L, NULL, 0, 0);
+	hook_mode = EHookMode::Continue;
+}
+
+void UScriptDebuggerSetting::StepOver()
+{
+	if (L == NULL)
+		return;
+
+	u_over.Reset();
+	hook_mode = EHookMode::StepOver;
+
+}
+
+void UScriptDebuggerSetting::StepIn()
+{
+	if (L == NULL)
+		return;
+	hook_mode = EHookMode::StepIn;
+}
+
+void UScriptDebuggerSetting::StepOut()
+{
+	if (L == NULL)
+		return;
+
+	u_out.Reset();
+	hook_mode = EHookMode::StepOut;
+
+}
+
+static void hook_call_option(lua_State* L)
+{
+	switch (hook_mode)
+	{
+	case Continue:
+		break;
+	case StepIn:
+		break;
+	case StepOver:
+		u_over.CallOper();
+		break;
+	case StepOut:
+		u_out.CallOper();
+		break;
+	}
+}
+
+static void hook_ret_option(lua_State* L)
+{
+	switch (hook_mode)
+	{
+	case Continue:
+		break;
+	case StepIn:
+		break;
+	case StepOver:
+		u_over.RetOper();
+		break;
+	case StepOut:
+		u_out.RetOper();
+		break;
+	}
+}
+
+static void hook_line_option(lua_State* L)
+{
+	switch (hook_mode)
+	{
+	case Continue:
+		if (FScriptEditor::Get()->HasBreakPoint(ur.source, ur.currentline))
+		{
+			UScriptDebuggerSetting::Get()->EnterDebug(ur.source, ur.currentline);
+		}
+		break;
+	case StepIn:
+		UScriptDebuggerSetting::Get()->EnterDebug(ur.source, ur.currentline);
+		break;
+	case StepOver:
+		if (u_over.BreakPoint())
+		{
+			UScriptDebuggerSetting::Get()->EnterDebug(ur.source, ur.currentline);
+			return;
+		}
+		if (FScriptEditor::Get()->HasBreakPoint(ur.source, ur.currentline))
+		{
+			UScriptDebuggerSetting::Get()->EnterDebug(ur.source, ur.currentline);
+			return;
+		}
+		break;
+	case StepOut:
+		if (u_out.BreakPoint())
+		{
+			UScriptDebuggerSetting::Get()->EnterDebug(ur.source, ur.currentline);
+			return;
+		}
+		if (FScriptEditor::Get()->HasBreakPoint(ur.source, ur.currentline))
+		{
+			UScriptDebuggerSetting::Get()->EnterDebug(ur.source, ur.currentline);
+			return;
+		}
+		break;
+	}
+}
+
+static void debugger_hook_c(lua_State *L, lua_Debug *ar)
+{
+	//UE_LOG(LogTemp, Log, TEXT("unlua_Debug debugger_hook_c"));
+
+	if (lua_getinfo(L, "Snl", ar) != 0)
+	{
+
+#ifdef UNLUA_DEBUG
+		ur.Init(ar);
+		UE_LOG(LogTemp, Log, TEXT("%s"), *ur.ToString());
+		if (ar->currentline < 0)
+			return;
+#else
+		if (ar->currentline < 0)
+			return;
+		ur.Init(ar);
+#endif // UNLUA_DEBUG
+
+#undef UNLUA_DEBUG
+
+		switch (ar->event)
+		{
+		case LUA_HOOKCALL:
+			hook_call_option(L);
+			break;
+		case LUA_HOOKRET:
+			hook_ret_option(L);
+			break;
+		case LUA_HOOKLINE:
+			hook_line_option(L);
+			break;
+		}
+	}
+}
+
+

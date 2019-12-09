@@ -49,8 +49,10 @@ namespace UnrealBuildTool.Rules
                     "InputCore",
 					"DirectoryWatcher",
 					"LevelEditor",
+                    "Lua",
+                    "Unlua",
                     "ScriptHelper",
-				}
+                }
 				);
 		}
 	}

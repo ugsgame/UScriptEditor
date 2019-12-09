@@ -320,12 +320,12 @@ void SScriptDebugger::EnterDebug(const FString& LuaFilePath, int32 Line)
 }
 
 
-void SScriptDebugger::SetStackData(const TArray<FString>& Content, const TArray<int32>& Lines, const TArray<FString>& FilePaths, const TArray<int32>& StackIndex, const TArray<FString>& FuncInfos)
+void SScriptDebugger::SetStackData(TArray<TTuple<int32, int32, FString, FString>>& StackInfos)
 {
 	NowLuaStack.Reset();
-	for (int i = 0; i < Content.Num(); i++)
+	for (auto StackItem : StackInfos)
 	{
-		FStackListNode_Ref NewNode = MakeShareable(new FStackListNode(Content[i], Lines[i], FilePaths[i], StackIndex[i], FuncInfos[i]));
+		FStackListNode_Ref NewNode = MakeShareable(new FStackListNode(StackItem.Get<0>(), StackItem.Get<1>(), StackItem.Get<2>(), StackItem.Get<3>()));
 		NowLuaStack.Add(NewNode);
 	}
 	RefreshStackList();
@@ -436,7 +436,7 @@ void SScriptDebugger::DebugContinue()
 		FSlateApplication::Get().LeaveDebuggingMode();
 		IsEnterDebugMode = false;
 	}
-	UScriptDebuggerSetting::Get(IsDebugRemote)->DebugContinue();
+	UScriptDebuggerSetting::Get(IsDebugRemote)->Continue();
 }
 
 
@@ -498,6 +498,20 @@ void SScriptDebugger::RegisterKeyDown()
 void SScriptDebugger::BeforeExit()
 {
 	SaveDebuggerConfig();
+}
+
+void SScriptDebugger::ClearStackInfo()
+{
+	NowLuaStack.Reset();
+	if (LuaStackListPtr.IsValid())
+	{
+		LuaStackListPtr.Pin()->RequestListRefresh();
+	}
+	NowVars.Reset();
+	if (DebuggerVarTree.IsValid())
+	{
+		DebuggerVarTree.Pin()->RequestTreeRefresh();
+	}
 }
 
 void SScriptDebugger::SaveDebuggerConfig()
@@ -579,13 +593,13 @@ TSharedRef<SWidget> SDebuggerVarTreeWidgetItem::GenerateWidgetForColumn(const FN
 			.AutoWidth()
 			[
 				SNew(STextBlock)
-				.Text_Lambda([&]()->FText {return VarInfoNode->Name; })
+				.Text_Lambda([&]()->FText {return VarInfoNode->VarName; })
 			];
 	}
 	else
 	{
 		return SNew(STextBlock)
-			.Text_Lambda([&]()->FText {return VarInfoNode->Value; });
+			.Text_Lambda([&]()->FText {return VarInfoNode->VarValue; });
 	}
 }
 

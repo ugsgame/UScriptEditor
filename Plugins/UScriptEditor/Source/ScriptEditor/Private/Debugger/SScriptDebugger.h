@@ -13,14 +13,17 @@
 
 struct FStackListNode
 {
-	FStackListNode(FString _Code, int32 _Line, FString _FilePath, int32 _StackIndex, const FString& _FuncInfo)
-		:FilePath(_FilePath), Code(_Code), Line(_Line), StackIndex(_StackIndex), FuncInfo(_FuncInfo)
-	{}
-	FString FilePath;
-	FString Code;
-	int32 Line;
 	int32 StackIndex;
+	int32 Line;
+	FString FilePath;
 	FString FuncInfo;
+	FString Code;
+
+	FStackListNode(int32 _StackIndex, int32 _Line, FString _FilePath, const FString& _FuncInfo)
+		:StackIndex(_StackIndex), Line(_Line), FilePath(_FilePath), FuncInfo(_FuncInfo)
+	{
+		Code = FString::Printf(TEXT("%s::%s line[%d]"), *FPaths::GetCleanFilename(FilePath), *FuncInfo, Line);
+	}
 };
 
 using FStackListNode_Ref = TSharedRef<FStackListNode>;
@@ -148,7 +151,7 @@ public:
 	void RefreshStackList();
 	static FString GetLuaSourceDir();
 	void EnterDebug(const FString& LuaFilePath, int32 Line);
-	void SetStackData(const TArray<FString>& Content, const TArray<int32>& Lines, const TArray<FString>& FilePaths, const TArray<int32>& StackIndex, const TArray<FString>& FuncInfos);
+	void SetStackData(TArray<TTuple<int32, int32, FString, FString>>& StackInfos);
 	void ShowCode(const FString& FilePath, int32 Line = 0);
 	void ShowStackVars(int32 StackIndex);
 
@@ -170,6 +173,7 @@ public:
 	void DebugTabClose(TSharedRef<SDockTab> DockTab);
 	void RegisterKeyDown();
 	void BeforeExit();
+	void ClearStackInfo();
 	void SaveDebuggerConfig();
 
 	class FHandleKeyDown :public IInputProcessor
