@@ -9,6 +9,7 @@
 #include "IDirectoryWatcher.h"
 #include "DirectoryScanner.h"
 #include "DirectoryWatcherModule.h"
+#include "ScriptHelperBPFunLib.h"
 
 UCodeProjectItem::UCodeProjectItem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -279,7 +280,8 @@ bool UCodeProjectItem::BuildScriptAssetContext()
 	if (Extension == "lua")
 	{
 		//Check file exist?
-		FString ScriptAssetPath = ScriptEditorUtils::CovertContentPathToAssetPath(Path);
+		FString ScriptContentPath = ScriptEditorUtils::CoverScriptPathToContentPath(Path);
+		FString ScriptAssetPath = ScriptEditorUtils::CovertContentPathToAssetPath(ScriptContentPath);
 
 		if (UEditorAssetLibrary::DoesAssetExist(ScriptAssetPath))
 		{
@@ -287,7 +289,7 @@ bool UCodeProjectItem::BuildScriptAssetContext()
 			if (ScriptAsset)
 			{
 				ScriptDataAsset = ScriptAsset;
-				ScriptAsset->Path = Path;
+				ScriptAsset->Path = ScriptEditorUtils::CoverToRelativeScriptPath(Path);
 				//
 				FString CodeText;
 				if (FFileHelper::LoadFileToString(CodeText, *Path))
@@ -295,7 +297,8 @@ bool UCodeProjectItem::BuildScriptAssetContext()
 					ScriptAsset->CodeText = CodeText;
 					ScriptAsset->UserObject = this;
 				}
-				GEditor->AddOnScreenDebugMessage(0, 1, FColor::Red, "Build Asset Content:" + ScriptAssetPath);
+				//Log
+				//GEditor->AddOnScreenDebugMessage(0, 1, FColor::Red, "Build Asset Content:" + ScriptAssetPath);
 
 				return true;
 			}
@@ -305,7 +308,7 @@ bool UCodeProjectItem::BuildScriptAssetContext()
 			}
 		}
 		else
-		{
+		{		
 			UScriptDataAsset* ScriptAsset = ScriptEditorUtils::CreateLuaScriptAssetFromLuaFile(Path);
 			if (ScriptAsset)
 			{

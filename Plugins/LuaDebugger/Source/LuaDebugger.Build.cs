@@ -47,7 +47,6 @@ public class LuaDebugger : ModuleRules
                 "EditorStyle",
                 "Lua",
                 "Unlua",
-                "Lua",
                 //"LuaPluginRuntime",
                 //"Lua53",
 				// ... add private dependencies that you statically link with here ...	

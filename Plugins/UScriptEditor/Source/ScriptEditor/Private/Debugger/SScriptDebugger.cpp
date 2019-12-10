@@ -16,6 +16,7 @@
 #include "SEditableTextBox.h"
 
 #include "ScriptEditor.h"
+#include "ScriptHelperBPFunLib.h"
 
 
 #define LOCTEXT_NAMESPACE "SScriptDebugger"
@@ -306,7 +307,9 @@ void SScriptDebugger::RefreshStackList()
 
 FString SScriptDebugger::GetLuaSourceDir()
 {
-	return FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() / "Scripts");
+	FString ScriptSourceDir = UScriptHelperBPFunLib::ScriptSourceDir();
+	FPaths::NormalizeDirectoryName(ScriptSourceDir);
+	return  ScriptSourceDir;
 }
 
 void SScriptDebugger::EnterDebug(const FString& LuaFilePath, int32 Line)

@@ -24,7 +24,7 @@ namespace UnrealBuildTool.Rules
 					"CoreUObject",
                   	"Engine",
                     "SlateCore",
-                    "UMG"
+                    "UMG",
                 }
 			);
             PrivateDependencyModuleNames.AddRange(

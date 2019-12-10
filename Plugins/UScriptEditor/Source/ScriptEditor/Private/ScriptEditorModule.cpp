@@ -95,6 +95,7 @@ void FScriptEditorModule::StartupModule()
 	AssetRegistryModule.Get().OnAssetRenamed().AddRaw(this, &FScriptEditorModule::OnScriptAssetRenamed);
 	AssetRegistryModule.Get().OnFilesLoaded().AddRaw(this, &FScriptEditorModule::OnClearInvalidScriptAssets);
 	//
+	IsCheckScriptAssetsOver = false;
 }
 
 void FScriptEditorModule::ShutdownModule()
@@ -133,12 +134,14 @@ void FScriptEditorModule::OnScriptAssetDeleted(UObject*  AssetObject)
 	if (UScriptDataAsset* ScriptAsset = Cast<UScriptDataAsset>(AssetObject))
 	{
 		//Check file is exist and delete it
-		if (IFileManager::Get().FileExists(*ScriptAsset->Path))
+		FString ScriptPath = ScriptEditorUtils::CoverToAbsoluteScriptPath(ScriptAsset->Path);
+		if (IFileManager::Get().FileExists(*ScriptPath))
 		{
-			if (IFileManager::Get().Delete(*ScriptAsset->Path))
+			if (IFileManager::Get().Delete(*ScriptPath))
 			{
 				//Log success
-				GEditor->AddOnScreenDebugMessage(1, 1, FColor::Red, "Deleted file success:" + ScriptAsset->Path);
+				GEditor->AddOnScreenDebugMessage(1, 1, FColor::Red, "Deleted file success:" + ScriptPath);
+				//US_Log("Deleted file success:%s", *ScriptPath);
 				TSharedPtr<FScriptEditor> ProjectEditor = FScriptEditor::Get();
 				if (ProjectEditor.IsValid())
 				{
@@ -187,15 +190,16 @@ void FScriptEditorModule::OnScriptAssetRenamed(const FAssetData& RenamedAsset, c
 
 	if (UScriptDataAsset* ScriptAsset = Cast<UScriptDataAsset>(RenamedAsset.FastGetAsset()))
 	{
-		if (IFileManager::Get().FileExists(*ScriptAsset->Path))
+		FString ScriptPath = ScriptEditorUtils::CoverToAbsoluteScriptPath(ScriptAsset->Path);
+		if (IFileManager::Get().FileExists(*ScriptPath))
 		{
 			//create new script file
-			FString NewScriptPath = FPaths::GetPath(ScriptAsset->Path) + "/" + ScriptAsset->GetName() + FPaths::GetExtension(ScriptAsset->Path, true);
+			FString NewScriptPath = FPaths::GetPath(ScriptPath) + "/" + ScriptAsset->GetName() + FPaths::GetExtension(ScriptPath, true);
 			FFileHelper::SaveStringToFile(ScriptAsset->CodeText, *NewScriptPath);
 			//delete old script file
-			IFileManager::Get().Delete(*ScriptAsset->Path);
+			IFileManager::Get().Delete(*ScriptPath);
 			//
-			ScriptAsset->Path = NewScriptPath;
+			ScriptAsset->Path = ScriptEditorUtils::CoverToRelativeScriptPath(NewScriptPath);
 
 			TSharedPtr<FScriptEditor> ProjectEditor = FScriptEditor::Get();
 
@@ -255,11 +259,12 @@ void FScriptEditorModule::OnClearInvalidScriptAssets()
 	{
 		//////////////////////////////////////////////////////////////////////////
 		//Fast Check,but Unsafe
-		FString ScriptPath = ScriptEditorUtils::CovertAssetPathToContentPath(ScriptAsset.GetFullName());
+		FString ContentPath = ScriptEditorUtils::CovertAssetPathToContentPath(ScriptAsset.GetFullName());
 		if (ScriptAsset.GetClass()->IsChildOf(ULuaScript::StaticClass()))
 		{
-			ScriptPath += ".lua";
+			ContentPath += ".lua";
 		}
+		FString ScriptPath = ScriptEditorUtils::CovertContentPathToScriptPath(ContentPath);
 		//js....
 		if (!FPaths::FileExists(ScriptPath))
 		{
@@ -301,6 +306,7 @@ void FScriptEditorModule::OnClearInvalidScriptAssets()
 		}
 	}
 
+	IsCheckScriptAssetsOver = true;
 }
 
 void FScriptEditorModule::OnScriptEditorClosed(TSharedRef<class SDockTab> ScriptEditorTab)
@@ -313,6 +319,9 @@ void FScriptEditorModule::OnScriptEditorClosed(TSharedRef<class SDockTab> Script
 
 void FScriptEditorModule::OpenEditorWindow()
 {
+	//TODO:Show a dialog if checking script assets
+	if (!IsCheckScriptAssetsOver)return;
+
 	//FGlobalTabmanager::Get()->InvokeTab(ScriptEditorTabName);
 	if (!CurrentScriptEditorTab.IsValid())
 	{	

@@ -65,6 +65,7 @@ private:
 
 	TSharedPtr<class SDockTab> CurrentScriptEditorTab;
 
+	bool IsCheckScriptAssetsOver;
 public:
 	TSharedPtr<class FScriptLogHistory> ScriptLogHistory;
 

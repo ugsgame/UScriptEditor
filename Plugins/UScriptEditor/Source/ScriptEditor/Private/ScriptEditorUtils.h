@@ -33,9 +33,11 @@ namespace ScriptEditorUtils
 	*/
 	FString CreateLuaFileFromLuaScriptAsset(class ULuaScript* ScriptAsset, EScriptTemplateType TemplateType = EScriptTemplateType::Actor);
 	
-	class ULuaScript* CreateLuaScriptAssetFromLuaFile(FString LuaScriptFilePath);
+	class ULuaScript* CreateLuaScriptAssetFromLuaFile(FString LuaScriptFileFullPath);
 
 	FString CreateLuaTemplate(EScriptTemplateType TempType, FString TemplateName);
+
+	FString CoverScriptPathToContentPath(FString ScriptFullPath);
 
     FString CovertContentPathToGamePath(FString ContentPath);
 
@@ -44,5 +46,10 @@ namespace ScriptEditorUtils
 	FString CovertContentPathToAssetPath(FString ContentFilePath);
 
 	FString CovertAssetPathToContentPath(FString AssetPath);
+
+	FString CovertContentPathToScriptPath(FString ContentFilePath);
+
+	FString CoverToAbsoluteScriptPath(FString RelativeScriptPath);
+	FString CoverToRelativeScriptPath(FString AbsoluteScriptPath);
 	/************************************************************************/
 }

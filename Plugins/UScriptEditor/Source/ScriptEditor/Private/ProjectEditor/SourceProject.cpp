@@ -7,5 +7,5 @@
 USourceProject::USourceProject(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	Path = FPaths::GameSourceDir();
+	Path = FPaths::ConvertRelativePathToFull(FPaths::GameSourceDir());
 }

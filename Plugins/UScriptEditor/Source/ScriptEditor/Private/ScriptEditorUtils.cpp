@@ -8,6 +8,7 @@
 #include "Assets/LuaScriptFactory.h"
 
 #include "ScriptDataAsset.h"
+#include "ScriptHelperBPFunLib.h"
 #include "LuaWrapper/LuaScript.h"
 
 #include "IPluginManager.h"
@@ -37,7 +38,9 @@ namespace ScriptEditorUtils
 		FString FullPath = ScriptAsset->GetPathName();
 		FullPath.RemoveFromStart(TEXT("/Game"));
 		FullPath.RemoveFromEnd(ScriptAsset->GetName());
-		FullPath = FPaths::ProjectContentDir() + FullPath + TEXT("lua");
+
+		FString ScriptRelativePath = FullPath + TEXT("lua");
+		FullPath = UScriptHelperBPFunLib::ScriptSourceDir() + ScriptRelativePath;
 
 		FString CodeText;
 		if (FFileHelper::LoadFileToString(CodeText, *FullPath))
@@ -49,18 +52,19 @@ namespace ScriptEditorUtils
 			FString LuaTemp = CreateLuaTemplate(TemplateType, ScriptAsset->GetName());
 			FFileHelper::SaveStringToFile(*LuaTemp, *FullPath);
 		}
-		ScriptAsset->Path = FullPath;
+		ScriptAsset->Path = ScriptRelativePath;
 
 		return FullPath;
 	}
 
-	ULuaScript* CreateLuaScriptAssetFromLuaFile(FString LuaScriptFilePath)
+	ULuaScript* CreateLuaScriptAssetFromLuaFile(FString LuaScriptFileFullPath)
 	{
 		FString CodeText;
-		if (FFileHelper::LoadFileToString(CodeText, *LuaScriptFilePath))
+		FString ContentPath = ScriptEditorUtils::CoverScriptPathToContentPath(LuaScriptFileFullPath);
+		if (FFileHelper::LoadFileToString(CodeText, *LuaScriptFileFullPath))
 		{
-			FString AssetName = FPaths::GetBaseFilename(LuaScriptFilePath);
-			FString AssetPath = FPaths::GetPath(CovertContentPathToGamePath(LuaScriptFilePath));
+			FString AssetName = FPaths::GetBaseFilename(ContentPath);
+			FString AssetPath = FPaths::GetPath(CovertContentPathToGamePath(ContentPath));
 
 			ULuaScriptFactory* NewFactory = NewObject<ULuaScriptFactory>();
 
@@ -69,7 +73,7 @@ namespace ScriptEditorUtils
 
 			if (NewAsset)
 			{
-				NewAsset->Path = LuaScriptFilePath;
+				NewAsset->Path = ScriptEditorUtils::CoverToRelativeScriptPath(LuaScriptFileFullPath);
 				NewAsset->CodeText = CodeText;
 
 				//TArray<UObject*> ObjectsToSync;
@@ -107,6 +111,17 @@ namespace ScriptEditorUtils
 		return Content.Replace(TEXT("TemplateName"), *TemplateName);
 	}
 
+	FString CoverScriptPathToContentPath(FString ScriptFullPath)
+	{
+		if (ScriptFullPath.Contains(UScriptHelperBPFunLib::ScriptSourceRoot()))
+		{
+			int32 FirstIndex = ScriptFullPath.Find(UScriptHelperBPFunLib::ScriptSourceRoot());
+			ScriptFullPath.RemoveAt(0, FirstIndex + UScriptHelperBPFunLib::ScriptSourceRoot().Len());
+			ScriptFullPath = FPaths::ProjectContentDir() + ScriptFullPath;
+		}
+		return ScriptFullPath;
+	}
+
 	FString CovertContentPathToGamePath(FString ContentPath)
 	{
 		if (ContentPath.Contains("/Content"))
@@ -122,9 +137,11 @@ namespace ScriptEditorUtils
 	{
 		if (GamePath.Contains("/Game"))
 		{
-			int32 FirstIndex = GamePath.Find("/Game/");
-			GamePath.RemoveAt(0, FirstIndex + 6);
-			GamePath = FPaths::ProjectContentDir() + GamePath;
+			int32 FirstIndex = GamePath.Find("/Game");
+			GamePath.RemoveAt(0, FirstIndex + 5);
+			FString ContentDir = FPaths::ProjectContentDir();
+			FPaths::NormalizeDirectoryName(ContentDir);
+			GamePath = ContentDir + GamePath;
 		}
 		return GamePath;
 	}
@@ -141,6 +158,32 @@ namespace ScriptEditorUtils
 		FString ContentFilePath = CovertGamePathToContentPath(FPaths::GetPath(AssetPath));
 		ContentFilePath = ContentFilePath + "/" + FPaths::GetBaseFilename(AssetPath);
 		return ContentFilePath;
+	}
+
+	FString CovertContentPathToScriptPath(FString ContentFilePath)
+	{
+		if (ContentFilePath.Contains("Content/"))
+		{
+			int32 FirstIndex = ContentFilePath.Find("Content/");
+			ContentFilePath.RemoveAt(0, FirstIndex + 8);
+			ContentFilePath = UScriptHelperBPFunLib::ScriptSourceDir() + ContentFilePath;
+		}
+		return ContentFilePath;
+	}
+
+	FString CoverToAbsoluteScriptPath(FString RelativeScriptPath)
+	{
+		return UScriptHelperBPFunLib::ScriptSourceDir() + RelativeScriptPath;
+	}
+
+	FString CoverToRelativeScriptPath(FString AbsoluteScriptPath)
+	{
+		if (AbsoluteScriptPath.Contains(UScriptHelperBPFunLib::ScriptSourceRoot()))
+		{
+			int32 FirstIndex = AbsoluteScriptPath.Find(UScriptHelperBPFunLib::ScriptSourceRoot());
+			AbsoluteScriptPath.RemoveAt(0, FirstIndex + UScriptHelperBPFunLib::ScriptSourceRoot().Len());
+		}
+		return AbsoluteScriptPath;
 	}
 
 }
