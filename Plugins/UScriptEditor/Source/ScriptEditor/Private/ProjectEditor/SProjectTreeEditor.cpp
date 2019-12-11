@@ -11,6 +11,7 @@
 #include "SourceProject.h"
 #include "ScriptEditor.h"
 #include "ScriptEditorUtils.h"
+#include "ScriptEditorSetting.h"
 #include "SProjectViewItem.h"
 #include "DirectoryScanner.h"
 #include "Widgets/Images/SThrobber.h"
@@ -31,6 +32,9 @@ void SProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* I
 	ScriptProject = InScriptProject;
 
 	EditingProject = InScriptProject;
+
+	InSourceProject->OnDirectoryScannedOver.BindRaw(this, &SProjectTreeEditor::OnRescanOver);
+	ScriptProject->OnDirectoryScannedOver.BindRaw(this, &SProjectTreeEditor::OnRescanOver);
 
 	TSharedPtr<SProjectTreeEditor> ThisPtr(SharedThis(this));
 	ProjectTreeEditor = ThisPtr;
@@ -101,8 +105,8 @@ void SProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* I
 	else
 	{
 		//TODO:Reflash
-		//CodeProject->Children.Empty();
-		//ScriptProject->Children.Empty();
+		SourceProject->Children.Empty();
+		ScriptProject->Children.Empty();
 
 		SourceProject->RescanChildren();
 		ScriptProject->RescanChildren();
@@ -127,12 +131,18 @@ void SProjectTreeEditor::ExpanedScriptItem(UCodeProjectItem* Item,bool ShouldExp
 	}
 }
 
+void SProjectTreeEditor::ExpanedEditingProject()
+{
+	if(EditingProject)
+		ExpanedItemChildren(EditingProject);
+}
+
 void SProjectTreeEditor::ExpanedAllScriptItems()
 {
 	ProjectTree->SetTreeItemsSource(&ScriptProject->Children);
 	EditingProject = ScriptProject;
 
-	ExpanedItemChildren(EditingProject);
+	ExpanedEditingProject();
 }
 
 void SProjectTreeEditor::RescanScripts()
@@ -203,6 +213,21 @@ void SProjectTreeEditor::HandleMouseButtonDoubleClick(UCodeProjectItem* Item) co
 	{
 		FScriptEditor::Get()->OpenFileForEditing(Item);
 	}
+}
+
+void SProjectTreeEditor::OnRescanOver()
+{
+	//
+	UScriptEdtiorSetting::Get()->EdittingFiles.Empty();
+	FScriptEditor::Get()->CloseAllEditingFiles();
+	//
+	//Open PreEditting file tabs
+	for (UCodeProjectItem* Item:UScriptEdtiorSetting::Get()->PreEdittingItems)
+	{
+		FScriptEditor::Get()->OpenFileForEditing(Item);
+		ExpanedItem(Item);
+	}
+	UScriptEdtiorSetting::Get()->PreEdittingItems.Empty();
 }
 
 void SProjectTreeEditor::ExpanedItem(UCodeProjectItem* Item, bool ShouldExpandItem) const

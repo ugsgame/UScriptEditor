@@ -16,7 +16,6 @@ public:
 public:
 
 #if WITH_EDITORONLY_DATA
-	bool EFlag_IsEditing;
 	bool EFlag_IsValid;
 #endif // WITH_EDITORONLY_DATA
 

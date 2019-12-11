@@ -50,8 +50,6 @@ void SScriptDebugger::Construct(const FArguments& InArgs)
 	}
 	*/
 
-	FCoreDelegates::OnPreExit.AddRaw(this, &SScriptDebugger::BeforeExit);
-
 	OnSpawnPluginTab(FSpawnTabArgs(TSharedPtr<SWindow>(), FTabId()));
 }
 
@@ -497,12 +495,6 @@ void SScriptDebugger::RegisterKeyDown()
 	FSlateApplication::Get().RegisterInputPreProcessor(ptr_HandleKeyDown);
 }
 
-
-void SScriptDebugger::BeforeExit()
-{
-	SaveDebuggerConfig();
-}
-
 void SScriptDebugger::ClearStackInfo()
 {
 	NowLuaStack.Reset();
@@ -527,16 +519,9 @@ void SScriptDebugger::SaveDebuggerConfig()
 // 		LastTimeFileOffset.Add(NowLuaCodeFilePath, NowOffset);
 // 	}
 
-	UScriptDebuggerSetting::Get(IsDebugRemote)->LastTimeFileOffset = LastTimeFileOffset;
-	UScriptDebuggerSetting::Get(IsDebugRemote)->RecentFilePath = RecentFilePath;
-	UScriptDebuggerSetting::Get(IsDebugRemote)->RecentBreakPoint.Reset();
-
-	for (FBreakPointNode_Ref &Node : FScriptEditor::Get()->BreakPointForView)
-	{
-		UScriptDebuggerSetting::Get(IsDebugRemote)->RecentBreakPoint.Add(*Node);
-	}
-	UScriptDebuggerSetting::Get(IsDebugRemote)->SaveConfig();
-
+//	UScriptDebuggerSetting::Get(IsDebugRemote)->LastTimeFileOffset = LastTimeFileOffset;
+//	UScriptDebuggerSetting::Get(IsDebugRemote)->RecentFilePath = RecentFilePath;
+	
 }
 
 

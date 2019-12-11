@@ -22,6 +22,7 @@
 
 #include "ScriptEditor.h"
 #include "SScriptDebugger.h"
+#include "ScriptEditorSetting.h"
 
 #include "Editor/EditorStyle/Public/EditorStyle.h"
 
@@ -242,6 +243,13 @@ FText SCodeEditor::GetLineAndColumn() const
 	FString LineAndColumn = FString::Printf(TEXT("Line: %d Column: %d"), Line + 1, Column);
 
 	return FText::FromString(LineAndColumn);
+}
+
+void SCodeEditor::OnClose()
+{
+	UScriptEdtiorSetting::Get()->EdittingFiles.Remove(CodeProjectItem->Path);
+
+	UE_LOG(LogTemp, Log, TEXT("CodeProjectItems [%d]"), UScriptEdtiorSetting::Get()->EdittingFiles.Num());
 }
 
 void SCodeEditor::SetLineCountList(const int32 Count) 

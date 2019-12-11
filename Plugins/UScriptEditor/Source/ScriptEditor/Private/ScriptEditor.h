@@ -7,15 +7,14 @@
 #include "UObject/GCObject.h"
 #include "Toolkits/IToolkitHost.h"
 #include "WorkflowOrientedApp/WorkflowCentricApplication.h"
-
 #include "SScriptDebugger.h"
+
 
 class FScriptEditorToolbar;
 class FDocumentTracker;
 class FTabInfo;
 class USourceProject;
 class UCodeProjectItem;
-
 
 class FScriptEditor : public FWorkflowCentricApplication, public FGCObject
 {
@@ -33,6 +32,7 @@ public:
 	virtual FText GetToolkitToolTipText() const override;
 	virtual FLinearColor GetWorldCentricTabColorScale() const override;
 	virtual FString GetWorldCentricTabPrefix() const override;
+	virtual bool OnRequestClose() override;
 	// End of FAssetEditorToolkit
 
 	// FSerializableObject interface

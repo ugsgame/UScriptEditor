@@ -8,6 +8,7 @@
 #include "SProjectTreeEditor.h"
 #include "AssetToolsModule.h"
 #include "ContentBrowserModule.h"
+#include "ScriptEditorSetting.h"
 
 #define LOCTEXT_NAMESPACE "LuaScriptAssetTypeActions"
 
@@ -44,8 +45,11 @@ void FLuaScriptAssetTypeActions::OpenAssetEditor(const TArray<UObject*>& InObjec
 			{
 				if (UCodeProjectItem* Item = Cast<UCodeProjectItem>(ScriptAsset->UserObject))
 				{
-					//Goto item tab
+					//Goto item tab			
 					FScriptEditor::Get()->OpenFileForEditing(Item);
+
+					UScriptEdtiorSetting::Get()->EdittingFiles.Remove(Item->Path);	//remove if exist
+					UScriptEdtiorSetting::Get()->EdittingFiles.Add(Item->Path);		// add to last!
 					//Expaned this item
 					if (SProjectTreeEditor::Get().IsValid())
 					{

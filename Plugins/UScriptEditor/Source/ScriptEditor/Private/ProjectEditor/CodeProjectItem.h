@@ -43,10 +43,14 @@ public:
 	UCodeProjectItem* FindChild(FString ChildFullPath);
 
 	FName GetBrush() const;
+
+	DECLARE_DELEGATE(FOnDirectoryScannedOver);
+	FOnDirectoryScannedOver OnDirectoryScannedOver;
 protected:
 
 	bool BuildScriptAssetContext();
 
+	void DirectoryScannedOver();
 private:
 	void RescaParentIsLegal(UCodeProjectItem* InParent);
 
@@ -79,6 +83,8 @@ public:
 	FDelegateHandle OnDirectoryChangedHandle;
 
 	bool bWithLegalFile;
+
+	bool bShowEmptyFolder;
 private:
 	UPROPERTY(Transient)
 	TArray<FString> LegalExtensions;

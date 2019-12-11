@@ -17,6 +17,7 @@
 #include "ScriptEditorToolbar.h"
 #include "WorkflowOrientedApp/ApplicationMode.h"
 #include "WorkflowOrientedApp/WorkflowUObjectDocuments.h"
+#include "ScriptEditorSetting.h"
 
 
 #define LOCTEXT_NAMESPACE "ScriptEditor"
@@ -59,6 +60,7 @@ public:
 	{
 		TSharedRef<SCodeEditor> CodeEditor = StaticCastSharedRef<SCodeEditor>(Tab->GetContent());
 	//	InCodeProjectEditorPtr.Pin()->OnCodeEditorFocused(CodeEditor);
+		Tab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &FCodeTabSummoner::OnCloseTab));
 	}
 
 	virtual void OnTabRefreshed(TSharedPtr<SDockTab> Tab) const override
@@ -73,6 +75,12 @@ public:
 
 	//	UCodeProjectItem* Graph = FTabPayload_UObject::CastChecked<UCodeProjectItem>(Payload);
 	//	BlueprintEditorPtr.Pin()->GetBlueprintObj()->LastEditedDocuments.Add(FEditedDocumentInfo(Graph, ViewLocation, ZoomAmount));
+	}
+
+	void OnCloseTab(TSharedRef<class SDockTab> Tab)
+	{
+		TSharedRef<SCodeEditor> CodeEditor = StaticCastSharedRef<SCodeEditor>(Tab->GetContent());
+		CodeEditor->OnClose();
 	}
 
 protected:
@@ -403,6 +411,8 @@ void FScriptEditor::OpenFileForEditing(UCodeProjectItem* Item)
 {
 	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(Item);
 	DocumentManager->OpenDocument(Payload, FDocumentTracker::OpenNewDocument);
+
+	UScriptEdtiorSetting::Get()->EdittingFiles.Add(Item->Path);
 }
 
 void FScriptEditor::OpenFileAndGotoLine(UCodeProjectItem* Item, int32 Line)
@@ -415,12 +425,16 @@ void FScriptEditor::OpenFileAndGotoLine(UCodeProjectItem* Item, int32 Line)
 		TSharedRef<SCodeEditor> CodeEditor = StaticCastSharedRef<SCodeEditor>(DocTab->GetContent());
 		CodeEditor->GotoLineAndColumn(Line - 1, 0);
 	}
+
+	UScriptEdtiorSetting::Get()->EdittingFiles.Add(Item->Path);
 }
 
 void FScriptEditor::CloseEditingFile(UCodeProjectItem* Item)
 {
 	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(Item);
 	DocumentManager->CloseTab(Payload);
+
+	//UScriptEdtiorSetting::Get()->EdittingFiles.Remove(Item->Path);
 }
 
 void FScriptEditor::CloseAllEditingFiles()
@@ -437,7 +451,7 @@ void FScriptEditor::CloseAllEditingFiles()
 
 void FScriptEditor::RescanScriptProject()
 {
-	this->CloseAllEditingFiles();
+	//this->CloseAllEditingFiles();
 	TSharedPtr<SProjectTreeEditor> ProjectTreeEditor = SProjectTreeEditor::Get();
 	if (ProjectTreeEditor.IsValid())
 	{
@@ -473,6 +487,20 @@ FText FScriptEditor::GetToolkitToolTipText() const
 FString FScriptEditor::GetWorldCentricTabPrefix() const
 {
 	return TEXT("UScriptEditor");
+}
+
+bool FScriptEditor::OnRequestClose()
+{
+	//Flash BreakPoints
+	UScriptDebuggerSetting::Get(false)->RecentBreakPoint.Reset();
+
+	for (FBreakPointNode_Ref &Node : BreakPointForView)
+	{
+		UScriptDebuggerSetting::Get(false)->RecentBreakPoint.Add(*Node);
+	}
+	//
+
+	return	FWorkflowCentricApplication::OnRequestClose();
 }
 
 FLinearColor FScriptEditor::GetWorldCentricTabColorScale() const

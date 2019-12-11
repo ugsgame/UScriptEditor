@@ -53,6 +53,8 @@ private:
 	void OnClearInvalidScriptAssets();
 
 	void OnScriptEditorClosed(TSharedRef<class SDockTab> ScriptEditorTab);
+
+	void BeforeExit();
 private:
 	EAssetTypeCategories::Type AssetCategoryBit;
 

@@ -10,6 +10,7 @@
 #include "DirectoryScanner.h"
 #include "DirectoryWatcherModule.h"
 #include "ScriptHelperBPFunLib.h"
+#include "ScriptEditorSetting.h"
 
 UCodeProjectItem::UCodeProjectItem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -27,11 +28,9 @@ void UCodeProjectItem::RescanChildren(bool ShowEmptyFolder)
 {
 	if(Path.Len() > 0)
 	{
-		if (!ShowEmptyFolder)
-		{
-			FDirectoryScanner::OnDirectoryScannedOver = FOnDirectoryScannedOver::CreateUObject(this, &UCodeProjectItem::DeletedEmptyFolder);
-		}
+		bShowEmptyFolder = ShowEmptyFolder;
 
+		FDirectoryScanner::OnDirectoryScannedOver = FOnDirectoryScannedOver::CreateUObject(this, &UCodeProjectItem::DirectoryScannedOver);
 		FDirectoryScanner::AddDirectory(Path, FOnDirectoryScanned::CreateUObject(this, &UCodeProjectItem::HandleDirectoryScanned));
 	}
 }
@@ -79,6 +78,16 @@ void UCodeProjectItem::HandleDirectoryScanned(const FString& InPathName, ECodePr
 				NewItem->BuildScriptAssetContext();
 				//Have an legal file,tell my parent it is legal too!! 
  				this->RescaParentIsLegal(this);
+				//
+				for (FString EdtingFile :UScriptEdtiorSetting::Get()->EdittingFiles)
+				{
+					if (NewItem->Path == EdtingFile)
+					{
+						UScriptEdtiorSetting::Get()->PreEdittingItems.Add(NewItem);
+						break;
+					}
+				}
+				//
 			}
 		}
 
@@ -326,4 +335,18 @@ bool UCodeProjectItem::BuildScriptAssetContext()
 
 	}
 	return false;
+}
+
+void UCodeProjectItem::DirectoryScannedOver()
+{
+	if (!bShowEmptyFolder)
+	{
+		this->DeletedEmptyFolder();
+	}
+
+	if (OnDirectoryScannedOver.IsBound())
+	{
+		OnDirectoryScannedOver.ExecuteIfBound();
+	}
+
 }

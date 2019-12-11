@@ -27,6 +27,7 @@
 
 #include "Assets/LuaScriptAssetTypeActions.h"
 #include "SScriptEditorLog.h"
+#include "ScriptEditorSetting.h"
 
 #define LOCTEXT_NAMESPACE "ScriptEditorModule"
 
@@ -94,6 +95,8 @@ void FScriptEditorModule::StartupModule()
 	AssetRegistryModule.Get().OnInMemoryAssetDeleted().AddRaw(this, &FScriptEditorModule::OnScriptAssetDeleted);
 	AssetRegistryModule.Get().OnAssetRenamed().AddRaw(this, &FScriptEditorModule::OnScriptAssetRenamed);
 	AssetRegistryModule.Get().OnFilesLoaded().AddRaw(this, &FScriptEditorModule::OnClearInvalidScriptAssets);
+
+	FCoreDelegates::OnPreExit.AddRaw(this, &FScriptEditorModule::BeforeExit);
 	//
 	IsCheckScriptAssetsOver = false;
 }
@@ -315,6 +318,14 @@ void FScriptEditorModule::OnScriptEditorClosed(TSharedRef<class SDockTab> Script
 	{
 		CurrentScriptEditorTab = nullptr;
 	}
+	
+}
+
+void FScriptEditorModule::BeforeExit()
+{
+	UScriptEdtiorSetting::Get()->SaveConfig();
+	UScriptDebuggerSetting::Get(false)->SaveConfig();
+
 }
 
 void FScriptEditorModule::OpenEditorWindow()

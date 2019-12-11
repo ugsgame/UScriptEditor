@@ -24,6 +24,7 @@ public:
 
 	void ExpanedScriptItem(class UCodeProjectItem* Item, bool ShouldExpandItem = true, bool Always = true);
 
+	void ExpanedEditingProject();
 	void ExpanedAllScriptItems();
 
 	void RescanScripts();
@@ -50,6 +51,8 @@ private:
 	void ExpanedItemChildren(class UCodeProjectItem* Item) const;
 
 	void HandleMouseButtonDoubleClick(class UCodeProjectItem* Item) const;
+
+	void OnRescanOver();
 
 	virtual FReply OnClickedCodeProject();
 	virtual FReply OnClickedScriptProject();

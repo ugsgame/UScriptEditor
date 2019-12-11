@@ -62,6 +62,7 @@ public:
 	FText GetLineAndColumn() const;
 
 	//
+	virtual void OnClose();
 
 protected:
 	void OnTextChanged(const FText& NewText);

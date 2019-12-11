@@ -557,7 +557,7 @@ void FLuaDebuggerModule::RefreshStackList()
 FString FLuaDebuggerModule::GetLuaSourceDir()
 {
 	//return FPaths::ConvertRelativePathToFull(FPaths::GameContentDir() /"Plugins" / "UnrealLua" / TEXT("LuaSource"));
-	return FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() / "Scripts");
+	return FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / "Script");
 }
 
 FString FLuaDebuggerModule::LuaPathToFilePath(FString LuaFilePath)

@@ -172,7 +172,6 @@ public:
 	void DebugStepout();
 	void DebugTabClose(TSharedRef<SDockTab> DockTab);
 	void RegisterKeyDown();
-	void BeforeExit();
 	void ClearStackInfo();
 	void SaveDebuggerConfig();
 
