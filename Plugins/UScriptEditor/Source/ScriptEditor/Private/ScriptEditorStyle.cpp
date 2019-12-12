@@ -92,6 +92,14 @@ void FScriptEditorStyle::Initialize()
 		StyleSet->Set("SyntaxHighlight.CPP.Comment", FTextBlockStyle(NormalText).SetColorAndOpacity(FLinearColor(FColor(0xff57a64a)))); // green
 		StyleSet->Set("SyntaxHighlight.CPP.PreProcessorKeyword", FTextBlockStyle(NormalText).SetColorAndOpacity(FLinearColor(FColor(0xffcfcfcf)))); // light grey
 
+		StyleSet->Set("SyntaxHighlight.LUA.Normal", FTextBlockStyle(NormalText).SetColorAndOpacity(FLinearColor(FColor(0xffdfd706))));// yellow
+		StyleSet->Set("SyntaxHighlight.LUA.Operator", FTextBlockStyle(NormalText).SetColorAndOpacity(FLinearColor(FColor(0xffcfcfcf)))); // light grey
+		StyleSet->Set("SyntaxHighlight.LUA.Keyword", FTextBlockStyle(NormalText).SetColorAndOpacity(FLinearColor(FColor(0xff006ab4)))); // blue
+		StyleSet->Set("SyntaxHighlight.LUA.String", FTextBlockStyle(NormalText).SetColorAndOpacity(FLinearColor(FColor(0xff9e4a1e)))); // pinkish
+		StyleSet->Set("SyntaxHighlight.LUA.Number", FTextBlockStyle(NormalText).SetColorAndOpacity(FLinearColor(FColor(0xff6db3a8)))); // cyan
+		StyleSet->Set("SyntaxHighlight.LUA.Comment", FTextBlockStyle(NormalText).SetColorAndOpacity(FLinearColor(FColor(0xff57a64a)))); // green
+		StyleSet->Set("SyntaxHighlight.LUA.PreProcessorKeyword", FTextBlockStyle(NormalText).SetColorAndOpacity(FLinearColor(FColor(0xffcfcfcf)))); // light grey
+
 		StyleSet->Set("TextEditor.Border", new BOX_BRUSH("UI/Widgets/TextEditorBorder", FMargin(4.0f/16.0f), FLinearColor(0.02f,0.02f,0.02f,1)));
 
 		const FEditableTextBoxStyle EditableTextBoxStyle = FEditableTextBoxStyle()

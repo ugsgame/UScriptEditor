@@ -18,6 +18,7 @@
 #include "CodeProjectItem.h"
 #include "ScriptEditorUtils.h"
 #include "CPPRichTextSyntaxHighlighterTextLayoutMarshaller.h"
+#include "LUARichTextSyntaxHighlighterTextLayoutMarshaller.h"
 #include "SCodeEditableText.h"
 
 #include "ScriptEditor.h"
@@ -39,10 +40,25 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 	FString FileText = "File Loading, please wait";
 	FFileHelper::LoadFileToString(FileText, *InCodeProjectItem->Path);
 
+	TSharedPtr<FSyntaxHighlighterTextLayoutMarshaller> RichTextMarshaller = nullptr;
 
-	TSharedRef<FCPPRichTextSyntaxHighlighterTextLayoutMarshaller> RichTextMarshaller = FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::Create(
+	TSharedRef<FCPPRichTextSyntaxHighlighterTextLayoutMarshaller> CPPRichTextMarshaller = FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::Create(
 			FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::FSyntaxTextStyle()
 			);
+
+	TSharedRef<FLUARichTextSyntaxHighlighterTextLayoutMarshaller> LUARichTextMarshaller = FLUARichTextSyntaxHighlighterTextLayoutMarshaller::Create(
+		FLUARichTextSyntaxHighlighterTextLayoutMarshaller::FSyntaxTextStyle()
+	);
+	//TODO:后面要不后缀名对比
+	if (CodeProjectItem->Extension == "lua")
+	{
+		RichTextMarshaller = LUARichTextMarshaller;
+	}
+	else
+	{
+		RichTextMarshaller = CPPRichTextMarshaller;
+	}
+	//
 
 	HorizontalScrollbar = 
 		SNew(SScrollBar)

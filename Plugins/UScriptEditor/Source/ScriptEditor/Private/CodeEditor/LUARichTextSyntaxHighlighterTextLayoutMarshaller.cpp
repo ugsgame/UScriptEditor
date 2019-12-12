@@ -1,6 +1,6 @@
 ﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
-#include "CPPRichTextSyntaxHighlighterTextLayoutMarshaller.h"
+#include "LUARichTextSyntaxHighlighterTextLayoutMarshaller.h"
 #include "Framework/Text/IRun.h"
 #include "Framework/Text/TextLayout.h"
 #include "Framework/Text/ISlateRun.h"
@@ -8,154 +8,73 @@
 #include "Misc/ExpressionParserTypes.h"
 #include "WhiteSpaceTextRun.h"
 
-const TCHAR* CppKeywords[] =
+const TCHAR* LuaKeywords[] =
 {
-	TEXT("alignas"),
-	TEXT("alignof"),
 	TEXT("and"),
-	TEXT("and_eq"),
-	TEXT("asm"),
-	TEXT("auto"),
-	TEXT("bitand"),
-	TEXT("bitor"),
-	TEXT("bool"),
 	TEXT("break"),
-	TEXT("case"),
-	TEXT("catch"),
-	TEXT("char"),
-	TEXT("char16_t"),
-	TEXT("char32_t"),
-	TEXT("class"),
-	TEXT("compl"),
-	TEXT("concept"),
-	TEXT("const"),
-	TEXT("constexpr"),
-	TEXT("const_cast"),
-	TEXT("continue"),
-	TEXT("decltype"),
-	TEXT("default"),
-	TEXT("delete"),
 	TEXT("do"),
-	TEXT("double"),
-	TEXT("dynamic_cast"),
 	TEXT("else"),
-	TEXT("enum"),
-	TEXT("explicit"),
-	TEXT("export"),
-	TEXT("extern"),
+	TEXT("elseif"),
+	TEXT("end"),
 	TEXT("false"),
-	TEXT("float"),
 	TEXT("for"),
-	TEXT("friend"),
-	TEXT("goto"),
+	TEXT("function"),
 	TEXT("if"),
-	TEXT("inline"),
-	TEXT("int"),
-	TEXT("long"),
-	TEXT("mutable"),
-	TEXT("namespace"),
-	TEXT("new"),
-	TEXT("noexcept"),
+	TEXT("in"),
+	TEXT("local"),
+	TEXT("nil"),
 	TEXT("not"),
-	TEXT("not_eq"),
-	TEXT("nullptr"),
-	TEXT("operator"),
 	TEXT("or"),
-	TEXT("or_eq"),
-	TEXT("private"),
-	TEXT("protected"),
-	TEXT("public"),
-	TEXT("register"),
-	TEXT("reinterpret_cast"),
-	TEXT("requires"),
+	TEXT("repeat"),
 	TEXT("return"),
-	TEXT("short"),
-	TEXT("signed"),
-	TEXT("sizeof"),
-	TEXT("static"),
-	TEXT("static_assert"),
-	TEXT("static_cast"),
-	TEXT("struct"),
-	TEXT("switch"),
-	TEXT("template"),
-	TEXT("this"),
-	TEXT("thread_local"),
-	TEXT("throw"),
+	TEXT("then"),
 	TEXT("true"),
-	TEXT("try"),
-	TEXT("typedef"),
-	TEXT("typeid"),
-	TEXT("typename"),
-	TEXT("union"),
-	TEXT("unsigned"),
-	TEXT("using"),
-	TEXT("virtual"),
-	TEXT("void"),
-	TEXT("volatile"),
-	TEXT("wchar_t"),
+	TEXT("until"),
 	TEXT("while"),
-	TEXT("xor"),
-	TEXT("xor_eq"),
+	TEXT("goto"),
 };
 
-const TCHAR* CppOperators[] =
+const TCHAR* LuaOperators[] =
 {
-	TEXT("/*"),
-	TEXT("*/"),
-	TEXT("//"),
+	TEXT("--"),
+	TEXT("--[["),
+	TEXT("--]]"),
 	TEXT("\""),
 	TEXT("\'"),
 	TEXT("::"),
 	TEXT(":"),
-	TEXT("+="),
-	TEXT("++"),
 	TEXT("+"),
-	TEXT("--"),
-	TEXT("-="),
 	TEXT("-"),
 	TEXT("("),
 	TEXT(")"),
-	TEXT("["),
-	TEXT("]"),
+ 	TEXT("["),
+ 	TEXT("]"),
 	TEXT("."),
-	TEXT("->"),
-	TEXT("!="),
-	TEXT("!"),
-	TEXT("&="),
 	TEXT("~"),
-	TEXT("&"),
+	TEXT("~="),
 	TEXT("*="),
 	TEXT("*"),
-	TEXT("->"),
 	TEXT("/="),
 	TEXT("/"),
 	TEXT("%="),
 	TEXT("%"),
-	TEXT("<<="),
-	TEXT("<<"),
 	TEXT("<="),
 	TEXT("<"),
-	TEXT(">>="),
-	TEXT(">>"),
 	TEXT(">="),
 	TEXT(">"),
 	TEXT("=="),
-	TEXT("&&"),
-	TEXT("&"),
 	TEXT("^="),
 	TEXT("^"),
-	TEXT("|="),
-	TEXT("||"),
-	TEXT("|"),
-	TEXT("?"),
 	TEXT("="),
 	TEXT(","),
 	TEXT("{"),
 	TEXT("}"),
 	TEXT(";"),
+	TEXT("#")
+	TEXT("..")
 };
 
-const TCHAR* CppPreProcessorKeywords[] =
+const TCHAR* LuaPreProcessorKeywords[] =
 {
 	TEXT("#include"),
 	TEXT("#define"),
@@ -168,37 +87,37 @@ const TCHAR* CppPreProcessorKeywords[] =
 	TEXT("#undef"),
 };
 
-TSharedRef< FCPPRichTextSyntaxHighlighterTextLayoutMarshaller > FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::Create(const FSyntaxTextStyle& InSyntaxTextStyle)
+TSharedRef< FLUARichTextSyntaxHighlighterTextLayoutMarshaller > FLUARichTextSyntaxHighlighterTextLayoutMarshaller::Create(const FSyntaxTextStyle& InSyntaxTextStyle)
 {
 	TArray<FSyntaxTokenizer::FRule> TokenizerRules;
 
 	// operators
-	for(const auto& Operator : CppOperators)
+	for(const auto& Operator : LuaOperators)
 	{
 		TokenizerRules.Emplace(FSyntaxTokenizer::FRule(Operator));
 	}	
 
 	// keywords
-	for(const auto& Keyword : CppKeywords)
+	for(const auto& Keyword : LuaKeywords)
 	{
 		TokenizerRules.Emplace(FSyntaxTokenizer::FRule(Keyword));
 	}
 
 	// Pre-processor Keywords
-	for(const auto& PreProcessorKeyword : CppPreProcessorKeywords)
+	for(const auto& PreProcessorKeyword : LuaPreProcessorKeywords)
 	{
 		TokenizerRules.Emplace(FSyntaxTokenizer::FRule(PreProcessorKeyword));
 	}
 
-	return MakeShareable(new FCPPRichTextSyntaxHighlighterTextLayoutMarshaller(FSyntaxTokenizer::Create(TokenizerRules), InSyntaxTextStyle));
+	return MakeShareable(new FLUARichTextSyntaxHighlighterTextLayoutMarshaller(FSyntaxTokenizer::Create(TokenizerRules), InSyntaxTextStyle));
 }
 
-FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::~FCPPRichTextSyntaxHighlighterTextLayoutMarshaller()
+FLUARichTextSyntaxHighlighterTextLayoutMarshaller::~FLUARichTextSyntaxHighlighterTextLayoutMarshaller()
 {
 
 }
 
-void FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::ParseTokens(const FString& SourceString, FTextLayout& TargetTextLayout, TArray<FSyntaxTokenizer::FTokenizedLine> TokenizedLines)
+void FLUARichTextSyntaxHighlighterTextLayoutMarshaller::ParseTokens(const FString& SourceString, FTextLayout& TargetTextLayout, TArray<FSyntaxTokenizer::FTokenizedLine> TokenizedLines)
 {
 	enum class EParseState : uint8
 	{
@@ -231,7 +150,7 @@ void FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::ParseTokens(const FStrin
 			const FTextRange ModelRange(ModelString->Len(), ModelString->Len() + TokenText.Len());
 			ModelString->Append(TokenText);
 
-			FRunInfo RunInfo(TEXT("SyntaxHighlight.CPP.Normal"));
+			FRunInfo RunInfo(TEXT("SyntaxHighlight.LUA.Normal"));
 			FTextBlockStyle TextBlockStyle = SyntaxTextStyle.NormalTextStyle;
 
 			const bool bIsWhitespace = FString(TokenText).TrimEnd().IsEmpty();
@@ -242,63 +161,63 @@ void FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::ParseTokens(const FStrin
 				{
 					if(ParseState == EParseState::None && TokenText == TEXT("\""))
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.String");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.String");
 						TextBlockStyle = SyntaxTextStyle.StringTextStyle;
 						ParseState = EParseState::LookingForString;
 						bHasMatchedSyntax = true;
 					}
 					else if(ParseState == EParseState::LookingForString && TokenText == TEXT("\""))
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.Normal");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.Normal");
 						TextBlockStyle = SyntaxTextStyle.StringTextStyle;
 						ParseState = EParseState::None;
 					}
 					else if(ParseState == EParseState::None && TokenText == TEXT("\'"))
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.String");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.String");
 						TextBlockStyle = SyntaxTextStyle.StringTextStyle;
 						ParseState = EParseState::LookingForCharacter;
 						bHasMatchedSyntax = true;
 					}
 					else if(ParseState == EParseState::LookingForCharacter && TokenText == TEXT("\'"))
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.Normal");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.Normal");
 						TextBlockStyle = SyntaxTextStyle.StringTextStyle;
 						ParseState = EParseState::None;
 					}
 					else if(ParseState == EParseState::None && TokenText.StartsWith(TEXT("#")))
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.PreProcessorKeyword");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.PreProcessorKeyword");
 						TextBlockStyle = SyntaxTextStyle.PreProcessorKeywordTextStyle;
 						ParseState = EParseState::None;
 					}
-					else if(ParseState == EParseState::None && TokenText == TEXT("//"))
+					else if (ParseState == EParseState::None && TokenText == TEXT("--"))
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.Comment");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.Comment");
 						TextBlockStyle = SyntaxTextStyle.CommentTextStyle;
 						ParseState = EParseState::LookingForSingleLineComment;
 					}
-					else if(ParseState == EParseState::None && TokenText == TEXT("/*"))
+					else if(ParseState == EParseState::None && TokenText == TEXT("--[["))
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.Comment");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.Comment");
 						TextBlockStyle = SyntaxTextStyle.CommentTextStyle;
 						ParseState = EParseState::LookingForMultiLineComment;
 					}
-					else if(ParseState == EParseState::LookingForMultiLineComment && TokenText == TEXT("*/"))
+					else if(ParseState == EParseState::LookingForMultiLineComment && TokenText == TEXT("--]]"))
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.Comment");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.Comment");
 						TextBlockStyle = SyntaxTextStyle.CommentTextStyle;
 						ParseState = EParseState::None;
 					}
 					else if(ParseState == EParseState::None && TChar<WIDECHAR>::IsAlpha(TokenText[0]))
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.Keyword");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.Keyword");
 						TextBlockStyle = SyntaxTextStyle.KeywordTextStyle;
 						ParseState = EParseState::None;
 					}
 					else if(ParseState == EParseState::None && !TChar<WIDECHAR>::IsAlpha(TokenText[0]))
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.Operator");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.Operator");
 						TextBlockStyle = SyntaxTextStyle.OperatorTextStyle;
 						ParseState = EParseState::None;
 					}
@@ -310,22 +229,22 @@ void FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::ParseTokens(const FStrin
 				{
 					if(ParseState == EParseState::LookingForString)
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.String");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.String");
 						TextBlockStyle = SyntaxTextStyle.StringTextStyle;
 					}
 					else if(ParseState == EParseState::LookingForCharacter)
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.String");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.String");
 						TextBlockStyle = SyntaxTextStyle.StringTextStyle;
 					}
 					else if(ParseState == EParseState::LookingForSingleLineComment)
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.Comment");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.Comment");
 						TextBlockStyle = SyntaxTextStyle.CommentTextStyle;
 					}
 					else if(ParseState == EParseState::LookingForMultiLineComment)
 					{
-						RunInfo.Name = TEXT("SyntaxHighlight.CPP.Comment");
+						RunInfo.Name = TEXT("SyntaxHighlight.LUA.Comment");
 						TextBlockStyle = SyntaxTextStyle.CommentTextStyle;
 					}
 				}
@@ -335,7 +254,7 @@ void FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::ParseTokens(const FStrin
 			}
 			else
 			{
-				RunInfo.Name = TEXT("SyntaxHighlight.CPP.WhiteSpace");
+				RunInfo.Name = TEXT("SyntaxHighlight.LUA.WhiteSpace");
 				TSharedRef< ISlateRun > Run = FWhiteSpaceTextRun::Create(RunInfo, ModelString, TextBlockStyle, ModelRange, 4);
 				Runs.Add(Run);
 			}
@@ -347,7 +266,7 @@ void FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::ParseTokens(const FStrin
 	TargetTextLayout.AddLines(LinesToAdd);
 }
 
-FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::FCPPRichTextSyntaxHighlighterTextLayoutMarshaller(TSharedPtr< FSyntaxTokenizer > InTokenizer, const FSyntaxTextStyle& InSyntaxTextStyle)
+FLUARichTextSyntaxHighlighterTextLayoutMarshaller::FLUARichTextSyntaxHighlighterTextLayoutMarshaller(TSharedPtr< FSyntaxTokenizer > InTokenizer, const FSyntaxTextStyle& InSyntaxTextStyle)
 	: FSyntaxHighlighterTextLayoutMarshaller(MoveTemp(InTokenizer))
 	, SyntaxTextStyle(InSyntaxTextStyle)
 {
