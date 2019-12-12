@@ -58,7 +58,7 @@ public:
 	void CloseAllEditingFiles();
 
 	/** Rescan all script files */
-	void RescanScriptProject();
+	void RescanProject();
 
 	/** Get the current project being edited by this code editor */
 	UCodeProjectItem* GetCodeProjectBeingEdited() const { return CodeProjectBeingEdited.Get(); }
@@ -74,6 +74,7 @@ public:
 	bool Save();
 	bool SaveAll();
 	bool Reload();
+	bool ReloadAll();
 
 private:
 	void BindCommands();
@@ -82,10 +83,12 @@ private:
 	void Save_Internal();
 	void SaveAll_Internal();
 	void Reload_Internal();
+	void ReloadAll_Internal();
 
 	bool CanSave() const;
 	bool CanSaveAll() const;
 	bool CanReload() const;
+	bool CanReloadAll() const;
 	//Debug Actions
 	void DebugContinue();
 	void DebugStepover();

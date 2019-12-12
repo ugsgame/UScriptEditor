@@ -43,7 +43,7 @@ UObject* ULuaScriptFactory::FactoryCreateNew(UClass* InClass, UObject* InParent,
 		TSharedPtr<FScriptEditor> ProjectEditor = FScriptEditor::Get();
 		if (ProjectEditor.IsValid())
 		{
-			ProjectEditor->RescanScriptProject();
+			ProjectEditor->RescanProject();
 		}
 	}
 	else

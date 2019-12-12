@@ -205,6 +205,17 @@ bool SCodeEditor::CanSave() const
 	return bDirty;
 }
 
+bool SCodeEditor::Reload() const
+{
+	FString FileText = "File Loading, please wait";
+	if (FFileHelper::LoadFileToString(FileText, *CodeProjectItem->Path))
+	{
+		CodeEditableText->SetText(FText::FromString(FileText));
+		return true;
+	}
+	return false;
+}
+
 void SCodeEditor::Browser() const
 {
 	if (CodeProjectItem->ScriptDataAsset)

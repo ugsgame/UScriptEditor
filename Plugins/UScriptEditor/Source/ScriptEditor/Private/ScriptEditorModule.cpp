@@ -170,7 +170,7 @@ void FScriptEditorModule::OnScriptAssetDeleted(UObject*  AssetObject)
 					else
 					{						
 						//Reflash Browser
-						ProjectEditor->RescanScriptProject();				
+						ProjectEditor->RescanProject();				
 					}
 				}
 			}
@@ -237,7 +237,7 @@ void FScriptEditorModule::OnScriptAssetRenamed(const FAssetData& RenamedAsset, c
 				//Reflash Browser
 				if (ProjectEditor.IsValid())
 				{
-					ProjectEditor->RescanScriptProject();
+					ProjectEditor->RescanProject();
 				}
 			}
 

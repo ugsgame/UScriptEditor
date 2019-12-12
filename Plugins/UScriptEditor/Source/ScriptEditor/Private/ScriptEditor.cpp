@@ -402,6 +402,11 @@ void FScriptEditor::BindCommands()
 			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanReload)
 			);
 
+	ToolkitCommands->MapAction(FScriptEditorCommands::Get().ReloadAll,
+			FExecuteAction::CreateSP(this, &FScriptEditor::ReloadAll_Internal),
+			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanReloadAll)
+			);
+
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugContinue,
 			FExecuteAction::CreateSP(this, &FScriptEditor::DebugContinue),
 			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugContinue)
@@ -465,19 +470,15 @@ void FScriptEditor::CloseAllEditingFiles()
 	}
 }
 
-void FScriptEditor::RescanScriptProject()
+void FScriptEditor::RescanProject()
 {
-	//this->CloseAllEditingFiles();
 	TSharedPtr<SProjectTreeEditor> ProjectTreeEditor = SProjectTreeEditor::Get();
 	if (ProjectTreeEditor.IsValid())
 	{
 		ProjectTreeEditor->RescanScripts();
+		ProjectTreeEditor->RescanSources();
 		ProjectTreeEditor->RequestRefresh();
 	}
-	//TODO:
-	//Open all old edited files
-	//
-	//
 }
 
 FName FScriptEditor::GetToolkitFName() const
@@ -574,7 +575,15 @@ void FScriptEditor::SaveAll_Internal()
 
 void FScriptEditor::Reload_Internal()
 {
-	Reload();
+	if (!Reload())
+	{
+		//TODO:Show a error dialog
+	}
+}
+
+void FScriptEditor::ReloadAll_Internal()
+{
+	ReloadAll();
 }
 
 bool FScriptEditor::SaveAll()
@@ -602,6 +611,17 @@ bool FScriptEditor::SaveAll()
 
 bool FScriptEditor::Reload()
 {
+	if (DocumentManager.IsValid() && DocumentManager->GetActiveTab().IsValid())
+	{
+		TSharedRef<SCodeEditor> CodeEditorRef = StaticCastSharedRef<SCodeEditor>(DocumentManager->GetActiveTab()->GetContent());
+		return CodeEditorRef->Reload();
+	}
+	return true;
+}
+
+bool FScriptEditor::ReloadAll()
+{
+	RescanProject();
 	return true;
 }
 
@@ -612,6 +632,19 @@ bool FScriptEditor::CanSaveAll() const
 
 bool FScriptEditor::CanReload() const
 {
+	if (SScriptDebugger::Get())
+	{
+		return !SScriptDebugger::Get()->IsEnterDebugMode;
+	}
+	return true;
+}
+
+bool FScriptEditor::CanReloadAll() const
+{
+	if (SScriptDebugger::Get())
+	{
+		return !SScriptDebugger::Get()->IsEnterDebugMode;
+	}
 	return true;
 }
 

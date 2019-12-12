@@ -55,6 +55,7 @@ public:
 	//
 	bool Save() const;
 	bool CanSave() const;
+	bool Reload() const;
 	void Browser() const;
 	//
 	//
