@@ -131,18 +131,28 @@ void SProjectTreeEditor::ExpanedScriptItem(UCodeProjectItem* Item,bool ShouldExp
 	}
 }
 
-void SProjectTreeEditor::ExpanedEditingProject()
-{
-	if(EditingProject)
-		ExpanedItemChildren(EditingProject);
-}
-
 void SProjectTreeEditor::ExpanedAllScriptItems()
 {
 	ProjectTree->SetTreeItemsSource(&ScriptProject->Children);
 	EditingProject = ScriptProject;
 
-	ExpanedEditingProject();
+	ExpanedAllEditingItems();
+}
+
+void SProjectTreeEditor::ExpanedEditingItem(class UCodeProjectItem* Item, bool ShouldExpandItem /*= true*/, bool Always /*= true*/)
+{
+	ProjectTree->SetSelection(Item, ESelectInfo::OnMouseClick);
+
+	if (Always)
+		ExpanedItem(Item, ShouldExpandItem);
+	else
+		ProjectTree->SetItemExpansion(Item, ShouldExpandItem);
+}
+
+void SProjectTreeEditor::ExpanedAllEditingItems()
+{
+	if (EditingProject)
+		ExpanedItemChildren(EditingProject);
 }
 
 void SProjectTreeEditor::RescanScripts()
@@ -151,7 +161,7 @@ void SProjectTreeEditor::RescanScripts()
 	ScriptProject->RescanChildren();
 }
 
-void SProjectTreeEditor::RescanCodes()
+void SProjectTreeEditor::RescanSources()
 {
 	SourceProject->Children.Empty();
 	SourceProject->RescanChildren();
@@ -160,7 +170,7 @@ void SProjectTreeEditor::RescanCodes()
 void SProjectTreeEditor::RescanAllFiles()
 {
 	RescanScripts();
-	RescanCodes();
+	RescanSources();
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	AssetRegistryModule.Get().OnFilesLoaded().RemoveAll(this);
@@ -169,6 +179,26 @@ void SProjectTreeEditor::RescanAllFiles()
 void SProjectTreeEditor::RequestRefresh()
 {
 	ProjectTree->RequestTreeRefresh();
+}
+
+void SProjectTreeEditor::SwitchToScriptProject()
+{
+	ProjectTree->SetTreeItemsSource(&ScriptProject->Children);
+	EditingProject = ScriptProject;
+	ScriptProjectButton->SetBorderBackgroundColor(SelectedColor);
+	SourceProjectButton->SetBorderBackgroundColor(UnSelectedColor);
+
+	//TODO:Expanded editting items
+}
+
+void SProjectTreeEditor::SwitchToSourceProject()
+{
+	ProjectTree->SetTreeItemsSource(&SourceProject->Children);
+	EditingProject = SourceProject;
+	SourceProjectButton->SetBorderBackgroundColor(SelectedColor);
+	ScriptProjectButton->SetBorderBackgroundColor(UnSelectedColor);
+
+	//TODO:Expanded editting items
 }
 
 void SProjectTreeEditor::Tick( const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime )
@@ -217,17 +247,27 @@ void SProjectTreeEditor::HandleMouseButtonDoubleClick(UCodeProjectItem* Item) co
 
 void SProjectTreeEditor::OnRescanOver()
 {
-	//
+	//Sort the items from EdittingFiles;
+	TArray<UCodeProjectItem*> SortItems;
+	for (FString FilePath:UScriptEdtiorSetting::Get()->EdittingFiles)
+	{
+		for (UCodeProjectItem* Item : UScriptEdtiorSetting::Get()->PreEdittingItems)
+		{
+			if (FilePath == Item->Path)
+				SortItems.Add(Item);
+		}
+	}
 	UScriptEdtiorSetting::Get()->EdittingFiles.Empty();
 	FScriptEditor::Get()->CloseAllEditingFiles();
 	//
 	//Open PreEditting file tabs
-	for (UCodeProjectItem* Item:UScriptEdtiorSetting::Get()->PreEdittingItems)
+	for (UCodeProjectItem* Item: SortItems)
 	{
 		FScriptEditor::Get()->OpenFileForEditing(Item);
-		ExpanedItem(Item);
+		ExpanedEditingItem(Item);
 	}
 	UScriptEdtiorSetting::Get()->PreEdittingItems.Empty();
+	SortItems.Empty();
 }
 
 void SProjectTreeEditor::ExpanedItem(UCodeProjectItem* Item, bool ShouldExpandItem) const
@@ -259,19 +299,13 @@ void SProjectTreeEditor::ExpanedItemChildren(UCodeProjectItem* Item) const
 
 FReply SProjectTreeEditor::OnClickedCodeProject()
 {
-	ProjectTree->SetTreeItemsSource(&SourceProject->Children);
-	EditingProject = SourceProject;
-	SourceProjectButton->SetBorderBackgroundColor(SelectedColor);
-	ScriptProjectButton->SetBorderBackgroundColor(UnSelectedColor);
+	SwitchToSourceProject();
 	return FReply::Handled();
 }
 
 FReply SProjectTreeEditor::OnClickedScriptProject()
 {
-	ProjectTree->SetTreeItemsSource(&ScriptProject->Children);
-	EditingProject = ScriptProject;
-	ScriptProjectButton->SetBorderBackgroundColor(SelectedColor);
-	SourceProjectButton->SetBorderBackgroundColor(UnSelectedColor);
+	SwitchToScriptProject();
 	return FReply::Handled();
 }
 

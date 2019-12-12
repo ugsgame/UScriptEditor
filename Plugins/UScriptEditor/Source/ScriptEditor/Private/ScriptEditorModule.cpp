@@ -99,6 +99,7 @@ void FScriptEditorModule::StartupModule()
 	FCoreDelegates::OnPreExit.AddRaw(this, &FScriptEditorModule::BeforeExit);
 	//
 	IsCheckScriptAssetsOver = false;
+	IsEditorOpen = false;
 }
 
 void FScriptEditorModule::ShutdownModule()
@@ -110,6 +111,12 @@ void FScriptEditorModule::ShutdownModule()
 	// Unregister the tab spawner
 	FGlobalTabmanager::Get()->UnregisterTabSpawner(ScriptEditorTabName);
 
+}
+
+void FScriptEditorModule::SaveConfig()
+{
+	UScriptEdtiorSetting::Get()->SaveConfig();
+	UScriptDebuggerSetting::Get(false)->SaveConfig();
 }
 
 TSharedRef< SWidget > FScriptEditorModule::MakeConsoleInputBox(TSharedPtr< SEditableTextBox >& OutExposedEditableTextBox) const
@@ -317,15 +324,16 @@ void FScriptEditorModule::OnScriptEditorClosed(TSharedRef<class SDockTab> Script
 	if (CurrentScriptEditorTab == ScriptEditorTab)
 	{
 		CurrentScriptEditorTab = nullptr;
+
+		IsEditorOpen = false;
 	}
 	
 }
 
+
 void FScriptEditorModule::BeforeExit()
 {
-	UScriptEdtiorSetting::Get()->SaveConfig();
-	UScriptDebuggerSetting::Get(false)->SaveConfig();
-
+	SaveConfig();
 }
 
 void FScriptEditorModule::OpenEditorWindow()
@@ -343,6 +351,8 @@ void FScriptEditorModule::OpenEditorWindow()
 		CurrentScriptEditorTab->ActivateInParent(ETabActivationCause::UserClickedOnTab);
 		FGlobalTabmanager::Get()->DrawAttention(CurrentScriptEditorTab.ToSharedRef());
 	}
+
+	IsEditorOpen = true;
 }
 
 void FScriptEditorModule::AddMenuExtension(FMenuBuilder& Builder)

@@ -224,6 +224,11 @@ int32 SCodeEditor::GetLineCount() const
 	return Count;
 }
 
+UCodeProjectItem* SCodeEditor::GetCodeProjectItem() const
+{
+	return CodeProjectItem;
+}
+
 void SCodeEditor::GotoLineAndColumn(int32 LineNumber, int32 ColumnNumber)
 {
 	FSlateApplication::Get().SetKeyboardFocus(CodeEditableText.ToSharedRef());
@@ -247,9 +252,9 @@ FText SCodeEditor::GetLineAndColumn() const
 
 void SCodeEditor::OnClose()
 {
-	UScriptEdtiorSetting::Get()->EdittingFiles.Remove(CodeProjectItem->Path);
+	//UScriptEdtiorSetting::Get()->EdittingFiles.Remove(CodeProjectItem->Path);
 
-	UE_LOG(LogTemp, Log, TEXT("CodeProjectItems [%d]"), UScriptEdtiorSetting::Get()->EdittingFiles.Num());
+	//UE_LOG(LogTemp, Log, TEXT("CodeProjectItems [%d]"), UScriptEdtiorSetting::Get()->EdittingFiles.Num());
 }
 
 void SCodeEditor::SetLineCountList(const int32 Count) 

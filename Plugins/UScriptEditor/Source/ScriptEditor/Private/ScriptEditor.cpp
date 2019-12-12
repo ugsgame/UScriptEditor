@@ -18,6 +18,7 @@
 #include "WorkflowOrientedApp/ApplicationMode.h"
 #include "WorkflowOrientedApp/WorkflowUObjectDocuments.h"
 #include "ScriptEditorSetting.h"
+#include "ScriptEditorModule.h"
 
 
 #define LOCTEXT_NAMESPACE "ScriptEditor"
@@ -59,7 +60,17 @@ public:
 	virtual void OnTabActivated(TSharedPtr<SDockTab> Tab) const override
 	{
 		TSharedRef<SCodeEditor> CodeEditor = StaticCastSharedRef<SCodeEditor>(Tab->GetContent());
+		if (UCodeProjectItem* Item = CodeEditor->GetCodeProjectItem())
+		{
+			if (SProjectTreeEditor::Get().IsValid())
+			{
+				//TODO:Switch to ScriptProject or SoucreProject
+				//Expanded item
+				SProjectTreeEditor::Get()->ExpanedEditingItem(Item);
+			}
+		}
 	//	InCodeProjectEditorPtr.Pin()->OnCodeEditorFocused(CodeEditor);
+
 		Tab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &FCodeTabSummoner::OnCloseTab));
 	}
 
@@ -80,6 +91,11 @@ public:
 	void OnCloseTab(TSharedRef<class SDockTab> Tab)
 	{
 		TSharedRef<SCodeEditor> CodeEditor = StaticCastSharedRef<SCodeEditor>(Tab->GetContent());
+
+		if (UCodeProjectItem* Item = CodeEditor->GetCodeProjectItem())
+		{
+			UScriptEdtiorSetting::Get()->EdittingFiles.Remove(Item->Path);
+		}
 		CodeEditor->OnClose();
 	}
 
@@ -499,6 +515,7 @@ bool FScriptEditor::OnRequestClose()
 		UScriptDebuggerSetting::Get(false)->RecentBreakPoint.Add(*Node);
 	}
 	//
+	FScriptEditorModule::GetInstance()->SaveConfig();
 
 	return	FWorkflowCentricApplication::OnRequestClose();
 }

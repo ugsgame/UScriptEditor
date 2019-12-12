@@ -9,6 +9,7 @@
 #include "AssetToolsModule.h"
 #include "ContentBrowserModule.h"
 #include "ScriptEditorSetting.h"
+#include "ScriptHelperBPFunLib.h"
 
 #define LOCTEXT_NAMESPACE "LuaScriptAssetTypeActions"
 
@@ -37,40 +38,39 @@ void FLuaScriptAssetTypeActions::OpenAssetEditor(const TArray<UObject*>& InObjec
 	{
 		if (ScriptAsset->EFlag_IsValid)
 		{
-			//FGlobalTabmanager::Get()->InvokeTab(FScriptEditorModule::ScriptEditorTabName);
-			FScriptEditorModule::GetInstance()->OpenEditorWindow();
 
-			TSharedPtr<FScriptEditor> ProjectEditor = FScriptEditor::Get();
-			if (ProjectEditor.IsValid())
+			if (FScriptEditorModule::GetInstance()->IsEditorOpen)
 			{
-				if (UCodeProjectItem* Item = Cast<UCodeProjectItem>(ScriptAsset->UserObject))
+				//Goto item tab			
+				UCodeProjectItem* Item = Cast<UCodeProjectItem>(ScriptAsset->UserObject);
+				TSharedPtr<FScriptEditor> ScriptEditor = FScriptEditor::Get();
+				if (ScriptEditor.IsValid() && Item)
 				{
-					//Goto item tab			
 					FScriptEditor::Get()->OpenFileForEditing(Item);
 
-					UScriptEdtiorSetting::Get()->EdittingFiles.Remove(Item->Path);	//remove if exist
-					UScriptEdtiorSetting::Get()->EdittingFiles.Add(Item->Path);		// add to last!
 					//Expaned this item
 					if (SProjectTreeEditor::Get().IsValid())
 					{
 						SProjectTreeEditor::Get()->ExpanedScriptItem(Item);
 					}
-					//
-				}
-				else
-				{
-					////Show Waring Dialog
 				}
 			}
 			else
 			{
-				//TODO:Add the item to open after ProjectEditor was inited!!!
+				FString ScriptPath = UScriptHelperBPFunLib::ScriptSourceDir()  + ScriptAsset->Path;
+				//remove if exist
+				UScriptEdtiorSetting::Get()->EdittingFiles.Remove(ScriptPath);	
+				// add to last!
+				UScriptEdtiorSetting::Get()->EdittingFiles.Add(ScriptPath);
+
+				FScriptEditorModule::GetInstance()->OpenEditorWindow();
 			}
 		}
 		else
 		{
-			//Show Waring Dialog
+			//TODO:Show a dialog
 		}
+
 	}
 }
 

@@ -11,6 +11,8 @@ class SCodeEditableText;
 class SScrollBar;
 class SScrollBox;
 
+class UCodeProjectItem;
+
 struct FCodeLineNode
 {
 	FCodeLineNode(int32 _Line, FString _FilePath)
@@ -53,14 +55,13 @@ public:
 	//
 	bool Save() const;
 	bool CanSave() const;
-
 	void Browser() const;
 	//
 	//
 	int32 GetLineCount() const;
+	UCodeProjectItem* GetCodeProjectItem()const;
 	void GotoLineAndColumn(int32 LineNumber, int32 ColumnNumber);
 	FText GetLineAndColumn() const;
-
 	//
 	virtual void OnClose();
 
@@ -74,7 +75,7 @@ protected:
 	TSharedRef<ITableRow>OnGenerateLineCounter(FCodeLineNode_Ptr Item, const TSharedRef<STableViewBase>&OwnerTable);
 
 protected:
-	class UCodeProjectItem* CodeProjectItem;
+	UCodeProjectItem* CodeProjectItem;
 
 	TArray<TSharedPtr<FCodeLineNode>>LineCount;
 

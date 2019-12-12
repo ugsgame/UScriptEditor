@@ -23,16 +23,20 @@ public:
 	}
 
 	void ExpanedScriptItem(class UCodeProjectItem* Item, bool ShouldExpandItem = true, bool Always = true);
-
-	void ExpanedEditingProject();
 	void ExpanedAllScriptItems();
 
+	void ExpanedEditingItem(class UCodeProjectItem* Item, bool ShouldExpandItem = true, bool Always = true);
+	void ExpanedAllEditingItems();
+;
 	void RescanScripts();
-	void RescanCodes();
+	void RescanSources();
 
 	void RescanAllFiles();
 
 	void RequestRefresh();
+
+	void SwitchToScriptProject();
+	void SwitchToSourceProject();
 private:
 	/** Begin SWidget interface */
 	void Tick( const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime ) override;

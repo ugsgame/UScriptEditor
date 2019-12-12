@@ -32,6 +32,8 @@ public:
 	/** This function will be bound to Command (by default it will bring up plugin window) */
 	void OpenEditorWindow();
 
+	void SaveConfig();
+
 	EAssetTypeCategories::Type GetAssetCategoryBit() const { return AssetCategoryBit; };
 private:
 
@@ -55,7 +57,13 @@ private:
 	void OnScriptEditorClosed(TSharedRef<class SDockTab> ScriptEditorTab);
 
 	void BeforeExit();
+
+public:
+
+	bool IsEditorOpen;
+
 private:
+
 	EAssetTypeCategories::Type AssetCategoryBit;
 
 	/** All created asset type actions.  Cached here so that we can unregister them during shutdown. */

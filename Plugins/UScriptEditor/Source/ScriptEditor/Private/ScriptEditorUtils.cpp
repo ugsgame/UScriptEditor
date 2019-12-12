@@ -36,7 +36,7 @@ namespace ScriptEditorUtils
 	FString CreateLuaFileFromLuaScriptAsset(class ULuaScript* ScriptAsset ,EScriptTemplateType TemplateType)
 	{
 		FString FullPath = ScriptAsset->GetPathName();
-		FullPath.RemoveFromStart(TEXT("/Game"));
+		FullPath.RemoveFromStart(TEXT("/Game/"));
 		FullPath.RemoveFromEnd(ScriptAsset->GetName());
 
 		FString ScriptRelativePath = FullPath + TEXT("lua");

@@ -10,6 +10,8 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "LuaWrapper/LuaScript.h"
+#include "ScriptHelperBPFunLib.h"
+#include "ScriptEditorSetting.h"
 
 #define LOCTEXT_NAMESPACE "LuaScriptFactory" 
 
@@ -32,21 +34,26 @@ UObject* ULuaScriptFactory::FactoryCreateNew(UClass* InClass, UObject* InParent,
 	//create *.lua in this directory
 	//TODO:Display a dialog to selecte template to create
 	ScriptEditorUtils::CreateLuaFileFromLuaScriptAsset(ScriptAsset,EScriptTemplateType::Actor);
-	//save asset
-	ScriptEditorUtils::SaveScriptAsset(ScriptAsset);
 
 	//Reflash Browser
-	TSharedPtr<FScriptEditor> ProjectEditor = FScriptEditor::Get();
-	if (ProjectEditor.IsValid())
-	{
-		ProjectEditor->RescanScriptProject();
+	FString ScriptPath = UScriptHelperBPFunLib::ScriptSourceDir() + ScriptAsset->Path;
+	UScriptEdtiorSetting::Get()->EdittingFiles.Add(ScriptPath);
+	if (FScriptEditorModule::GetInstance()->IsEditorOpen)
+	{	
+		TSharedPtr<FScriptEditor> ProjectEditor = FScriptEditor::Get();
+		if (ProjectEditor.IsValid())
+		{
+			ProjectEditor->RescanScriptProject();
+		}
 	}
 	else
 	{
-		//Open Editor
-		//FGlobalTabmanager::Get()->InvokeTab(FScriptEditorModule::ScriptEditorTabName);
 		FScriptEditorModule::GetInstance()->OpenEditorWindow();
 	}
+	//
+
+	//save asset
+	ScriptEditorUtils::SaveScriptAsset(ScriptAsset);
 
 	return ScriptAsset;
 }
