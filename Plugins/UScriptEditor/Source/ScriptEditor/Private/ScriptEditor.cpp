@@ -19,6 +19,8 @@
 #include "WorkflowOrientedApp/WorkflowUObjectDocuments.h"
 #include "ScriptEditorSetting.h"
 #include "ScriptEditorModule.h"
+#include "SGraphActionMenu.h"
+#include "Private/SBlueprintActionMenu.h"
 
 
 #define LOCTEXT_NAMESPACE "ScriptEditor"
@@ -41,6 +43,7 @@ namespace ScriptEditorTabs
 	static const FName LogViewID(TEXT("Log"));
 	static const FName DebuggerViewID(TEXT("Debugger"));
 	static const FName VarWathcerViewID(TEXT("VarWathcer"));
+	static const FName APIBrowserViewID(TEXT("APIBrowser"));
 };
 
 
@@ -228,6 +231,28 @@ public:
 	}
 };
 
+struct FAPIBrowserViewSummoner : public FWorkflowTabFactory
+{
+public:
+	FAPIBrowserViewSummoner(TSharedPtr<class FAssetEditorToolkit> InHostingApp)
+		: FWorkflowTabFactory(ScriptEditorTabs::APIBrowserViewID, InHostingApp)
+	{
+		TabLabel = NSLOCTEXT("APIBrowser_Tile", "TabTitle", "APIBrowser");
+		//TabIcon = FSlateIcon(FEditorStyle::GetStyleSetName(), "Log.TabIcon");
+
+		bIsSingleton = true;
+
+		ViewMenuDescription = LOCTEXT("APIBrowserTabMenu_Description", "APIBrowser");
+		ViewMenuTooltip = LOCTEXT("APIBrowserTabMenu_ToolTip", "Shows the script APIBrowser");
+	}
+
+	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override
+	{
+		return SNew(SGraphActionMenu);
+		//return SNew(SBlueprintActionMenu);
+	}
+};
+
 class FBasicScriptEditorMode : public FApplicationMode
 {
 public:
@@ -252,6 +277,7 @@ FBasicScriptEditorMode::FBasicScriptEditorMode(TSharedPtr<class FScriptEditor> I
 	TabFactories.RegisterFactory(MakeShareable(new FLogViewSummoner(InScriptEditor)));
 	TabFactories.RegisterFactory(MakeShareable(new FDebuggerViewSummoner(InScriptEditor)));
 	TabFactories.RegisterFactory(MakeShareable(new FVarWatcherViewSummoner(InScriptEditor)));
+	TabFactories.RegisterFactory(MakeShareable(new FAPIBrowserViewSummoner(InScriptEditor)));
 
 	TabLayout = FTabManager::NewLayout("Standalone_ScriptEditor_Layout_v1.1")
 		->AddArea

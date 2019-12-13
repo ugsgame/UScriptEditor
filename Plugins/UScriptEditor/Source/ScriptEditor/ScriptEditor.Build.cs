@@ -44,7 +44,9 @@ namespace UnrealBuildTool.Rules
                     "UnrealEd",
 					"EditorStyle",
 					"PropertyEditor",
-					"Kismet",  // for FWorkflowCentricApplication
+                    "BlueprintGraph",
+                    "GraphEditor",
+                    "Kismet",  // for FWorkflowCentricApplication
                     "Projects",
                     "InputCore",
 					"DirectoryWatcher",
