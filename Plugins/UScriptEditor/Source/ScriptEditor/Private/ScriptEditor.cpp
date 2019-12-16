@@ -340,7 +340,7 @@ void FScriptEditor::InitScriptEditor(const EToolkitMode::Type Mode, const TShare
 	ScriptProjectBeingEdited = ScriptProject;
 
 	//
-	for (FScriptBreakPointNode &Node : UScriptDebuggerSetting::Get(false)->RecentBreakPoint)
+	for (FScriptBreakPointNode &Node : UScriptDebuggerSetting::Get()->RecentBreakPoint)
 	{
 		TSet<int32>& Set = EnableBreakPoint.FindOrAdd(Node.FilePath);
 		Set.Add(Node.Line);
@@ -509,11 +509,11 @@ FString FScriptEditor::GetWorldCentricTabPrefix() const
 bool FScriptEditor::OnRequestClose()
 {
 	//Flash BreakPoints
-	UScriptDebuggerSetting::Get(false)->RecentBreakPoint.Reset();
+	UScriptDebuggerSetting::Get()->RecentBreakPoint.Reset();
 
 	for (FBreakPointNode_Ref &Node : BreakPointForView)
 	{
-		UScriptDebuggerSetting::Get(false)->RecentBreakPoint.Add(*Node);
+		UScriptDebuggerSetting::Get()->RecentBreakPoint.Add(*Node);
 	}
 	//
 	FScriptEditorModule::GetInstance()->SaveConfig();
@@ -775,7 +775,7 @@ TSharedPtr<FScriptBreakPointNode> FScriptEditor::GetViewBreakPoint(FString& File
 {
 	for (int32 i = 0; i < BreakPointForView.Num(); i++)
 	{
-		FBreakPointNode_Ref&Node = BreakPointForView[i];
+		FBreakPointNode_Ref& Node = BreakPointForView[i];
 		if (Node->FilePath == FilePath && Node->Line == CodeLine)
 		{
 			return Node;

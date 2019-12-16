@@ -136,6 +136,7 @@ class SDebuggerVarTreeWidgetItem :public SMultiColumnTableRow<TSharedRef<FDebugg
 public:
 	static FName Col_Name;
 	static FName Col_Value;
+	static FName Col_Type;
 	TSharedPtr<FDebuggerVarNode> VarInfoNode;
 	SLATE_BEGIN_ARGS(SDebuggerVarTreeWidgetItem)
 	{}

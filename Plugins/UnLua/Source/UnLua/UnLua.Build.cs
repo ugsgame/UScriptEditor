@@ -79,5 +79,7 @@ public class UnLua : ModuleRules
         {
             PublicDefinitions.Add("SUPPORTS_RPC_CALL=1");
         }
+
+        PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
     }
 }

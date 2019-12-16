@@ -18,6 +18,9 @@
 #include "ScriptEditor.h"
 #include "ScriptHelperBPFunLib.h"
 
+#include "ProjectEditor/CodeProjectItem.h"
+#include "ProjectEditor/SProjectTreeEditor.h"
+
 
 #define LOCTEXT_NAMESPACE "SScriptDebugger"
 
@@ -36,11 +39,11 @@ void SScriptDebugger::Construct(const FArguments& InArgs)
 	IntervalToCheckFileChange = 0;
 	ptr_HandleKeyDown = MakeShareable(new FHandleKeyDown());
 	StackListState = EStackListState::CallStack;
-	LastTimeFileOffset = UScriptDebuggerSetting::Get(IsDebugRemote)->LastTimeFileOffset;
-	RecentFilePath = UScriptDebuggerSetting::Get(IsDebugRemote)->RecentFilePath;
+	LastTimeFileOffset = UScriptDebuggerSetting::Get()->LastTimeFileOffset;
+	RecentFilePath = UScriptDebuggerSetting::Get()->RecentFilePath;
 
 	/*
-	for (FScriptBreakPointNode &Node : UScriptDebuggerSetting::Get(IsDebugRemote)->RecentBreakPoint)
+	for (FScriptBreakPointNode &Node : UScriptDebuggerSetting::Get()->RecentBreakPoint)
 	{
 		TSet<int32>& Set = EnableBreakPoint.FindOrAdd(Node.FilePath);
 		Set.Add(Node.Line);
@@ -55,8 +58,8 @@ void SScriptDebugger::Construct(const FArguments& InArgs)
 
 void SScriptDebugger::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	UScriptDebuggerSetting::Get(false)->SetTabIsOpen(true);
-	UScriptDebuggerSetting::Get(true)->SetTabIsOpen(true);
+	UScriptDebuggerSetting::Get()->SetTabIsOpen(true);
+
 	SyncState();
 	FSlateApplication::Get().RegisterInputPreProcessor(ptr_HandleKeyDown);
 
@@ -150,6 +153,10 @@ void SScriptDebugger::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 
 										+ SHeaderRow::Column(SDebuggerVarTreeWidgetItem::Col_Value)
 										.DefaultLabel(LOCTEXT("VarValue1", "Value"))
+										.FillWidth(20.0f)
+
+										+ SHeaderRow::Column(SDebuggerVarTreeWidgetItem::Col_Type)
+										.DefaultLabel(LOCTEXT("VarType1", "Type"))
 										.FillWidth(20.0f)
 									)
 								]
@@ -269,17 +276,12 @@ void SScriptDebugger::BreakPointChange()
 {
 	if (BreakPointListPtr.IsValid())
 		BreakPointListPtr.Pin()->RequestListRefresh();
-
-	UScriptDebuggerSetting::Get(true)->UpdateBreakPoint(FScriptEditor::Get()->EnableBreakPoint);
-	UScriptDebuggerSetting::Get(false)->UpdateBreakPoint(FScriptEditor::Get()->EnableBreakPoint);
 }
 
 
 void SScriptDebugger::DebugStateChange()
 {
 	DebugContinue();
-	UScriptDebuggerSetting::Get(true)->ToggleDebugStart(IsDebugRun && IsDebugRemote);
-	UScriptDebuggerSetting::Get(false)->ToggleDebugStart(IsDebugRun && !IsDebugRemote);
 }
 
 void SScriptDebugger::RemoteStateChange()
@@ -313,9 +315,7 @@ FString SScriptDebugger::GetLuaSourceDir()
 void SScriptDebugger::EnterDebug(const FString& LuaFilePath, int32 Line)
 {
 	ShowCode(LuaFilePath, Line);
-	// todo
-	if (NowLuaStack.Num() > 0)
-		ShowStackVars(NowLuaStack[0]->StackIndex);
+	ShowStackVars(0);
 	IsEnterDebugMode = true;
 	FSlateApplication::Get().EnterDebuggingMode();
 }
@@ -334,6 +334,7 @@ void SScriptDebugger::SetStackData(TArray<TTuple<int32, int32, FString, FString>
 
 void SScriptDebugger::ShowCode(const FString& FilePath, int32 Line /*= 0*/)
 {
+#if 1
 	//TODO
 	UCodeProjectItem* ScriptProject = FScriptEditor::Get()->GetScriptProjectBeingEdited();
 	UCodeProjectItem* CodeItem = ScriptProject->FindChild(FilePath);
@@ -343,30 +344,15 @@ void SScriptDebugger::ShowCode(const FString& FilePath, int32 Line /*= 0*/)
 		SProjectTreeEditor::Get()->ExpanedScriptItem(CodeItem);
 		FScriptEditor::Get()->OpenFileAndGotoLine(CodeItem, Line);
 	}
+#endif
 }
 
 
 void SScriptDebugger::ShowStackVars(int32 StackIndex)
 {
-	if (StackIndex == -1)
-	{
-		NowVars.Reset();
-	}
-	else
-	{
-		FString NowFuncName;
-		for (auto& Node : NowLuaStack)
-		{
-			if (Node->StackIndex == StackIndex)
-				NowFuncName = Node->FuncInfo;
-		}
+	NowVars.Reset();
+	UScriptDebuggerSetting::Get()->GetStackVars(StackIndex, NowVars);
 
-		if (!LastShowVarFuncName.IsEmpty() && LastShowVarFuncName != NowFuncName)
-			NowVars.Reset();
-		LastShowVarFuncName = NowFuncName;
-		UScriptDebuggerSetting::Get(IsDebugRemote)->GetStackVars(StackIndex, NowVars);
-
-	}
 	if (DebuggerVarTree.IsValid())
 	{
 		DebuggerVarTree.Pin()->RequestTreeRefresh();
@@ -405,13 +391,13 @@ void SScriptDebugger::HandleBreakPointListSelectionChanged(TSharedPtr<FScriptBre
 		ShowCode(InNode->FilePath, InNode->Line);
 }
 
-TSharedRef<ITableRow> SScriptDebugger::HandleVarsTreeGenerateRow(FDebuggerVarNode_Ref InNode, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SScriptDebugger::HandleVarsTreeGenerateRow(FScriptDebuggerVarNode_Ref InNode, const TSharedRef<STableViewBase>& OwnerTable)
 {
 	return SNew(SDebuggerVarTreeWidgetItem, OwnerTable, InNode);
 }
 
 
-void SScriptDebugger::HandleVarsTreeGetChildren(FDebuggerVarNode_Ref InNode, TArray<FDebuggerVarNode_Ref>& OutChildren)
+void SScriptDebugger::HandleVarsTreeGetChildren(FScriptDebuggerVarNode_Ref InNode, TArray<FScriptDebuggerVarNode_Ref>& OutChildren)
 {
 	InNode->GetChildren(OutChildren);
 }
@@ -433,11 +419,10 @@ void SScriptDebugger::DebugContinue()
 	if (IsEnterDebugMode)
 	{
 		CleanDebugInfo();
-		ShowStackVars(-1);
 		FSlateApplication::Get().LeaveDebuggingMode();
 		IsEnterDebugMode = false;
 	}
-	UScriptDebuggerSetting::Get(IsDebugRemote)->Continue();
+	UScriptDebuggerSetting::Get()->Continue();
 }
 
 
@@ -448,7 +433,7 @@ void SScriptDebugger::DebugStepover()
 		CleanDebugInfo();
 		FSlateApplication::Get().LeaveDebuggingMode();
 		IsEnterDebugMode = false;
-		UScriptDebuggerSetting::Get(IsDebugRemote)->StepOver();
+		UScriptDebuggerSetting::Get()->StepOver();
 	}
 }
 
@@ -460,7 +445,7 @@ void SScriptDebugger::DebugStepin()
 		CleanDebugInfo();
 		FSlateApplication::Get().LeaveDebuggingMode();
 		IsEnterDebugMode = false;
-		UScriptDebuggerSetting::Get(IsDebugRemote)->StepIn();
+		UScriptDebuggerSetting::Get()->StepIn();
 	}
 }
 
@@ -472,15 +457,14 @@ void SScriptDebugger::DebugStepout()
 		CleanDebugInfo();
 		FSlateApplication::Get().LeaveDebuggingMode();
 		IsEnterDebugMode = false;
-		UScriptDebuggerSetting::Get(IsDebugRemote)->StepOut();
+		UScriptDebuggerSetting::Get()->StepOut();
 	}
 }
 
 void SScriptDebugger::DebugTabClose(TSharedRef<SDockTab> DockTab)
 {
-	UScriptDebuggerSetting::Get(false)->SetTabIsOpen(false);
-	UScriptDebuggerSetting::Get(true)->SetTabIsOpen(false);
-	DebugContinue();
+	UScriptDebuggerSetting::Get()->SetTabIsOpen(false);
+
 	FSlateApplication::Get().UnregisterInputPreProcessor(ptr_HandleKeyDown);
 	SaveDebuggerConfig();
 	NowLuaCodeFilePath = "";
@@ -519,8 +503,8 @@ void SScriptDebugger::SaveDebuggerConfig()
 // 		LastTimeFileOffset.Add(NowLuaCodeFilePath, NowOffset);
 // 	}
 
-//	UScriptDebuggerSetting::Get(IsDebugRemote)->LastTimeFileOffset = LastTimeFileOffset;
-//	UScriptDebuggerSetting::Get(IsDebugRemote)->RecentFilePath = RecentFilePath;
+//	UScriptDebuggerSetting::Get()->LastTimeFileOffset = LastTimeFileOffset;
+//	UScriptDebuggerSetting::Get()->RecentFilePath = RecentFilePath;
 	
 }
 
@@ -565,6 +549,7 @@ void SLuaStackWidgetItem::Construct(const FArguments& InArgs, const TSharedRef<S
 
 FName SDebuggerVarTreeWidgetItem::Col_Name = "key";
 FName SDebuggerVarTreeWidgetItem::Col_Value = "value";
+FName SDebuggerVarTreeWidgetItem::Col_Type = "Type";
 
 TSharedRef<SWidget> SDebuggerVarTreeWidgetItem::GenerateWidgetForColumn(const FName& ColumnName)
 {
@@ -584,10 +569,17 @@ TSharedRef<SWidget> SDebuggerVarTreeWidgetItem::GenerateWidgetForColumn(const FN
 				.Text_Lambda([&]()->FText {return VarInfoNode->VarName; })
 			];
 	}
+	else if (ColumnName == Col_Value)
+	{
+		return SNew(STextBlock)
+			.Text_Lambda([&]()->FText {return VarInfoNode->VarValue; })
+			;
+	}
 	else
 	{
 		return SNew(STextBlock)
-			.Text_Lambda([&]()->FText {return VarInfoNode->VarValue; });
+			.Text_Lambda([&]()->FText {return VarInfoNode->VarType; })
+			;
 	}
 }
 
@@ -641,6 +633,7 @@ void SBreakPointWidgetItem::Construct(const FArguments& InArgs, const TSharedRef
 			]
 		];
 }
+
 
 
 

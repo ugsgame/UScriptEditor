@@ -397,8 +397,6 @@ void SCodeLineItem::OnBreakConditionCommit(const FText& ConditionText, ETextComm
 	if (BreakPointNode.IsValid())
 	{
 		BreakPointNode->HitCondition = ConditionText;
-		UScriptDebuggerSetting::Get(false)->BreakConditionChange();
-		UScriptDebuggerSetting::Get(true)->BreakConditionChange();
 	}
 }
 
