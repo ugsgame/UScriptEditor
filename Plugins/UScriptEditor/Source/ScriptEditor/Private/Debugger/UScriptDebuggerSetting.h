@@ -10,6 +10,7 @@
 #include "UScriptDebuggerSetting.generated.h"
 
 
+
 UENUM()
 enum class EScriptVarNodeType : uint8
 {
@@ -18,6 +19,36 @@ enum class EScriptVarNodeType : uint8
 	Global,
 	UEObject
 };
+
+UENUM()
+enum class EScriptUEKindType : uint8
+{
+	T_Single = 0, // Single do not have child
+	T_TArray,
+	T_TSet,
+	T_TMap,
+	T_UObject,
+	T_AActor,
+	T_UEObject,
+	T_ClassDesc,
+	T_UFunction,
+};
+
+#if 0
+
+T_bool,
+T_uint8,
+T_int32,
+T_int64,
+T_float,
+T_FName,
+T_FString,
+T_FText,
+T_Vector,
+T_Rotator,
+T_UFunction_Arg,
+
+#endif
 
 USTRUCT()
 struct FScriptDebuggerVarNode
@@ -29,28 +60,32 @@ public:
 	FScriptDebuggerVarNode() {}
 
 	UPROPERTY()
-	EScriptVarNodeType NodeType;
+		EScriptVarNodeType NodeType;
 
 	UPROPERTY()
-	int32 StackLevel;
+		int32 StackLevel;
 
 	UPROPERTY()
-	int32 VarType;
+		int32 KindType;
 
 	UPROPERTY()
-	FText VarName;
+		FText VarName;
 
 	UPROPERTY()
-	FText VarValue;
+		FText VarValue;
 
 	UPROPERTY()
-	TArray<FString> NameList;
+		FText VarType;
+
+	// cast by KindType to get value 
+	void* VarPtr;
+
+	UPROPERTY()
+		TArray<FString> NameList;
 
 	TMap<FString, TSharedRef<FScriptDebuggerVarNode>> NodeChildren;
 
 	void GetChildren(TArray<TSharedRef<FScriptDebuggerVarNode>>& OutChildren);
-
-	bool IsEditable();
 
 	FString ToString()
 	{
@@ -64,61 +99,69 @@ public:
 
 };
 
-using FDebuggerVarNode_Ref = TSharedRef<FScriptDebuggerVarNode>;
-using SDebuggerVarTree = STreeView<FDebuggerVarNode_Ref>;
+using FScriptDebuggerVarNode_Ref = TSharedRef<FScriptDebuggerVarNode>;
+using SDebuggerVarTree = STreeView<FScriptDebuggerVarNode_Ref>;
 
 USTRUCT()
 struct FScriptBreakPointNode
 {
 	GENERATED_BODY()
-	FScriptBreakPointNode() {};
+		FScriptBreakPointNode() {};
 	FScriptBreakPointNode(int32 _Line, FString _FilePath)
 		:FilePath(_FilePath), Line(_Line)
 	{}
 	UPROPERTY()
-	FString FilePath;
+		FString FilePath;
 
 	UPROPERTY()
-	int32 Line;
+		int32 Line;
 
 	UPROPERTY()
-	FText HitCondition;
+		FText HitCondition;
 };
 
 UCLASS(config = Editor)
 class  UScriptDebuggerSetting : public UObject
 {
 	GENERATED_BODY()
+
 public:
 
-	TMap<FString, TSet<int32>> BreakPoints;
 	bool bIsStart;
 	bool bTabIsOpen;
 	struct lua_State *L;
+
+	class FClassDesc* UEClassDesc;
+	UObject* UEObject;
+	static const FString SelfName;
+	static const FString OverriddenName;
+	static const FText ClassDescText;
+	static const FText UFunctionText;
+
+	//transform name
+	static const FString SelfLocationName;
+	static const FString SelfRotatorName;
+	static const FString SelfScalerName;
+	static const FString FVectorName;
+	static const FString FRotatorName;
+	static const FString FTransformName;
+
+	//transform type
+	static const FText SelfLocationText;
+	static const FText SelfRotatorText;
+	static const FText SelfScalerText;
+	static const FText FVectorText;
+	static const FText FRotatorText;
+
 public:
+
 	UScriptDebuggerSetting() :L(nullptr) {}
-	UFUNCTION()
-		static UScriptDebuggerSetting* Get(bool IsRemoteDebugger = false);
-	UFUNCTION()
-		virtual FString GetLuaSourceDir();
 
 	UFUNCTION()
-		virtual void PullDataToLua();
-	virtual void UpdateBreakPoint(TMap<FString, TSet<int32>>& BreakPoint);
-	virtual void ToggleDebugStart(bool IsStart);
+		static UScriptDebuggerSetting* Get();
+
 	virtual void SetTabIsOpen(bool IsOpen);
 
-
-
-	UFUNCTION()
-		virtual void SetStackData(const TArray<FString>& Content, const TArray<int32>& Lines, const TArray<FString>& FilePaths, const TArray<int32>& StackIndex, const TArray<FString>& FuncInfos);
-
-	UFUNCTION()
-		virtual FText GetBreakPointHitConditionText(FString& FilePath, int32 CodeLine);
-
-	void CombineNodeArr(TArray<FDebuggerVarNode_Ref>& PreVars, TArray<FScriptDebuggerVarNode>& NowVars);
-
-	virtual void BreakConditionChange();
 	UPROPERTY(config)
 		TMap<FString, float> LastTimeFileOffset;
 
@@ -135,9 +178,9 @@ public:
 	virtual void StepOut();
 	void UnRegisterLuaState(bool bFullCleanup);
 
-	bool NameTranslate(int32 VarType, FString& VarName, int32 StackIndex);
+	bool NameTranslate(int32 KindType, FString& VarName, int32 StackIndex);
 
-	void ValueTranslate(int32 VarType, FString& VarValue, int32 StackIndex);
+	void ValueTranslate(int32 KindType, FString& VarValue, FString& VarType, int32 StackIndex);
 
 	void IteraionTable(FScriptDebuggerVarNode& InNode, int32 NameIndex);
 
@@ -147,11 +190,13 @@ public:
 
 	void GlobalListen(FScriptDebuggerVarNode& InNode);
 
-	void UEObjectListen();
+	bool PropertyTranslate(FString& VarValue, FString& VarType, int32& KindType, void*& VarPtr, UProperty* Property, UObject* Object);
+
+	void UEObjectListen(FScriptDebuggerVarNode& InNode);
 
 	void EnterDebug(const FString& LuaFilePath, int32 Line);
 
-	virtual void GetStackVars(int32 StackIndex, TArray<FDebuggerVarNode_Ref>& Vars);
+	virtual void GetStackVars(int32 StackIndex, TArray<FScriptDebuggerVarNode_Ref>& Vars);
 
 	virtual void GetVarsChildren(FScriptDebuggerVarNode& Node);
 };

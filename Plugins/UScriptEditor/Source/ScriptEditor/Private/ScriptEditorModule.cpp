@@ -28,6 +28,7 @@
 #include "Assets/LuaScriptAssetTypeActions.h"
 #include "SScriptEditorLog.h"
 #include "ScriptEditorSetting.h"
+#include "LuaWrapper/LuaScript.h"
 
 #define LOCTEXT_NAMESPACE "ScriptEditorModule"
 
@@ -116,7 +117,7 @@ void FScriptEditorModule::ShutdownModule()
 void FScriptEditorModule::SaveConfig()
 {
 	UScriptEdtiorSetting::Get()->SaveConfig();
-	UScriptDebuggerSetting::Get(false)->SaveConfig();
+	UScriptDebuggerSetting::Get()->SaveConfig();
 }
 
 TSharedRef< SWidget > FScriptEditorModule::MakeConsoleInputBox(TSharedPtr< SEditableTextBox >& OutExposedEditableTextBox) const

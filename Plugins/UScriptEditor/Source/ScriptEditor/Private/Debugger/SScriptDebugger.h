@@ -45,12 +45,13 @@ class SDebuggerVarTreeWidgetItem :public SMultiColumnTableRow<TSharedRef<FScript
 public:
 	static FName Col_Name;
 	static FName Col_Value;
+	static FName Col_Type;
 	TSharedPtr<FScriptDebuggerVarNode> VarInfoNode;
 	SLATE_BEGIN_ARGS(SDebuggerVarTreeWidgetItem)
 	{}
 	SLATE_END_ARGS()
 
-		void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FDebuggerVarNode_Ref Node)
+		void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FScriptDebuggerVarNode_Ref Node)
 	{
 		VarInfoNode = Node;
 		SMultiColumnTableRow<TSharedRef<FScriptDebuggerVarNode>>::Construct(SMultiColumnTableRow< TSharedRef<FScriptDebuggerVarNode> >::FArguments().Padding(1), InOwnerTableView);
@@ -126,7 +127,7 @@ public:
 	UPROPERTY()
 	FString NowLuaCodeFilePath;
 	UPROPERTY()
-	TArray<FDebuggerVarNode_Ref> NowVars;
+	TArray<FScriptDebuggerVarNode_Ref> NowVars;
 	UPROPERTY()
 	TWeakPtr<SDebuggerVarTree> DebuggerVarTree;
 	UPROPERTY()
@@ -161,8 +162,8 @@ public:
 	TSharedRef<ITableRow> HandleBreakPointListGenerateRow(FBreakPointNode_Ref InNode, const TSharedRef<STableViewBase>& OwnerTable);
 	void HandleBreakPointListSelectionChanged(TSharedPtr<FScriptBreakPointNode>, ESelectInfo::Type);
 
-	TSharedRef<ITableRow> HandleVarsTreeGenerateRow(FDebuggerVarNode_Ref InNode, const TSharedRef<STableViewBase>& OwnerTable);
-	void HandleVarsTreeGetChildren(FDebuggerVarNode_Ref InNode, TArray<FDebuggerVarNode_Ref>& OutChildren);
+	TSharedRef<ITableRow> HandleVarsTreeGenerateRow(FScriptDebuggerVarNode_Ref InNode, const TSharedRef<STableViewBase>& OwnerTable);
+	void HandleVarsTreeGetChildren(FScriptDebuggerVarNode_Ref InNode, TArray<FScriptDebuggerVarNode_Ref>& OutChildren);
 	void HandleVarsTreeSelectionChanged(TSharedPtr<FScriptDebuggerVarNode>, ESelectInfo::Type);
 
 	void CleanDebugInfo();

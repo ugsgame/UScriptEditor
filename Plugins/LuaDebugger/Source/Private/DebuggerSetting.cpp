@@ -18,9 +18,9 @@ UDebuggerSetting* UDebuggerSetting::Get(bool IsRemoteDebugger)
 		Singleton->AddToRoot();
 
 		//Bind UnLUa Create Lua_State delegate
-		FUnLuaDelegates::OnLuaStateCreated.AddUObject(Singleton, &UDebuggerSetting::RegisterLuaState);
+		//FUnLuaDelegates::OnLuaStateCreated.AddUObject(Singleton, &UDebuggerSetting::RegisterLuaState);
 
-		FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(Singleton, &UDebuggerSetting::UnRegisterLuaState);
+		//FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(Singleton, &UDebuggerSetting::UnRegisterLuaState);
 	}
 	return Singleton;
 }
