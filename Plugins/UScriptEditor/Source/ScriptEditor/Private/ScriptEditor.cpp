@@ -237,13 +237,13 @@ public:
 	FAPIBrowserViewSummoner(TSharedPtr<class FAssetEditorToolkit> InHostingApp)
 		: FWorkflowTabFactory(ScriptEditorTabs::APIBrowserViewID, InHostingApp)
 	{
-		TabLabel = NSLOCTEXT("APIBrowser_Tile", "TabTitle", "APIBrowser");
-		//TabIcon = FSlateIcon(FEditorStyle::GetStyleSetName(), "Log.TabIcon");
+		TabLabel = NSLOCTEXT("APIBrowser_Tile", "TabTitle", "API Browser");
+		TabIcon = FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ScriptEditor.APIBroswer");
 
 		bIsSingleton = true;
 
-		ViewMenuDescription = LOCTEXT("APIBrowserTabMenu_Description", "APIBrowser");
-		ViewMenuTooltip = LOCTEXT("APIBrowserTabMenu_ToolTip", "Shows the script APIBrowser");
+		ViewMenuDescription = LOCTEXT("APIBrowserTabMenu_Description", "API Browser");
+		ViewMenuTooltip = LOCTEXT("APIBrowserTabMenu_ToolTip", "Shows the script API Browser");
 	}
 
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override

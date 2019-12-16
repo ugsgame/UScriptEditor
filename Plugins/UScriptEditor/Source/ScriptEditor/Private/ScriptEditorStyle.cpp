@@ -68,6 +68,8 @@ void FScriptEditorStyle::Initialize()
 		StyleSet->Set("ScriptEditor.DebugStepin", new IMAGE_BRUSH("UI/Debug/icon_debug_step_into", Icon40x40));
 		StyleSet->Set("ScriptEditor.DebugStepout", new IMAGE_BRUSH("UI/Debug/icon_debug_step_out", Icon40x40));
 
+		StyleSet->Set("ScriptEditor.APIBroswer", new IMAGE_BRUSH("UI/Widgets/icon_tab_editor_16x", Icon16x16));
+		StyleSet->Set("ScriptEditor.APIBroswer", new IMAGE_BRUSH("UI/Widgets/icon_tab_editor_16x", Icon16x16));
 	}
 
 	const FSlateFontInfo Consolas10  = DEFAULT_FONT("Mono", 11);

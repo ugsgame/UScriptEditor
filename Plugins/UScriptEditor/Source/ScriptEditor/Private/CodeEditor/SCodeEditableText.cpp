@@ -60,14 +60,19 @@ void SCodeEditableText::ContextMenuExtender(FMenuBuilder& MenuBuilder)
 {
 	//MenuBuilder.AddSubMenu();
 	//MenuBuilder.AddMenuSeparator(FName("CodeHelper"));
-	MenuBuilder.BeginSection(FName("CodeHelper"));
-	MenuBuilder.AddMenuEntry(
-		FScriptEditorCommands::Get().APIBroswer,
-		FName("CodeHelper"),
-		LOCTEXT("APIBroswer_Title","APIBroswer"),
-		LOCTEXT("APIBroswer_TooltipText","Open the APIBroswer"),
-		FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ScriptEditor.TabIcon")
-		);
+	MenuBuilder.BeginSection("CodeHelper", LOCTEXT("Heading", "Code Helper"));
+	{
+		MenuBuilder.AddMenuEntry(FScriptEditorCommands::Get().APIBroswer);
+		/*
+		MenuBuilder.AddMenuEntry(
+			FScriptEditorCommands::Get().APIBroswer,
+			FName("CodeHelper"),
+			LOCTEXT("APIBroswer_Title","APIBroswer"),
+			LOCTEXT("APIBroswer_TooltipText","Open the APIBroswer"),
+			FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ScriptEditor.TabIcon")
+			);
+		*/
+	}
 	MenuBuilder.EndSection();
 }
 
