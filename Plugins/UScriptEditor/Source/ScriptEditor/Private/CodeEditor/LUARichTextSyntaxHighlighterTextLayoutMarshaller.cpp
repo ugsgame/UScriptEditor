@@ -8,6 +8,10 @@
 #include "Misc/ExpressionParserTypes.h"
 #include "WhiteSpaceTextRun.h"
 
+#include "ScriptEditorUtils.h"
+
+//TODO:
+
 const TCHAR* LuaKeywords[] =
 {
 	TEXT("and"),
@@ -37,8 +41,8 @@ const TCHAR* LuaKeywords[] =
 const TCHAR* LuaOperators[] =
 {
 	TEXT("--"),
-	TEXT("--[["),
-	TEXT("--]]"),
+	TEXT("[["), 	
+	TEXT("]]"),		
 	TEXT("\""),
 	TEXT("\'"),
 	TEXT("::"),
@@ -47,8 +51,8 @@ const TCHAR* LuaOperators[] =
 	TEXT("-"),
 	TEXT("("),
 	TEXT(")"),
- 	TEXT("["),
- 	TEXT("]"),
+ //	TEXT("["),
+ //	TEXT("]"),
 	TEXT("."),
 	TEXT("~"),
 	TEXT("~="),
@@ -197,13 +201,13 @@ void FLUARichTextSyntaxHighlighterTextLayoutMarshaller::ParseTokens(const FStrin
 						TextBlockStyle = SyntaxTextStyle.CommentTextStyle;
 						ParseState = EParseState::LookingForSingleLineComment;
 					}
-					else if(ParseState == EParseState::None && TokenText == TEXT("--[["))
+					else if(ParseState == EParseState::LookingForSingleLineComment && TokenText == TEXT("[["))
 					{
 						RunInfo.Name = TEXT("SyntaxHighlight.LUA.Comment");
 						TextBlockStyle = SyntaxTextStyle.CommentTextStyle;
 						ParseState = EParseState::LookingForMultiLineComment;
 					}
-					else if(ParseState == EParseState::LookingForMultiLineComment && TokenText == TEXT("--]]"))
+					else if(ParseState == EParseState::LookingForMultiLineComment && TokenText == TEXT("]]"))
 					{
 						RunInfo.Name = TEXT("SyntaxHighlight.LUA.Comment");
 						TextBlockStyle = SyntaxTextStyle.CommentTextStyle;

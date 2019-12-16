@@ -30,6 +30,8 @@ void FScriptEditorCommands::RegisterCommands()
 	UI_COMMAND(DebugStepover, "Step Over", "Step Over", EUserInterfaceActionType::Button, FInputChord(EKeys::F10));
 	UI_COMMAND(DebugStepin, "Step In", "Step In", EUserInterfaceActionType::Button, FInputChord(EKeys::F11));
 	UI_COMMAND(DebugStepout, "Step Out", "Step Out", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Shift, EKeys::F11));
+
+	UI_COMMAND(APIBroswer, "APIBroswer", "APIBroswer", EUserInterfaceActionType::Button, FInputGesture());
 }
 
 

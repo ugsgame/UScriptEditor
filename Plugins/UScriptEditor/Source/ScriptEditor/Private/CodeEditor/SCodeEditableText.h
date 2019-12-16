@@ -37,6 +37,7 @@ public:
 		//SLATE_EVENT(FOnInvokeSearchEvent, OnInvokeSearch)
 		SLATE_EVENT(FOnTextChanged, OnTextChanged)
 		SLATE_EVENT(FOnTextCommitted, OnTextCommitted)
+		SLATE_EVENT(FMenuExtensionDelegate, ContextMenuExtender)
 
 	SLATE_END_ARGS()
 
@@ -53,6 +54,13 @@ public:
 		CurrentLine = Location.GetLineIndex();
 		CurrentColumn = Location.GetOffset();
 	}
+
+	void ContextMenuExtender(class FMenuBuilder& MenuBuilder);
+
+protected:
+
+	void OpenAPIBrowser();
+
 private:
 	virtual FReply OnKeyChar(const FGeometry& MyGeometry,const FCharacterEvent& InCharacterEvent) override;
 

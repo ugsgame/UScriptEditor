@@ -13,7 +13,7 @@
 
 #include "IPluginManager.h"
 
-//DEFINE_LOG_CATEGORY(UScriptEditor);
+DEFINE_LOG_CATEGORY(UScriptLog);
 
 namespace ScriptEditorUtils
 {

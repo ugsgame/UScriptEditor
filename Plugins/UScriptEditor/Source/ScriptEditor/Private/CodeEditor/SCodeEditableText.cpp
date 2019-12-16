@@ -2,6 +2,15 @@
 
 #include "SCodeEditableText.h"
 #include "ScriptEditorStyle.h"
+#include "ScriptEditorCommands.h"
+#include "UICommandList.h"
+#include "Framework/Commands/UIAction.h"
+#include "Framework/MultiBox/MultiBoxExtender.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "ScriptEditorUtils.h"
+#include "MultiBoxBuilder.h"
+
+#define  LOCTEXT_NAMESPACE "CodeEditableText"
 
 
 void SCodeEditableText::Construct( const FArguments& InArgs )
@@ -18,7 +27,14 @@ void SCodeEditableText::Construct( const FArguments& InArgs )
 		.VScrollBar(InArgs._VScrollBar)
 		.OnTextChanged(InArgs._OnTextChanged)
 		.OnCursorMoved(this, &SCodeEditableText::OnCursorMoved)
+		.ContextMenuExtender(this,&SCodeEditableText::ContextMenuExtender)
 	);
+
+	TSharedPtr<FUICommandList> PluginCommands = MakeShareable(new FUICommandList);
+	PluginCommands->MapAction(
+		FScriptEditorCommands::Get().APIBroswer,
+		FExecuteAction::CreateRaw(this, &SCodeEditableText::OpenAPIBrowser),
+		FCanExecuteAction());
 }
 
 void SCodeEditableText::GoToLineColumn(int32 Line, int32 Column)
@@ -38,6 +54,26 @@ void SCodeEditableText::GetLineAndColumn(int32 & Line, int32 & Column)
 {
 	Line = CurrentLine;
 	Column = CurrentColumn;
+}
+
+void SCodeEditableText::ContextMenuExtender(FMenuBuilder& MenuBuilder)
+{
+	//MenuBuilder.AddSubMenu();
+	//MenuBuilder.AddMenuSeparator(FName("CodeHelper"));
+	MenuBuilder.BeginSection(FName("CodeHelper"));
+	MenuBuilder.AddMenuEntry(
+		FScriptEditorCommands::Get().APIBroswer,
+		FName("CodeHelper"),
+		LOCTEXT("APIBroswer_Title","APIBroswer"),
+		LOCTEXT("APIBroswer_TooltipText","Open the APIBroswer"),
+		FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ScriptEditor.TabIcon")
+		);
+	MenuBuilder.EndSection();
+}
+
+void SCodeEditableText::OpenAPIBrowser()
+{
+	US_Log("OpenAPIBrowser");
 }
 
 void SCodeEditableText::SelectLine() {
@@ -75,3 +111,5 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 
 	return Reply;
 }
+
+#undef LOCTEXT_NAMESPACE

@@ -27,6 +27,8 @@ public:
 	TSharedPtr<FUICommandInfo> DebugStepout;
 	//////////////////////////////////////////////////////////////////////////
 
+	TSharedPtr<FUICommandInfo> APIBroswer;
+
 	/** Initialize commands */
 	virtual void RegisterCommands() override;
 
