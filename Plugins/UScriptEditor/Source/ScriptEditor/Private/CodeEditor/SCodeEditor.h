@@ -16,11 +16,12 @@ class UCodeProjectItem;
 struct FCodeLineNode
 {
 	FCodeLineNode(int32 _Line, FString _FilePath)
-		:FilePath(_FilePath), Line(_Line), HasBreakPoint(false)
+		:FilePath(_FilePath), Line(_Line), HasBreakPoint(false),IsHited(false)
 	{}
 	FString FilePath;
 	int32 Line;
 	bool HasBreakPoint;
+	bool IsHited;
 };
 
 using FCodeLineNode_Ptr = TSharedPtr<FCodeLineNode>;
@@ -36,6 +37,7 @@ public:
 	TSharedPtr<FCodeLineNode> CodeLine;
 	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FCodeLineNode_Ptr Line);
 
+	ECheckBoxState BreakPointIsChecked()const;
 	void OnClickBreakPoint(const ECheckBoxState NewCheckedState);
 	void OnBreakConditionCommit(const FText& ConditionText, ETextCommit::Type CommitType);
 

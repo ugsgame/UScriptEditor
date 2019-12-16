@@ -21,6 +21,7 @@
 #include "ScriptEditorModule.h"
 #include "SGraphActionMenu.h"
 #include "Private/SBlueprintActionMenu.h"
+#include "SScriptActionMenu.h"
 
 
 #define LOCTEXT_NAMESPACE "ScriptEditor"
@@ -140,7 +141,8 @@ public:
 	FProjectViewSummoner(TSharedPtr<class FAssetEditorToolkit> InHostingApp)
 		: FWorkflowTabFactory(ScriptEditorTabs::ProjectViewID, InHostingApp)
 	{
-		TabLabel = LOCTEXT("ProjectTabLabel", "Project");
+		TabLabel = NSLOCTEXT("ProjectTabLabel","TabTitle", "Project");
+		TabIcon = FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ProjectEditor.Project");
 
 		bIsSingleton = true;
 
@@ -162,7 +164,7 @@ public:
 		: FWorkflowTabFactory(ScriptEditorTabs::LogViewID, InHostingApp)
 	{
 		TabLabel = NSLOCTEXT("ScriptConsole", "TabTitle", "Log");
-		TabIcon = FSlateIcon(FEditorStyle::GetStyleSetName(),"Log.TabIcon");
+		TabIcon = FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ScriptEditor.Log");
 
 		bIsSingleton = true;
 
@@ -183,7 +185,7 @@ public:
 		: FWorkflowTabFactory(ScriptEditorTabs::DebuggerViewID, InHostingApp)
 	{
 		TabLabel = NSLOCTEXT("ScriptDebugger", "TabTitle", "Debugger");
-		//TabIcon = FEditorStyle::GetBrush("Log.TabIcon");
+		TabIcon = FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ScriptEditor.Debugger");
 
 		bIsSingleton = true;
 
@@ -217,7 +219,7 @@ public:
 		: FWorkflowTabFactory(ScriptEditorTabs::VarWathcerViewID, InHostingApp)
 	{
 		TabLabel = NSLOCTEXT("VarWatcher_Tile", "TabTitle", "VarWatcher");
-		//TabIcon = FSlateIcon(FEditorStyle::GetStyleSetName(), "Log.TabIcon");
+		TabIcon = FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ScriptEditor.VarWatcher");
 
 		bIsSingleton = true;
 
@@ -248,7 +250,7 @@ public:
 
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override
 	{
-		return SNew(SGraphActionMenu);
+		return SNew(SScriptActionMenu, FScriptEditor::Get());
 		//return SNew(SBlueprintActionMenu);
 	}
 };

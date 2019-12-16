@@ -59,6 +59,8 @@ public:
 
 protected:
 
+	void OnGraphActionMenuClosed(bool bActionExecuted, bool bContextSensitiveChecked, bool bGraphPinContext);
+
 	void OpenAPIBrowser();
 
 private:
@@ -66,4 +68,6 @@ private:
 
 	int32 CurrentLine;
 	int32 CurrentColumn;
+
+	TSharedPtr<class FUICommandList> ExtenderCommands;
 };

@@ -102,6 +102,16 @@ public:
 using FScriptDebuggerVarNode_Ref = TSharedRef<FScriptDebuggerVarNode>;
 using SDebuggerVarTree = STreeView<FScriptDebuggerVarNode_Ref>;
 
+UENUM()
+enum class EBreakPointState : uint8
+{
+	On = 0,
+	Off = 1,
+	Hit = 2,
+	Disable = 3,
+};
+
+
 USTRUCT()
 struct FScriptBreakPointNode
 {
@@ -109,7 +119,9 @@ struct FScriptBreakPointNode
 		FScriptBreakPointNode() {};
 	FScriptBreakPointNode(int32 _Line, FString _FilePath)
 		:FilePath(_FilePath), Line(_Line)
-	{}
+	{
+		State = EBreakPointState::On;
+	}
 	UPROPERTY()
 		FString FilePath;
 
@@ -118,6 +130,9 @@ struct FScriptBreakPointNode
 
 	UPROPERTY()
 		FText HitCondition;
+
+	UPROPERTY()
+		EBreakPointState State;
 };
 
 UCLASS(config = Editor)

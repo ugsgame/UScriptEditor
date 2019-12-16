@@ -9,6 +9,9 @@
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "ScriptEditorUtils.h"
 #include "MultiBoxBuilder.h"
+#include "SScriptActionMenu.h"
+#include "GraphEditor.h"
+#include "SlateApplication.h"
 
 #define  LOCTEXT_NAMESPACE "CodeEditableText"
 
@@ -30,11 +33,14 @@ void SCodeEditableText::Construct( const FArguments& InArgs )
 		.ContextMenuExtender(this,&SCodeEditableText::ContextMenuExtender)
 	);
 
-	TSharedPtr<FUICommandList> PluginCommands = MakeShareable(new FUICommandList);
-	PluginCommands->MapAction(
-		FScriptEditorCommands::Get().APIBroswer,
-		FExecuteAction::CreateRaw(this, &SCodeEditableText::OpenAPIBrowser),
-		FCanExecuteAction());
+	ExtenderCommands = MakeShareable(new FUICommandList);
+	{
+		ExtenderCommands->MapAction(
+			FScriptEditorCommands::Get().APIBroswer,
+			FExecuteAction::CreateRaw(this, &SCodeEditableText::OpenAPIBrowser),
+			FCanExecuteAction());
+	}
+
 }
 
 void SCodeEditableText::GoToLineColumn(int32 Line, int32 Column)
@@ -60,25 +66,58 @@ void SCodeEditableText::ContextMenuExtender(FMenuBuilder& MenuBuilder)
 {
 	//MenuBuilder.AddSubMenu();
 	//MenuBuilder.AddMenuSeparator(FName("CodeHelper"));
+
+	MenuBuilder.PushCommandList(ExtenderCommands.ToSharedRef());
+
 	MenuBuilder.BeginSection("CodeHelper", LOCTEXT("Heading", "Code Helper"));
 	{
 		MenuBuilder.AddMenuEntry(FScriptEditorCommands::Get().APIBroswer);
-		/*
-		MenuBuilder.AddMenuEntry(
-			FScriptEditorCommands::Get().APIBroswer,
-			FName("CodeHelper"),
-			LOCTEXT("APIBroswer_Title","APIBroswer"),
-			LOCTEXT("APIBroswer_TooltipText","Open the APIBroswer"),
-			FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ScriptEditor.TabIcon")
-			);
-		*/
 	}
 	MenuBuilder.EndSection();
+}
+
+void SCodeEditableText::OnGraphActionMenuClosed(bool bActionExecuted, bool bContextSensitiveChecked, bool bGraphPinContext)
+{
+
 }
 
 void SCodeEditableText::OpenAPIBrowser()
 {
 	US_Log("OpenAPIBrowser");
+
+	FVector2D InNodePosition = FVector2D(20, 20);
+
+	TSharedRef<SScriptActionMenu> ActionMenu =
+		SNew(SScriptActionMenu, FScriptEditor::Get())
+		.NewNodePosition(InNodePosition)
+		.AutoExpandActionMenu(true)
+		.OnCloseReason(this, &SCodeEditableText::OnGraphActionMenuClosed);
+
+	FActionMenuContent FocusedContent = FActionMenuContent(ActionMenu, ActionMenu->GetFilterTextBox());
+
+	TSharedRef<SWidget> MenuContent = FocusedContent.Content;
+
+	TSharedPtr<IMenu> Menu = FSlateApplication::Get().PushMenu(
+		AsShared(),
+		FWidgetPath(),
+		MenuContent,
+		InNodePosition,
+		FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu)
+	);
+
+	if (Menu.IsValid() && Menu->GetOwnedWindow().IsValid())
+	{
+		Menu->GetOwnedWindow()->SetWidgetToFocusOnActivate(FocusedContent.WidgetToFocus);
+	}
+
+	if (Menu.IsValid())
+	{
+		Menu->GetOnMenuDismissed().AddLambda([DelegateList = FocusedContent.OnMenuDismissed](TSharedRef<IMenu>) { DelegateList.Broadcast(); });
+	}
+	else
+	{
+		FocusedContent.OnMenuDismissed.Broadcast();
+	}
 }
 
 void SCodeEditableText::SelectLine() {

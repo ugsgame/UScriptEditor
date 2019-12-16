@@ -1,4 +1,4 @@
-// Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -101,11 +101,11 @@ public:
 
 struct FStackListNode
 {
-	FString FilePath;
-	FString Code;
-	int32 Line;
 	int32 StackIndex;
+	int32 Line;
+	FString FilePath;
 	FString FuncInfo;
+	FString Code;
 
 	FStackListNode(int32 _StackIndex, int32 _Line, FString _FilePath, const FString& _FuncInfo)
 		:StackIndex(_StackIndex), Line(_Line), FilePath(_FilePath), FuncInfo(_FuncInfo)

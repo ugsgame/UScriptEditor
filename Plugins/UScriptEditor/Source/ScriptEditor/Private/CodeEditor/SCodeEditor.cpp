@@ -352,13 +352,14 @@ void SCodeLineItem::Construct(const FArguments& InArgs, const TSharedRef<STableV
 					SNew(SBox)
 					[
 						SAssignNew(BreakPointCheckBox, SCheckBox)
-						.IsChecked(CodeLine->HasBreakPoint ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
+						//.IsChecked(CodeLine->HasBreakPoint ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
+						.IsChecked(this, &SCodeLineItem::BreakPointIsChecked)
 						.OnCheckStateChanged(this, &SCodeLineItem::OnClickBreakPoint)
 						.CheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
 						.CheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
 						.CheckedPressedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
 						.UncheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Null"))
-						.UncheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Null"))
+						.UncheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
 					]
 				]
 			+ SHorizontalBox::Slot()
@@ -374,6 +375,22 @@ void SCodeLineItem::Construct(const FArguments& InArgs, const TSharedRef<STableV
 			]
 		]
 	];
+}
+
+ECheckBoxState SCodeLineItem::BreakPointIsChecked()const
+{
+	CodeLine->HasBreakPoint = FScriptEditor::Get()->HasBreakPoint(CodeLine->FilePath, CodeLine->Line);
+
+	if (CodeLine->HasBreakPoint)
+	{
+		BreakPointCheckBox->SetCheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Remove"));
+	}
+	else
+	{
+		BreakPointCheckBox->SetCheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"));
+	}
+
+	return CodeLine->HasBreakPoint ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
 }
 
 void SCodeLineItem::OnClickBreakPoint(const ECheckBoxState NewCheckedState)

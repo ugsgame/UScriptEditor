@@ -68,8 +68,12 @@ void FScriptEditorStyle::Initialize()
 		StyleSet->Set("ScriptEditor.DebugStepin", new IMAGE_BRUSH("UI/Debug/icon_debug_step_into", Icon40x40));
 		StyleSet->Set("ScriptEditor.DebugStepout", new IMAGE_BRUSH("UI/Debug/icon_debug_step_out", Icon40x40));
 
+		//Tab Icons
+		StyleSet->Set("ScriptEditor.Project", new IMAGE_BRUSH("UI/Widgets/icon_tab_members_16x", Icon16x16));
 		StyleSet->Set("ScriptEditor.APIBroswer", new IMAGE_BRUSH("UI/Widgets/icon_tab_editor_16x", Icon16x16));
-		StyleSet->Set("ScriptEditor.APIBroswer", new IMAGE_BRUSH("UI/Widgets/icon_tab_editor_16x", Icon16x16));
+		StyleSet->Set("ScriptEditor.Debugger", new IMAGE_BRUSH("UI/Widgets/icon_tab_breakpoints_16x", Icon16x16));
+		StyleSet->Set("ScriptEditor.Log", new IMAGE_BRUSH("UI/Widgets/icon_tab_log_16x", Icon16x16));
+		StyleSet->Set("ScriptEditor.VarWatcher", new IMAGE_BRUSH("UI/Widgets/icon_tab_preview_16x", Icon16x16));
 	}
 
 	const FSlateFontInfo Consolas10  = DEFAULT_FONT("Mono", 11);
@@ -116,6 +120,9 @@ void FScriptEditorStyle::Initialize()
 		StyleSet->Set("Breakpoint.Off", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_off", Icon16x16));
 		StyleSet->Set("Breakpoint.Hit", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_hit", Icon16x16));
 		StyleSet->Set("Breakpoint.Null", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_null", Icon16x16));
+		StyleSet->Set("Breakpoint.DisableAll", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_disable_all", Icon16x16));
+		StyleSet->Set("Breakpoint.Enable", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_enable", Icon16x16));
+		StyleSet->Set("Breakpoint.Remove", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_remove_all", Icon16x16));
 	}
 
 	// Project editor
