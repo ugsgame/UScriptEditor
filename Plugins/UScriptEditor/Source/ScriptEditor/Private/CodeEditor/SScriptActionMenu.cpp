@@ -401,7 +401,7 @@ void SScriptActionMenu::OnActionSelected(const TArray< TSharedPtr<FEdGraphSchema
 				if (SelectedAction[ActionIndex]->GetTypeId() != FEdGraphSchemaAction_Dummy::StaticGetTypeId())
 				{
 					FSlateApplication::Get().DismissAllMenus();
-					FScriptSchemaAction* ScriptAction = dynamic_cast<FScriptSchemaAction*>(SelectedAction[ActionIndex].Get());
+					FScriptSchemaAction* ScriptAction = static_cast<FScriptSchemaAction*>(SelectedAction[ActionIndex].Get());
 					//TODO:Add script code to the CodeEditor
 					if (this->CodeEditableObj && ScriptAction)
 					{
