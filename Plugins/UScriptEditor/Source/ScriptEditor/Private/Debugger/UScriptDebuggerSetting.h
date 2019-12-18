@@ -186,6 +186,9 @@ public:
 	UPROPERTY(config)
 		TArray<FScriptBreakPointNode> RecentBreakPoint;
 
+	UPROPERTY()
+		FScriptBreakPointNode HittingPoint;
+
 	void RegisterLuaState(lua_State* State);
 	virtual void Continue();
 	virtual void StepOver();

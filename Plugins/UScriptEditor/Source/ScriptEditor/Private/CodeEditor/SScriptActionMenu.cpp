@@ -25,7 +25,9 @@
 
 #include "ScriptEditor.h"
 #include "SCodeEditor.h"
+#include "SCodeEditableText.h"
 #include "ScriptEditorStyle.h"
+#include "ScriptSchemaAction.h"
 
 #define LOCTEXT_NAMESPACE "SScriptActionMenu"
 
@@ -216,7 +218,7 @@ void SScriptActionMenu::Construct(const FArguments& InArgs, TSharedPtr<FScriptEd
 {
 	bActionExecuted = false;
 
-	//this->CodeEditorObj = InArgs._CodeEditorObj;
+	this->CodeEditableObj = InArgs._CodeEditableObj;
 	this->NewNodePosition = InArgs._NewNodePosition;
 	//this->OnClosedCallback = InArgs._OnClosedCallback;
 	this->bAutoExpandActionMenu = InArgs._AutoExpandActionMenu;
@@ -389,7 +391,26 @@ void SScriptActionMenu::OnContextTargetsChanged(uint32 ContextTargetMask)
 
 void SScriptActionMenu::OnActionSelected(const TArray< TSharedPtr<FEdGraphSchemaAction> >& SelectedAction, ESelectInfo::Type InSelectionType)
 {
-	//TODO:
+	if (InSelectionType == ESelectInfo::OnMouseClick || InSelectionType == ESelectInfo::OnKeyPress || SelectedAction.Num() == 0)
+	{
+		for (int32 ActionIndex = 0; ActionIndex < SelectedAction.Num(); ActionIndex++)
+		{
+			if (SelectedAction[ActionIndex].IsValid())
+			{
+				// Don't dismiss when clicking on dummy action
+				if (SelectedAction[ActionIndex]->GetTypeId() != FEdGraphSchemaAction_Dummy::StaticGetTypeId())
+				{
+					FSlateApplication::Get().DismissAllMenus();
+					FScriptSchemaAction* ScriptAction = dynamic_cast<FScriptSchemaAction*>(SelectedAction[ActionIndex].Get());
+					//TODO:Add script code to the CodeEditor
+					if (this->CodeEditableObj && ScriptAction)
+					{
+						CodeEditableObj->InsertTextAtCursor(ScriptAction->CodeClip);
+					}
+				}
+			}
+		}
+	}
 }
 
 // TSharedRef<SWidget> SScriptActionMenu::OnCreateWidgetForAction(struct FCreateWidgetForActionData* const InCreateData)
@@ -402,6 +423,26 @@ void SScriptActionMenu::OnActionSelected(const TArray< TSharedPtr<FEdGraphSchema
 void SScriptActionMenu::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
 	//TODO:
+	US_Log("CollectAllActions");
+
+	if (UScriptActionCollecter::Get())
+	{
+
+		for (TSharedPtr<FEdGraphSchemaAction> Action:UScriptActionCollecter::Get()->GetScriptActions())
+		{
+			OutAllActions.AddAction(Action);
+		}
+
+		for (TSharedPtr<FEdGraphSchemaAction> Action : UScriptActionCollecter::Get()->GetLuaActions())
+		{
+			OutAllActions.AddAction(Action);
+		}
+		/*
+		UScriptActionCollecter::Get()->Reflash();
+		OutAllActions.Append(*UScriptActionCollecter::Get()->GetScriptActionList());
+		OutAllActions.Append(*UScriptActionCollecter::Get()->GetLuaActionList());
+		*/
+	}
 }
 
 void SScriptActionMenu::ConstructActionContext(FBlueprintActionContext& ContextDescOut)
@@ -452,3 +493,5 @@ FMargin SScriptActionMenuExpander::GetCustomIndentPadding() const
 	}
 	return CustomPadding;
 }
+
+#undef LOCTEXT_NAMESPACE

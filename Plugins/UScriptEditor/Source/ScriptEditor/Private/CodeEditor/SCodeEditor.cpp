@@ -379,16 +379,37 @@ void SCodeLineItem::Construct(const FArguments& InArgs, const TSharedRef<STableV
 
 ECheckBoxState SCodeLineItem::BreakPointIsChecked()const
 {
+	if ( !(FScriptEditor::Get().IsValid()) || !SScriptDebugger::Get())return ECheckBoxState::Unchecked;
+
 	CodeLine->HasBreakPoint = FScriptEditor::Get()->HasBreakPoint(CodeLine->FilePath, CodeLine->Line);
 
-	if (CodeLine->HasBreakPoint)
+	if (SScriptDebugger::Get()->IsEnterDebugMode && CodeLine->IsHit())
 	{
-		BreakPointCheckBox->SetCheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Remove"));
+		if (CodeLine->HasBreakPoint)
+		{
+			BreakPointCheckBox->SetCheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Hit"));
+			BreakPointCheckBox->SetCheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Remove"));
+		}
+		else
+		{
+			BreakPointCheckBox->SetUncheckedImage(FScriptEditorStyle::Get().GetBrush("Callsatck.Next"));
+			BreakPointCheckBox->SetCheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"));
+		}
 	}
 	else
 	{
-		BreakPointCheckBox->SetCheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"));
+		if (CodeLine->HasBreakPoint)
+		{
+			BreakPointCheckBox->SetCheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"));
+			BreakPointCheckBox->SetCheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Remove"));
+		}
+		else
+		{
+			BreakPointCheckBox->SetUncheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Null"));
+			BreakPointCheckBox->SetCheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"));
+		}
 	}
+
 
 	return CodeLine->HasBreakPoint ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
 }

@@ -15,6 +15,8 @@ class SBlueprintContextTargetMenu;
 class SEditableTextBox;
 class SGraphActionMenu;
 class SCodeEditor;
+class SCodeEditableText;
+
 struct FBlueprintActionContext;
 struct FCustomExpanderData;
 
@@ -29,12 +31,12 @@ public:
 	DECLARE_DELEGATE_ThreeParams(FClosedReason, bool /*bActionExecuted*/, bool /*bContextSensitiveChecked*/, bool /*bGraphPinContext*/);
 
 	SLATE_BEGIN_ARGS(SScriptActionMenu)
-		//: _CodeEditorObj(static_cast<SCodeEditor*>(NULL))
-		: _NewNodePosition(FVector2D::ZeroVector)
+		: _CodeEditableObj(static_cast<SCodeEditableText*>(NULL))
+		, _NewNodePosition(FVector2D::ZeroVector)
 		, _AutoExpandActionMenu(false)
 	{}
 
-		//SLATE_ARGUMENT(SCodeEditor*, CodeEditorObj)
+		SLATE_ARGUMENT(SCodeEditableText*, CodeEditableObj)
 		SLATE_ARGUMENT(FVector2D, NewNodePosition)
 		//SLATE_ARGUMENT(TArray<UEdGraphPin*>, DraggedFromPins)
 		//SLATE_ARGUMENT(SCodeEditor::FActionMenuClosed, OnClosedCallback)
@@ -71,7 +73,7 @@ protected:
 	void TryInsertPromoteToVariable(FBlueprintActionContext const& Context, FGraphActionListBuilderBase& OutAllActions);
 
 private:
-	//SCodeEditor* CodeEditorObj;
+	SCodeEditableText* CodeEditableObj;
 	FVector2D NewNodePosition;
 	bool bAutoExpandActionMenu;
 

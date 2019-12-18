@@ -123,6 +123,9 @@ void FScriptEditorStyle::Initialize()
 		StyleSet->Set("Breakpoint.DisableAll", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_disable_all", Icon16x16));
 		StyleSet->Set("Breakpoint.Enable", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_enable", Icon16x16));
 		StyleSet->Set("Breakpoint.Remove", new IMAGE_BRUSH("UI/Debug/icon_breakpoint_remove_all", Icon16x16));
+
+		StyleSet->Set("Callsatck.Next", new IMAGE_BRUSH("UI/Debug/icon_callsatck_next_statement", Icon16x16));
+		StyleSet->Set("Callsatck.Selected", new IMAGE_BRUSH("UI/Debug/icon_callstack_selected", Icon16x16));
 	}
 
 	// Project editor

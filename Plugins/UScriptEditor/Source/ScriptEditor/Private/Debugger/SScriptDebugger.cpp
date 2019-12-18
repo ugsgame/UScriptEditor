@@ -314,10 +314,18 @@ FString SScriptDebugger::GetLuaSourceDir()
 
 void SScriptDebugger::EnterDebug(const FString& LuaFilePath, int32 Line)
 {
+	UScriptDebuggerSetting::Get()->HittingPoint.Line = Line;
+	UScriptDebuggerSetting::Get()->HittingPoint.FilePath = LuaFilePath;
+
 	ShowCode(LuaFilePath, Line);
 	ShowStackVars(0);
 	IsEnterDebugMode = true;
 	FSlateApplication::Get().EnterDebuggingMode();
+
+	//
+	UScriptDebuggerSetting::Get()->HittingPoint.Line = -1;
+	UScriptDebuggerSetting::Get()->HittingPoint.FilePath = "";
+	//
 }
 
 

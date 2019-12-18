@@ -7,6 +7,8 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Views/SListView.h"
 
+#include "UScriptDebuggerSetting.h"
+
 class SCodeEditableText;
 class SScrollBar;
 class SScrollBox;
@@ -16,12 +18,17 @@ class UCodeProjectItem;
 struct FCodeLineNode
 {
 	FCodeLineNode(int32 _Line, FString _FilePath)
-		:FilePath(_FilePath), Line(_Line), HasBreakPoint(false),IsHited(false)
+		:FilePath(_FilePath), Line(_Line), HasBreakPoint(false)
 	{}
+
+	bool IsHit()
+	{
+		return (Line == UScriptDebuggerSetting::Get()->HittingPoint.Line && FilePath == UScriptDebuggerSetting::Get()->HittingPoint.FilePath);
+	};
+
 	FString FilePath;
 	int32 Line;
 	bool HasBreakPoint;
-	bool IsHited;
 };
 
 using FCodeLineNode_Ptr = TSharedPtr<FCodeLineNode>;

@@ -50,9 +50,7 @@ void SCodeEditableText::GoToLineColumn(int32 Line, int32 Column)
 	GoTo(Location);
 	ScrollTo(Location);
 
-	GEditor->AddOnScreenDebugMessage(1, 5, FColor::Red, FString("Line:") + FString::FromInt(Line) + ":" + FString::FromInt(Column));
-
-
+	US_Log("Line:%d,Column:%d", Line ,Column);
 }
 
 
@@ -74,6 +72,7 @@ void SCodeEditableText::ContextMenuExtender(FMenuBuilder& MenuBuilder)
 		MenuBuilder.AddMenuEntry(FScriptEditorCommands::Get().APIBroswer);
 	}
 	MenuBuilder.EndSection();
+
 }
 
 void SCodeEditableText::OnGraphActionMenuClosed(bool bActionExecuted, bool bContextSensitiveChecked, bool bGraphPinContext)
@@ -85,11 +84,10 @@ void SCodeEditableText::OpenAPIBrowser()
 {
 	US_Log("OpenAPIBrowser");
 
-	FVector2D InNodePosition = FVector2D(20, 20);
-
 	TSharedRef<SScriptActionMenu> ActionMenu =
 		SNew(SScriptActionMenu, FScriptEditor::Get())
-		.NewNodePosition(InNodePosition)
+		.CodeEditableObj(this)
+		.NewNodePosition(CurrentMouseRightUpSSPosition)
 		.AutoExpandActionMenu(true)
 		.OnCloseReason(this, &SCodeEditableText::OnGraphActionMenuClosed);
 
@@ -101,7 +99,7 @@ void SCodeEditableText::OpenAPIBrowser()
 		AsShared(),
 		FWidgetPath(),
 		MenuContent,
-		InNodePosition,
+		CurrentMouseRightUpSSPosition,
 		FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu)
 	);
 
@@ -154,6 +152,20 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 	}
 
 	return Reply;
+}
+
+FReply SCodeEditableText::OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	if (MouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+	{
+		CurrentMouseRightUpSSPosition = MouseEvent.GetScreenSpacePosition();
+	}
+	else if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
+	{
+		CurrentMouseLeftUpSSPosition = MouseEvent.GetScreenSpacePosition();
+	}
+
+	return SMultiLineEditableText::OnMouseButtonUp(MyGeometry, MouseEvent);
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -65,9 +65,13 @@ protected:
 
 private:
 	virtual FReply OnKeyChar(const FGeometry& MyGeometry,const FCharacterEvent& InCharacterEvent) override;
+	virtual FReply OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 
 	int32 CurrentLine;
 	int32 CurrentColumn;
+
+	FVector2D CurrentMouseRightUpSSPosition;
+	FVector2D CurrentMouseLeftUpSSPosition;
 
 	TSharedPtr<class FUICommandList> ExtenderCommands;
 };
