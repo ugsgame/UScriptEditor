@@ -579,6 +579,9 @@ TSharedRef<SWidget> SDebuggerVarTreeWidgetItem::GenerateWidgetForColumn(const FN
 	}
 	else if (ColumnName == Col_Value)
 	{
+		if (VarInfoNode->KindType == (int32)EScriptUEKindType::T_TList || VarInfoNode->KindType == (int32)EScriptUEKindType::T_TDict)
+			return SNullWidget::NullWidget;
+
 		return SNew(STextBlock)
 			.Text_Lambda([&]()->FText {return VarInfoNode->VarValue; })
 			;

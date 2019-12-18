@@ -79,32 +79,6 @@ enum class EStackListState : uint8
 	BreakPoints,
 };
 
-// struct ViewCodeHistory
-// {
-// 	int32 NowHeadIndex;
-// 	int32 NowIndex;
-// 	struct ViewAddr
-// 	{
-// 		FString FilePath;
-// 		int32 Line;
-// 		bool operator==(const ViewAddr& Right)
-// 		{
-// 			return FilePath == Right.FilePath && Line == Right.Line;
-// 		}
-// 	};
-// 
-// 	void Append(ViewAddr NewAddr)
-// 	{
-// 		if (NowIndex != NowHeadIndex)
-// 		{
-// 			NowHeadIndex = NowIndex;
-// 		}
-// 		NowHeadIndex++;
-// // 		History.ResizeTo(NowHeadIndex + 1);
-// 
-// 	}
-// 	TArray<ViewAddr> History;
-// };
 
 class SScriptDebugger : public SCompoundWidget
 {

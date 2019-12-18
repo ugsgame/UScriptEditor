@@ -7,23 +7,27 @@
 #include "STableRow.h"
 #include "STreeView.h"
 
-class SVarTreeWidgetItem :public SMultiColumnTableRow<TSharedRef<FVarNode>>
+#include "UScriptDebuggerSetting.h"
+
+
+class SVarTreeWidgetItem :public SMultiColumnTableRow<TSharedRef<FVarWatcherNode>>
 {
 public:
 	static FName Col_Name;
 	static FName Col_Value;
-	TSharedPtr<FVarNode> VarInfoNode;
+	static FName Col_Type;
+	TSharedPtr<FVarWatcherNode> VarInfoNode;
 	SLATE_BEGIN_ARGS(SVarTreeWidgetItem)
 		:_VarInfoToVisualize()
 	{}
-		SLATE_ARGUMENT(TSharedPtr<FVarNode>, VarInfoToVisualize)
+		SLATE_ARGUMENT(TSharedPtr<FVarWatcherNode>, VarInfoToVisualize)
 
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView)
 	{
 		VarInfoNode = InArgs._VarInfoToVisualize;
-		SMultiColumnTableRow<TSharedRef<FVarNode>>::Construct(SMultiColumnTableRow< TSharedRef<FVarNode> >::FArguments().Padding(1), InOwnerTableView);
+		SMultiColumnTableRow<TSharedRef<FVarWatcherNode>>::Construct(SMultiColumnTableRow< TSharedRef<FVarWatcherNode> >::FArguments().Padding(1), InOwnerTableView);
 	}
 		virtual TSharedRef<SWidget> GenerateWidgetForColumn(const FName& ColumnName) override;
 };
@@ -39,18 +43,17 @@ public:
 	static SVarWatcher* Ptr;
 	static SVarWatcher* Get() { return Ptr; }
 	/** IModuleInterface implementation */
-	typedef STreeView<TSharedRef<FVarNode>> SVarsTree;
-	TArray<TSharedRef<FVarNode>> SelectedNodes;
-	TArray<TSharedRef<FVarNode>> VarTreeRoot;
+	typedef STreeView<TSharedRef<FVarWatcherNode>> SVarsTree;
+	
 	TWeakPtr<SVarsTree> VarTreePtr;
 	bool bNeedTickTreeView;
 	bool bNeedUpdateData;
 	bool bShowFunction;
 
-	TSharedRef<ITableRow> HandleVarTreeGenerateRow(TSharedRef<FVarNode> InVarNode, const TSharedRef<STableViewBase>& OwnerTable);
-	void HandleVarTreeGetChildren(TSharedRef<FVarNode> InVarNode, TArray<TSharedRef<FVarNode>>& OutChildren);
-	void HandleVarTreeSelectionChanged(TSharedPtr<FVarNode>, ESelectInfo::Type /*SelectInfo*/);
-	void HandleNodeExpansion(TSharedRef<FVarNode> VarNode, bool bIsExpaned);
+	TSharedRef<ITableRow> HandleVarTreeGenerateRow(TSharedRef<FVarWatcherNode> InVarNode, const TSharedRef<STableViewBase>& OwnerTable);
+	void HandleVarTreeGetChildren(TSharedRef<FVarWatcherNode> InVarNode, TArray<TSharedRef<FVarWatcherNode>>& OutChildren);
+	void HandleVarTreeSelectionChanged(TSharedPtr<FVarWatcherNode>, ESelectInfo::Type /*SelectInfo*/);
+	void HandleNodeExpansion(TSharedRef<FVarWatcherNode> VarNode, bool bIsExpaned);
 
 	virtual void StartupModule() ;
 	virtual void ShutdownModule() ;

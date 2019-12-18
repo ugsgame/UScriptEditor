@@ -1,18 +1,14 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "UScriptDebuggerSetting.h"
-//#include "UnrealLua.h"
 #include "UnLuaDelegates.h"
 #include "lua.hpp"
 #include "UnLua.h"
 #include "SScriptDebugger.h"
-
 #include "UEReflectionUtils.h"
 #include "GameFramework/Actor.h"
 #include "ScriptEditor.h"
 
-
-// #include "DebuggerVarNode.lua.h"
 
 
 UScriptDebuggerSetting* UScriptDebuggerSetting::Get()
@@ -127,14 +123,14 @@ struct unlua_Debug
 	}
 };
 
-#define UNLUA_DEBUG
+//#define UNLUA_DEBUG
 #ifdef UNLUA_DEBUG
 static unlua_Debug ur;
 #else
 static unlua_State ur;
 #endif // UNLUA_DEBUG
 
-#define UNFOLD_FUNCTION
+//#define UNFOLD_FUNCTION
 
 struct unlua_over
 {
@@ -219,8 +215,6 @@ const FString UScriptDebuggerSetting::FVectorName(TEXT("FVector"));
 
 const FString UScriptDebuggerSetting::FRotatorName(TEXT("FRotator"));
 
-const FString UScriptDebuggerSetting::FTransformName(TEXT("FTransform"));
-
 const FText UScriptDebuggerSetting::SelfLocationText = FText::FromString(SelfLocationName);
 
 const FText UScriptDebuggerSetting::SelfRotatorText = FText::FromString(SelfRotatorName);
@@ -268,12 +262,14 @@ void UScriptDebuggerSetting::RegisterLuaState(lua_State* State)
 
 void UScriptDebuggerSetting::UnRegisterLuaState(bool bFullCleanup)
 {
+#ifdef UNLUA_DEBUG
 	if (bFullCleanup)
 	{
 		UE_LOG(LogTemp, Log, TEXT("unlua_Debug UnRegisterLuaState FullCleanup"));
 	}
 	else
 		UE_LOG(LogTemp, Log, TEXT("unlua_Debug UnRegisterLuaState Not FullCleanup"));
+#endif
 
 	lua_sethook(L, NULL, 0, 0);
 	// Clear Stack Info UseLess
@@ -353,8 +349,6 @@ void UScriptDebuggerSetting::ValueTranslate(int32 KindType, FString& VarValue, F
 
 void UScriptDebuggerSetting::IteraionTable(FScriptDebuggerVarNode& InNode, int32 NameIndex)
 {
-	//UE_LOG(LogTemp, Log, TEXT("Itera Start [%d]"), lua_gettop(L));
-
 	FString VarName;
 	FString VarValue;
 	FString VarType;
@@ -363,29 +357,17 @@ void UScriptDebuggerSetting::IteraionTable(FScriptDebuggerVarNode& InNode, int32
 	//check is last index
 	if (InNode.NameList.Num() == NameIndex)
 	{
-		//UE_LOG(LogTemp, Log, TEXT("While Start [%d]"), lua_gettop(L));
-
 		//Generate New Node
 		while (lua_next(L, -2))
 		{
 			int32 NameType = lua_type(L, -2);
 
-			//UE_LOG(LogTemp, Log, TEXT("Names Start [%d]"), lua_gettop(L));
-
 			if (NameTranslate(NameType, VarName, -2))
 			{
-				//UE_LOG(LogTemp, Log, TEXT("Names Ended [%d]"), lua_gettop(L));
-
 				if (!TempVarName.Equals(VarName))
 				{
-
-					//UE_LOG(LogTemp, Log, TEXT("Value Start [%d]"), lua_gettop(L));
-
 					int ValueType = lua_type(L, -1);
 					ValueTranslate(ValueType, VarValue, VarType, -1);
-
-
-					//UE_LOG(LogTemp, Log, TEXT("Value Ended [%d]"), lua_gettop(L));
 
 					if (!InNode.NodeChildren.Contains(VarName))
 					{
@@ -400,21 +382,13 @@ void UScriptDebuggerSetting::IteraionTable(FScriptDebuggerVarNode& InNode, int32
 						NewNode->NameList.Append(InNode.NameList);
 						NewNode->NameList.Add(VarName);
 
-						//UE_LOG(LogTemp, Log, TEXT("NewNode [%s]"), *NewNode->ToString());
-
 						InNode.NodeChildren.Add(VarName, NewNode);
 					}
 
 				}
 			}
 
-			//UE_LOG(LogTemp, Log, TEXT("Poped Start [%d]"), lua_gettop(L));
-
 			lua_pop(L, 1);
-
-			//UE_LOG(LogTemp, Log, TEXT("Poped Ended [%d]"), lua_gettop(L));
-
-			//break;
 		}
 
 
@@ -443,15 +417,11 @@ void UScriptDebuggerSetting::IteraionTable(FScriptDebuggerVarNode& InNode, int32
 		}
 	}
 
-	//lua_pop(L, 1);
-
-	//UE_LOG(LogTemp, Log, TEXT("Itera Ended [%d]"), lua_gettop(L));
+	lua_pop(L, 1);
 }
 
 void UScriptDebuggerSetting::LocalListen(FScriptDebuggerVarNode& InNode)
 {
-	//UE_LOG(LogTemp, Log, TEXT("%s lua_top[%d]"), *InNode.ToString(), lua_gettop(L));
-
 	//Get Local Vars
 	lua_Debug ar;
 
@@ -614,8 +584,6 @@ void UScriptDebuggerSetting::GlobalListen(FScriptDebuggerVarNode& InNode)
 			}
 		}
 
-		//UE_LOG(LogTemp, Log, TEXT("unlua_Debug Get Global index[%d] name[%s] value[%s]"), i, UTF8_TO_TCHAR(VarName), *VarValue);
-
 		lua_pop(L, 1);
 		i++;
 	}
@@ -711,14 +679,7 @@ bool UScriptDebuggerSetting::PropertyTranslate(FString& VarValue, FString& VarTy
 		UArrayProperty* ArrayProperty = Cast<UArrayProperty>(Property);
 		ValuePtr = ArrayProperty->ContainerPtrToValuePtr<uint8>(Object);
 		ArrayProperty->ExportTextItem(VarValue, ValuePtr, ValuePtr, Object, 0, NULL);
-	}
-	else if (Cast<UMapProperty>(Property))
-	{
-		VarType = FString::Printf(TEXT("UMapProperty -- %s"), *CPPType);
-
-		UMapProperty* MapProperty = Cast<UMapProperty>(Property);
-		ValuePtr = MapProperty->ContainerPtrToValuePtr<uint8>(Object);
-		MapProperty->ExportTextItem(VarValue, ValuePtr, ValuePtr, Object, 0, NULL);
+		KindType = (int32)EScriptUEKindType::T_TList;
 	}
 	else if (Cast<USetProperty>(Property))
 	{
@@ -727,6 +688,16 @@ bool UScriptDebuggerSetting::PropertyTranslate(FString& VarValue, FString& VarTy
 		USetProperty* SetProperty = Cast<USetProperty>(Property);
 		ValuePtr = SetProperty->ContainerPtrToValuePtr<uint8>(Object);
 		SetProperty->ExportTextItem(VarValue, ValuePtr, ValuePtr, Object, 0, NULL);
+		KindType = (int32)EScriptUEKindType::T_TList;
+	}
+	else if (Cast<UMapProperty>(Property))
+	{
+		VarType = FString::Printf(TEXT("UMapProperty -- %s"), *CPPType);
+
+		UMapProperty* MapProperty = Cast<UMapProperty>(Property);
+		ValuePtr = MapProperty->ContainerPtrToValuePtr<uint8>(Object);
+		MapProperty->ExportTextItem(VarValue, ValuePtr, ValuePtr, Object, 0, NULL);
+		KindType = (int32)EScriptUEKindType::T_TDict;
 	}
 	else if (Cast<UStructProperty>(Property))
 	{
@@ -735,6 +706,11 @@ bool UScriptDebuggerSetting::PropertyTranslate(FString& VarValue, FString& VarTy
 		UStructProperty* StructProperty = Cast<UStructProperty>(Property);
 		ValuePtr = StructProperty->ContainerPtrToValuePtr<uint8>(Object);
 		StructProperty->ExportTextItem(VarValue, ValuePtr, ValuePtr, Object, 0, NULL);
+
+		if (CPPType.Equals(FVectorName) || CPPType.Equals(FRotatorName))
+			KindType = (int32)EScriptUEKindType::T_Single;
+		else
+			KindType = (int32)EScriptUEKindType::T_TDict;
 	}
 	else if (Cast<UDelegateProperty>(Property))
 	{
@@ -758,13 +734,138 @@ void UScriptDebuggerSetting::UEObjectListen(FScriptDebuggerVarNode& InNode)
 	int32 KindType;
 	void* VarPtr = NULL;
 
+	//for List and Dict to Generate Node
+	TArray<FString> NameGroup;
+	TArray<FString> ValueGroup;
+	const TCHAR* ValueTravel;
+	int32 ValueLen, PreStep, NowStep, BracketCount;
+
 	switch (InNode.KindType)
 	{
-	case (int32)EScriptUEKindType::T_TArray:
+	case (int32)EScriptUEKindType::T_TList:
+
+		ValueTravel = InNode.VarValue.ToString().GetCharArray().GetData();
+		ValueLen = InNode.VarValue.ToString().Len();
+		if (ValueLen < 3)
+			return;
+
+		PreStep = 1;
+		NowStep = 1;
+		BracketCount = 0;
+
+		while (NowStep++ != ValueLen)
+		{
+			switch (*(ValueTravel + NowStep))
+			{
+			case TCHAR('('):
+				BracketCount++;
+				break;
+			case TCHAR(')'):
+				BracketCount--;
+				break;
+			case TCHAR(','):
+
+				if (BracketCount == 0)
+				{
+					//splite the VarValue
+					VarValue.Empty();
+					VarValue.AppendChars(ValueTravel + PreStep, NowStep - PreStep);
+					ValueGroup.Add(VarValue);
+					PreStep = NowStep + 1;
+				}
+
+				break;
+			}
+		}
+
+		//get the last value
+		VarValue.Empty();
+		VarValue.AppendChars(ValueTravel + PreStep, NowStep - PreStep - 2);
+		ValueGroup.Add(VarValue);
+
+		for (int i = 0; i < ValueGroup.Num(); ++i)
+		{
+			if (!InNode.NodeChildren.Contains(FString::FromInt(i)))
+			{
+				FScriptDebuggerVarNode_Ref NewNode = MakeShareable(new FScriptDebuggerVarNode);
+				NewNode->NodeType = InNode.NodeType;
+				NewNode->KindType = (int32)EScriptUEKindType::T_Single;
+				NewNode->VarName = FText::FromString(FString::FromInt(i));
+				NewNode->VarValue = FText::FromString(ValueGroup[i]);
+
+				InNode.NodeChildren.Add(FString::FromInt(i), NewNode);
+			}
+		}
+
+
 		break;
-	case (int32)EScriptUEKindType::T_TSet:
-		break;
-	case (int32)EScriptUEKindType::T_TMap:
+	case (int32)EScriptUEKindType::T_TDict:
+
+
+		ValueTravel = InNode.VarValue.ToString().GetCharArray().GetData();
+		ValueLen = InNode.VarValue.ToString().Len();
+		if (ValueLen < 3)
+			return;
+
+		PreStep = 1;
+		NowStep = 1;
+		BracketCount = 0;
+
+		while (NowStep++ != ValueLen)
+		{
+			switch (*(ValueTravel + NowStep))
+			{
+			case TCHAR('('):
+				BracketCount++;
+				break;
+			case TCHAR(')'):
+				BracketCount--;
+				break;
+			case TCHAR('='):
+				if (BracketCount == 0)
+				{
+					//splite the VarName
+					VarName.Empty();
+					VarName.AppendChars(ValueTravel + PreStep, NowStep - PreStep);
+					NameGroup.Add(VarName);
+					PreStep = NowStep + 1;
+				}
+				break;
+			case TCHAR(','):
+				if (BracketCount == 0)
+				{
+					//splite the VarValue
+					VarValue.Empty();
+					VarValue.AppendChars(ValueTravel + PreStep, NowStep - PreStep);
+					ValueGroup.Add(VarValue);
+					PreStep = NowStep + 1;
+				}
+				break;
+			}
+		}
+
+		//get the last value
+		VarValue.Empty();
+		VarValue.AppendChars(ValueTravel + PreStep, NowStep - PreStep - 2);
+		ValueGroup.Add(VarValue);
+
+		if (NameGroup.Num() == ValueGroup.Num())
+		{
+			for (int i = 0; i < NameGroup.Num(); ++i)
+			{
+				if (!InNode.NodeChildren.Contains(NameGroup[i]))
+				{
+					FScriptDebuggerVarNode_Ref NewNode = MakeShareable(new FScriptDebuggerVarNode);
+					NewNode->NodeType = InNode.NodeType;
+					NewNode->KindType = (int32)EScriptUEKindType::T_Single;
+					NewNode->VarName = FText::FromString(NameGroup[i]);
+					NewNode->VarValue = FText::FromString(ValueGroup[i]);
+
+					InNode.NodeChildren.Add(NameGroup[i], NewNode);
+				}
+			}
+		}
+
 		break;
 	case (int32)EScriptUEKindType::T_UObject:
 		if (InNode.VarPtr)
@@ -907,9 +1008,9 @@ void UScriptDebuggerSetting::UEObjectListen(FScriptDebuggerVarNode& InNode)
 
 					InNode.NodeChildren.Add(Function->GetName(), NewNode);
 				}
-			}
-#endif
 		}
+#endif
+	}
 		break;
 	case (int32)EScriptUEKindType::T_UEObject:
 		if (InNode.VarPtr)
@@ -1016,9 +1117,9 @@ void UScriptDebuggerSetting::UEObjectListen(FScriptDebuggerVarNode& InNode)
 
 					InNode.NodeChildren.Add(Function->GetName(), NewNode);
 				}
-			}
-#endif
 		}
+#endif
+}
 		break;
 	case (int32)EScriptUEKindType::T_ClassDesc:
 		if (InNode.VarPtr)
@@ -1085,17 +1186,17 @@ void UScriptDebuggerSetting::UEObjectListen(FScriptDebuggerVarNode& InNode)
 			}
 #endif
 
-		}
+			}
 		break;
 	case (int32)EScriptUEKindType::T_UFunction:
 		break;
-	}
-}
+		}
+		}
 
 void UScriptDebuggerSetting::EnterDebug(const FString& LuaFilePath, int32 Line)
 {
+
 	//Collect Stack Info
-	//UE_LOG(LogTemp, Log, TEXT("stackInfo Start"));
 	TArray<TTuple<int32, int32, FString, FString>> StackInfos;
 	int i = 0;
 	lua_Debug ar;
@@ -1103,13 +1204,11 @@ void UScriptDebuggerSetting::EnterDebug(const FString& LuaFilePath, int32 Line)
 	{
 		if (lua_getinfo(L, "Snl", &ar) != 0)
 		{
-			//UE_LOG(LogTemp, Log, TEXT("stackInfo [%d] %s"), i, *ur.ToString());
 			TTuple<int32, int32, FString, FString> StackItem(i, ar.currentline, UTF8_TO_TCHAR(++ar.source), UTF8_TO_TCHAR(ar.name));
 			StackInfos.Add(StackItem);
 		}
 		i++;
 	}
-	//UE_LOG(LogTemp, Log, TEXT("stackInfo Ended"));
 	SScriptDebugger::Get()->SetStackData(StackInfos);
 
 	SScriptDebugger::Get()->EnterDebug(LuaFilePath, Line);
@@ -1163,7 +1262,6 @@ void UScriptDebuggerSetting::GetStackVars(int32 StackIndex, TArray<FScriptDebugg
 
 						if (UEObject)
 						{
-							UE_LOG(LogTemp, Log, TEXT("unlua_Debug UEObject name[%s]"), *UEObject->GetName());
 
 							// get matetable form userdate
 							lua_getmetatable(L, -1);
@@ -1180,8 +1278,6 @@ void UScriptDebuggerSetting::GetStackVars(int32 StackIndex, TArray<FScriptDebugg
 
 								if (UEClassDesc)
 								{
-									UE_LOG(LogTemp, Log, TEXT("unlua_Debug ClassDesc info [%s]"), *UEClassDesc->GetName());
-
 									FScriptDebuggerVarNode_Ref UEObjectNode = MakeShareable(new FScriptDebuggerVarNode);
 									UEObjectNode->NodeType = EScriptVarNodeType::UEObject;
 									UEObjectNode->KindType = (int32)EScriptUEKindType::T_UEObject;
@@ -1190,27 +1286,10 @@ void UScriptDebuggerSetting::GetStackVars(int32 StackIndex, TArray<FScriptDebugg
 
 									Vars.Add(UEObjectNode);
 								}
-								else
-								{
-									UE_LOG(LogTemp, Log, TEXT("unlua_Debug ClassDesc Not Found"));
-								}
-							}
-							else
-							{
-								UE_LOG(LogTemp, Log, TEXT("unlua_Debug ClassDesc Not LIGHTUSERDATA"));
 							}
 							lua_pop(L, 2);
 
 						}
-						else
-						{
-							UEObject = NULL;
-							UE_LOG(LogTemp, Log, TEXT("unlua_Debug UEObject NotFound"));
-						}
-					}
-					else
-					{
-						UE_LOG(LogTemp, Log, TEXT("unlua_Debug self Object is NotUserData"));
 					}
 					lua_pop(L, 1);
 				}
@@ -1225,6 +1304,8 @@ void UScriptDebuggerSetting::GetStackVars(int32 StackIndex, TArray<FScriptDebugg
 
 void UScriptDebuggerSetting::GetVarsChildren(FScriptDebuggerVarNode& InNode)
 {
+	//UE_LOG(LogTemp, Log, TEXT("GetVarsChildren luagettop[%d]"), lua_gettop(L));
+
 	//UEObject NameList is not empty
 	if (InNode.NodeType == EScriptVarNodeType::UEObject)
 	{
@@ -1360,7 +1441,6 @@ static void hook_line_option(lua_State* L)
 
 static void debugger_hook_c(lua_State *L, lua_Debug *ar)
 {
-	//UE_LOG(LogTemp, Log, TEXT("unlua_Debug debugger_hook_c"));
 
 	if (lua_getinfo(L, "Snl", ar) != 0)
 	{
@@ -1373,10 +1453,9 @@ static void debugger_hook_c(lua_State *L, lua_Debug *ar)
 #else
 		if (ar->currentline < 0)
 			return;
+
 		ur.Init(ar);
 #endif // UNLUA_DEBUG
-
-#undef UNLUA_DEBUG
 
 		switch (ar->event)
 		{
@@ -1393,365 +1472,5 @@ static void debugger_hook_c(lua_State *L, lua_Debug *ar)
 	}
 }
 
-
-
-
-// UEObjectListen get Overrider and FClassDesc
-#if 0
-void UScriptDebuggerSetting::UEObjectListen(FScriptDebuggerVarNode& InNode)
-{
-	//Get Local Vars
-	lua_Debug ar;
-
-	UE_LOG(LogTemp, Log, TEXT("unlua_Debug StackNum [%d]"), lua_gettop(L));
-
-	if (lua_getstack(L, InNode.StackLevel, &ar) != 0)
-	{
-
-		int i = 1;
-		const char* VarName;
-		int32 KindType = -1;
-		while ((VarName = lua_getlocal(L, &ar, i)) != NULL)
-		{
-			// if get the self table
-			if (SelfName.Equals(UTF8_TO_TCHAR(VarName)))
-			{
-				//make sure self is table
-				KindType = lua_type(L, -1);
-				if (KindType == LUA_TTABLE)
-				{
-					//get matetable form self, self in the top
-					lua_getmetatable(L, -1);
-					KindType = lua_type(L, -1);
-					if (KindType == LUA_TTABLE)
-					{
-
-						//iter matetable
-						lua_pushnil(L);
-						FString VarValue;
-						i = 0;
-						while (lua_next(L, -2) != 0)
-						{
-							VarName = lua_tostring(L, -2);
-
-							if (TempVarName.Equals(UTF8_TO_TCHAR(VarName)))
-							{
-								lua_pop(L, 1);
-								i++;
-								continue;
-							}
-
-							UE_LOG(LogTemp, Log, TEXT("unlua_Debug ClassDesc start [%d]"), lua_gettop(L));
-
-							//if VarName is Overridden, get the ClassDesc
-							if (OverriddenName.Equals(UTF8_TO_TCHAR(VarName)))
-							{
-								lua_pushstring(L, "ClassDesc");
-								lua_rawget(L, -2);
-								KindType = lua_type(L, -1);
-
-								//makesure ClassDesc is lightuserdata
-								if (KindType == LUA_TLIGHTUSERDATA)
-								{
-									void* UserData = lua_touserdata(L, -1);
-									FClassDesc* ClassDesc = (FClassDesc*)UserData;
-
-									if (ClassDesc)
-									{
-										UE_LOG(LogTemp, Log, TEXT("unlua_Debug ClassDesc info [%s]"), *ClassDesc->GetName());
-									}
-									else
-									{
-										UE_LOG(LogTemp, Log, TEXT("unlua_Debug ClassDesc Not Found"));
-									}
-								}
-
-								lua_pop(L, 1);
-							}
-
-							UE_LOG(LogTemp, Log, TEXT("unlua_Debug ClassDesc ended [%d]"), lua_gettop(L));
-
-							KindType = lua_type(L, -1);
-
-							ValueTranslate(KindType, VarValue, -1);
-
-							if (InNode.NameList.Num() == 0)
-							{
-								if (!InNode.NodeChildren.Contains(VarName))
-								{
-									FScriptDebuggerVarNode_Ref NewNode = MakeShareable(new FScriptDebuggerVarNode);
-									NewNode->NodeType = EScriptVarNodeType::UEObject;
-									NewNode->StackLevel = InNode.StackLevel;
-									NewNode->KindType = KindType;
-									NewNode->VarName = FText::FromString(UTF8_TO_TCHAR(VarName));
-									NewNode->VarValue = FText::FromString(VarValue);
-									NewNode->NameList.Add(UTF8_TO_TCHAR(VarName));
-									InNode.NodeChildren.Add(VarName, NewNode);
-								}
-							}
-							else
-							{
-								if (InNode.NameList[0].Equals(UTF8_TO_TCHAR(VarName)))
-								{
-									if (KindType == LUA_TTABLE)
-									{
-										IteraionTable(InNode, 1);
-										lua_pop(L, 1);
-										break;
-									}
-								}
-							}
-
-							//UE_LOG(LogTemp, Log, TEXT("unlua_Debug Get Global index[%d] name[%s] value[%s]"), i, UTF8_TO_TCHAR(VarName), *VarValue);
-
-							lua_pop(L, 1);
-							i++;
-						}
-						lua_pop(L, 1);
-					}
-					lua_pop(L, 1);
-				}
-				lua_pop(L, 1);
-				break;
-			}
-			i++;
-			lua_pop(L, 1);
-		}
-
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("unlua_Debug StackNum [%d]"), lua_gettop(L));
-}
-
-#endif
-
-// UEObjectListen get Object and FClassDesc
-#if 0
-void UScriptDebuggerSetting::UEObjectListen(FScriptDebuggerVarNode& InNode)
-{
-	//Get Local Vars
-	lua_Debug ar;
-
-	UE_LOG(LogTemp, Log, TEXT("unlua_Debug StackNum [%d]"), lua_gettop(L));
-
-	if (lua_getstack(L, InNode.StackLevel, &ar) != 0)
-	{
-
-		int i = 1;
-		const char* VarName;
-		int32 KindType = -1;
-		while ((VarName = lua_getlocal(L, &ar, i)) != NULL)
-		{
-			// if get the self table
-			if (SelfName.Equals(UTF8_TO_TCHAR(VarName)))
-			{
-				KindType = lua_type(L, -1);
-				if (KindType == LUA_TTABLE)
-				{
-					lua_pushstring(L, "Object");
-					lua_rawget(L, -2);
-
-					if (lua_isuserdata(L, -1))
-					{
-						void* Userdata = lua_touserdata(L, -1);
-
-						UObject* UEObject = (UObject*)*((void**)Userdata);
-
-						if (UEObject)
-						{
-							UE_LOG(LogTemp, Log, TEXT("unlua_Debug UEObject name[%s]"), *UEObject->GetPathName());
-						}
-						else
-						{
-							UE_LOG(LogTemp, Log, TEXT("unlua_Debug UEObject NotFound"));
-						}
-
-						// get matetable form userdate
-						lua_getmetatable(L, -1);
-
-						lua_pushstring(L, "ClassDesc");
-						lua_rawget(L, -2);
-						KindType = lua_type(L, -1);
-
-						//makesure ClassDesc is lightuserdata
-						if (lua_islightuserdata(L, -1))
-						{
-							void* UserData = lua_touserdata(L, -1);
-							FClassDesc* ClassDesc = (FClassDesc*)UserData;
-
-							if (ClassDesc)
-							{
-								UE_LOG(LogTemp, Log, TEXT("unlua_Debug ClassDesc info [%s]"), *ClassDesc->GetName());
-							}
-							else
-							{
-								UE_LOG(LogTemp, Log, TEXT("unlua_Debug ClassDesc Not Found"));
-							}
-						}
-						else
-						{
-							UE_LOG(LogTemp, Log, TEXT("unlua_Debug ClassDesc Not LIGHTUSERDATA"));
-						}
-
-						lua_pop(L, 2);
-					}
-					else
-					{
-						UE_LOG(LogTemp, Log, TEXT("unlua_Debug self Object is NotUserData"));
-					}
-
-					lua_pop(L, 1);
-				}
-
-				lua_pop(L, 1);
-				break;
-			}
-
-
-
-			lua_pop(L, 1);
-			i++;
-		}
-	}
-}
-#endif
-
-
-// UEObjectListen get Object Info by FClassDesc
-#if 0
-void UScriptDebuggerSetting::UEObjectListen(FScriptDebuggerVarNode& InNode)
-{
-
-	if (UEObject && UEClassDesc && InNode.NameList.Num() > 0)
-	{
-		int NameIndex = 1;
-		FClassDesc* ClassDesc = UEClassDesc;
-		while (ClassDesc)
-		{
-			// check is last index
-			if (InNode.NameList.Num() == NameIndex)
-			{
-
-				if (NameIndex == 1)
-				{
-					FString PropertyValue;
-					FString PropertyType;
-					// get Property form UEObject, NameIndex mast be 1
-					for (TFieldIterator<UProperty> ProIt(UEObject->GetClass()); ProIt; ++ProIt)
-					{
-						UProperty* Property = *ProIt;
-
-						if (!InNode.NodeChildren.Contains(Property->GetNameCPP()))
-						{
-							if (PropertyTranslate(PropertyValue, PropertyType, Property))
-							{
-								FScriptDebuggerVarNode_Ref NewNode = MakeShareable(new FScriptDebuggerVarNode);
-								NewNode->NodeType = InNode.NodeType;
-								NewNode->StackLevel = InNode.StackLevel;
-								NewNode->VarName = FText::FromString(Property->GetNameCPP());
-								NewNode->VarValue = FText::FromString(PropertyValue);
-								NewNode->VarType = FText::FromString(PropertyType);
-
-								InNode.NodeChildren.Add(Property->GetNameCPP(), NewNode);
-							}
-						}
-					}
-
-#if 0
-
-					// get Function form UEObject, Name Index mast be 1
-					for (TFieldIterator<UFunction> FunIt(UEObject->GetClass()); FunIt; ++FunIt)
-					{
-						UFunction* Function = *FunIt;
-
-						if (!InNode.NodeChildren.Contains(Function->GetName()))
-						{
-							FScriptDebuggerVarNode_Ref NewNode = MakeShareable(new FScriptDebuggerVarNode);
-							NewNode->NodeType = InNode.NodeType;
-							NewNode->StackLevel = InNode.StackLevel;
-							NewNode->VarName = FText::FromString(Function->GetName());
-							NewNode->VarValue = FText::FromString(Function->GetFullName());
-
-							InNode.NodeChildren.Add(Function->GetName(), NewNode);
-						}
-					}
-
-#endif
-
-				}
-
-
-
-#if 0
-				//get property
-				int PropertyIndex = 0;
-				FPropertyDesc* PropertyDesc = ClassDesc->GetProperty(PropertyIndex);
-				FString PropertyValue;
-				while (PropertyDesc)
-				{
-					UProperty* Property = PropertyDesc->GetProperty();
-					if (!InNode.NodeChildren.Contains(Property->GetNameCPP()))
-					{
-						if (PropertyTranslate(PropertyValue, Property))
-						{
-							FScriptDebuggerVarNode_Ref NewNode = MakeShareable(new FScriptDebuggerVarNode);
-							NewNode->NodeType = InNode.NodeType;
-							NewNode->StackLevel = InNode.StackLevel;
-							NewNode->VarName = FText::FromString(Property->GetNameCPP());
-							NewNode->VarValue = FText::FromString(PropertyValue);
-
-							InNode.NodeChildren.Add(PropertyDesc->GetName(), NewNode);
-						}
-					}
-					PropertyDesc = ClassDesc->GetProperty(++PropertyIndex);
-				}
-
-
-				//get function
-				int FunctionIndex = 0;
-				FFunctionDesc* FunctionDesc = ClassDesc->GetFunction(FunctionIndex);
-				FString FunctionValue;
-				while (FunctionDesc)
-				{
-					UFunction* Function = FunctionDesc->GetFunction();
-					if (!InNode.NodeChildren.Contains(Function->GetName()))
-					{
-						FScriptDebuggerVarNode_Ref NewNode = MakeShareable(new FScriptDebuggerVarNode);
-						NewNode->NodeType = InNode.NodeType;
-						NewNode->StackLevel = InNode.StackLevel;
-						NewNode->VarName = FText::FromString(Function->GetName());
-
-						InNode.NodeChildren.Add(Function->GetName(), NewNode);
-					}
-					FunctionDesc = ClassDesc->GetFunction(++FunctionIndex);
-				}
-#endif
-
-
-				ClassDesc = ClassDesc->GetParent();
-				if (ClassDesc && !InNode.NodeChildren.Contains(ClassDesc->GetName()))
-				{
-					FScriptDebuggerVarNode_Ref UEObjectNode = MakeShareable(new FScriptDebuggerVarNode);
-					UEObjectNode->NodeType = EScriptVarNodeType::UEObject;
-					UEObjectNode->StackLevel = InNode.StackLevel;
-					UEObjectNode->NameList.Append(InNode.NameList);
-					UEObjectNode->NameList.Add(ClassDesc->GetName());
-					UEObjectNode->VarName = FText::FromString(ClassDesc->GetName());
-
-					InNode.NodeChildren.Add(ClassDesc->GetName(), UEObjectNode);
-				}
-				break;
-			}
-			else
-			{
-				//get the info form parent
-				ClassDesc = ClassDesc->GetParent();
-			}
-			NameIndex++;
-		}
-	}
-}
-#endif
-
-
+#undef UNLUA_DEBUG
 #undef UNFOLD_FUNCTION

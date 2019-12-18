@@ -24,9 +24,8 @@ UENUM()
 enum class EScriptUEKindType : uint8
 {
 	T_Single = 0, // Single do not have child
-	T_TArray,
-	T_TSet,
-	T_TMap,
+	T_TList,      // Not key->value
+	T_TDict,      // Has key->value
 	T_UObject,
 	T_AActor,
 	T_UEObject,
@@ -159,7 +158,6 @@ public:
 	static const FString SelfScalerName;
 	static const FString FVectorName;
 	static const FString FRotatorName;
-	static const FString FTransformName;
 
 	//transform type
 	static const FText SelfLocationText;

@@ -4,79 +4,61 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "UScriptDebuggerSetting.h"
 #include "VarNode.generated.h"
 
-class UVarNode;
+struct lua_State;
 
-struct FVarNode
+struct FVarWatcherNode
 {
-	UVarNode* UNode;
-	bool bNeedExpandNextUpdate;
-	FVarNode() :bNeedExpandNextUpdate(false) {};
-	void GetChild(TArray<TSharedRef<FVarNode>> &OutChildren);
-	FText GetName();
-	FText GetValue();
+	EScriptVarNodeType NodeType;
+
+	int32 KindType;
+
+	FText VarName;
+
+	FText VarValue;
+
+	FText VarType;
+
+	void* VarPtr;
+
+	TArray<FString> NameList;
+
+	TMap<FString, TSharedRef<FVarWatcherNode>> NodeChildren;
+
+	void GetChildren(TArray<TSharedRef<FVarWatcherNode>>& OutChildren);
 };
+
+using FVarWatcherNode_Ref = TSharedRef<FVarWatcherNode>;
+using SVarWatcherTree = STreeView<FVarWatcherNode_Ref>;
 
 UCLASS()
-class  UVarNode : public UObject
+class  UVarWatcherSetting : public UObject
 {
 	GENERATED_BODY()
+
 public:
-	UPROPERTY()
-		TArray<UVarNode*> Children;
 
-	UPROPERTY()
-		TArray<UVarNode*> KeyChildren;
-	
-	UPROPERTY()
-		bool HasExpand;
+	static UVarWatcherSetting* Get();
 
-	UPROPERTY()
-		int32 LuaIndex;
+	void RegisterLuaState(lua_State* State);
 
-	UPROPERTY()
-		FText Name;
+	void UnRegisterLuaState(bool bFullCleanup);
 
-	UPROPERTY()
-		FText Value;
+	void OnObjectBinded(UObjectBaseUtility* InObject);
 
-	UVarNode* Parent;
-	TSharedPtr<FVarNode> FNode;
+	void OnObjectUnbinded(UObjectBaseUtility* InObject);
 
-	UFUNCTION()
-	void Init(FText VarName, FText VarValue, int32 _LuaIndex)
-	{
-		Name = VarName;
-		Value = VarValue;
-		LuaIndex = _LuaIndex;
-		FNode = MakeShareable(new FVarNode);
-		FNode->UNode = this;
-		HasExpand = false;
-	}
-	
-	UFUNCTION()
-		void AddChild(UVarNode* Child, bool bIsKey = false);
-	UFUNCTION()
-		void Release();
-	UFUNCTION()
-		bool ConsumeNeedExpand();
-	UFUNCTION()
-		void AddToRootArr();
-	UFUNCTION()
-		bool HasChild();
-	void RemoveFromRoot();
-	void RemoveChild(UVarNode* Child);
-	void Refresh();
+	void Update(float DeltaTime);
 
-	UFUNCTION()
-		bool bIsExpanding();
+public:
 
-	UFUNCTION()
-		static bool NeedUpdate(UObject* GameInstance);
+	struct lua_State *L;
 
-	UFUNCTION()
-		static bool NeedShowFunction();
-	
-	static TSet<UObject*> HasUpdateState;
+	TArray<UObjectBaseUtility*> ObjectGroup;
+
+	TArray<TSharedRef<FVarWatcherNode>> VarTreeRoot;
+
 };
+
