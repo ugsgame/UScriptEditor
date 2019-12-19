@@ -55,7 +55,6 @@ void UVarWatcherSetting::OnObjectBinded(UObjectBaseUtility* InObject)
 {
 	ObjectGroup.Add(InObject);
 
-	
 }
 
 void UVarWatcherSetting::OnObjectUnbinded(UObjectBaseUtility* InObject)

@@ -23,6 +23,8 @@ UScriptDebuggerSetting* UScriptDebuggerSetting::Get()
 		FUnLuaDelegates::OnLuaStateCreated.AddUObject(Singleton, &UScriptDebuggerSetting::RegisterLuaState);
 
 		FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(Singleton, &UScriptDebuggerSetting::UnRegisterLuaState);
+
+		FUnLuaDelegates::OnObjectBinded.AddUObject(Singleton, &UScriptDebuggerSetting::OnObjectBinded);
 	}
 	return Singleton;
 }
@@ -215,6 +217,8 @@ const FString UScriptDebuggerSetting::FVectorName(TEXT("FVector"));
 
 const FString UScriptDebuggerSetting::FRotatorName(TEXT("FRotator"));
 
+const FString UScriptDebuggerSetting::ReturnValueName(TEXT("ReturnValue"));
+
 const FText UScriptDebuggerSetting::SelfLocationText = FText::FromString(SelfLocationName);
 
 const FText UScriptDebuggerSetting::SelfRotatorText = FText::FromString(SelfRotatorName);
@@ -258,6 +262,9 @@ void UScriptDebuggerSetting::RegisterLuaState(lua_State* State)
 #endif
 
 	hook_mode = EHookMode::Continue;
+
+	//empty ScriptPromptGroup
+	ScriptPromptGroup.Empty();
 }
 
 void UScriptDebuggerSetting::UnRegisterLuaState(bool bFullCleanup)
@@ -280,6 +287,28 @@ void UScriptDebuggerSetting::UnRegisterLuaState(bool bFullCleanup)
 		hook_mode = EHookMode::Continue;
 		L = NULL;
 	}
+
+	UE_LOG(LogTemp, Log, TEXT("Prompt UnRegisterLuaState"));
+
+	ScriptPromptArray.Empty();
+
+	for (TMap<FString, TMap<FString, FScriptPromptNode>>::TIterator It(ScriptPromptGroup); It; ++It)
+	{
+		/*for (TMap<FString, FScriptPromptNode>::TIterator Ih(It->Value); Ih; ++Ih)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Prompt key[%s] func[%s] value[%s]"), *It->Key, *Ih->Key , *Ih->Value.ToString());
+		}*/
+
+		TArray<FScriptPromptNode> TempArray;
+
+		It->Value.GenerateValueArray(TempArray);
+
+		ScriptPromptArray.Append(TempArray);
+	}
+
+	//for(auto Item : ScriptPromptArray)
+	//	UE_LOG(LogTemp, Log, TEXT("Prompt [%s]"), *Item.ToString());
+
 }
 
 bool UScriptDebuggerSetting::NameTranslate(int32 KindType, FString& VarName, int32 StackIndex)
@@ -1008,9 +1037,9 @@ void UScriptDebuggerSetting::UEObjectListen(FScriptDebuggerVarNode& InNode)
 
 					InNode.NodeChildren.Add(Function->GetName(), NewNode);
 				}
-		}
+			}
 #endif
-	}
+		}
 		break;
 	case (int32)EScriptUEKindType::T_UEObject:
 		if (InNode.VarPtr)
@@ -1117,9 +1146,9 @@ void UScriptDebuggerSetting::UEObjectListen(FScriptDebuggerVarNode& InNode)
 
 					InNode.NodeChildren.Add(Function->GetName(), NewNode);
 				}
-		}
+			}
 #endif
-}
+		}
 		break;
 	case (int32)EScriptUEKindType::T_ClassDesc:
 		if (InNode.VarPtr)
@@ -1186,12 +1215,100 @@ void UScriptDebuggerSetting::UEObjectListen(FScriptDebuggerVarNode& InNode)
 			}
 #endif
 
-			}
+		}
 		break;
 	case (int32)EScriptUEKindType::T_UFunction:
+
+		if (InNode.VarPtr)
+		{
+			UFunction* Function = (UFunction*)InNode.VarPtr;
+
+			//iter function var
+			for (TFieldIterator<UProperty> ProIt(Function); ProIt; ++ProIt)
+			{
+				UProperty* Property = *ProIt;
+
+				VarName = Property->GetNameCPP();
+				if (!VarName.Equals(ReturnValueName) && !InNode.NodeChildren.Contains(VarName))
+				{
+					FScriptDebuggerVarNode_Ref NewNode = MakeShareable(new FScriptDebuggerVarNode);
+					NewNode->NodeType = InNode.NodeType;
+					NewNode->KindType = (int32)EScriptUEKindType::T_Single;
+					NewNode->VarName = FText::FromString(VarName);
+					NewNode->VarType = FText::FromString(Property->GetCPPType());
+
+					InNode.NodeChildren.Add(Property->GetNameCPP(), NewNode);
+				}
+
+			}
+
+
+
+		}
 		break;
+	}
+}
+
+void UScriptDebuggerSetting::OnObjectBinded(UObjectBaseUtility* InObject)
+{
+	FString FuncPath;
+	FString FuncName;
+	FString ClassName;
+	FString TempStr;
+
+	for (TFieldIterator<UFunction> FunIt(InObject->GetClass()); FunIt; ++FunIt)
+	{
+		UFunction* Function = *FunIt;
+
+		Function->GetPathName().Split(":", &FuncPath, &FuncName);
+
+		if (ScriptPromptGroup.FindOrAdd(ClassName).Contains(FuncName))
+		{
+			continue;
 		}
+
+		FuncPath.Split(".", &TempStr, &ClassName);
+
+		FString ProName;
+		FString ProType;
+
+		FString CodeClip = FString::Printf(TEXT("%s("), *FuncName);
+		FString ToolTip = FString::Printf(TEXT("(*%s)("), *FuncName);
+
+		bool HasReturn = false;
+
+		//iter function var
+		for (TFieldIterator<UProperty> ProIt(Function); ProIt; ++ProIt)
+		{
+			UProperty* Property = *ProIt;
+
+			ProName = Property->GetNameCPP();
+			ProType = Property->GetCPPType();
+
+			if (!ProName.Equals(ReturnValueName))
+			{
+				CodeClip += FString::Printf(TEXT("%s, "), *ProName);
+				ToolTip += FString::Printf(TEXT("%s, "), *ProType);
+			}
+			else
+			{
+				ToolTip = FString::Printf(TEXT("%s%s"), *ProType, *ToolTip);
+				HasReturn = true;
+			}
 		}
+
+		CodeClip.RemoveFromEnd(TEXT(", "));
+		CodeClip += TEXT(")");
+
+		ToolTip.RemoveFromEnd(TEXT(", "));
+		ToolTip += TEXT(")");
+
+		if(!HasReturn)
+			ToolTip = FString::Printf(TEXT("void%s"), *ToolTip);
+
+		ScriptPromptGroup.FindOrAdd(ClassName).Add(FuncName, FScriptPromptNode(ClassName, FuncName, ToolTip, CodeClip));
+	}
+}
 
 void UScriptDebuggerSetting::EnterDebug(const FString& LuaFilePath, int32 Line)
 {
@@ -1469,7 +1586,7 @@ static void debugger_hook_c(lua_State *L, lua_Debug *ar)
 			hook_line_option(L);
 			break;
 		}
-	}
+}
 }
 
 #undef UNLUA_DEBUG

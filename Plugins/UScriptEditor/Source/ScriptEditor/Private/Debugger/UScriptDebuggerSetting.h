@@ -134,6 +134,34 @@ struct FScriptBreakPointNode
 		EBreakPointState State;
 };
 
+USTRUCT()
+struct FScriptPromptNode
+{
+	GENERATED_BODY()
+
+		FScriptPromptNode() {}
+
+		FScriptPromptNode(FString InCategory, FString InMenuDesc, FString InToolTip, FString InCodeClip) : Category(InCategory), MenuDesc(InMenuDesc), ToolTip(InToolTip), CodeClip(InCodeClip) {}
+
+	UPROPERTY()
+		FString Category;
+
+	UPROPERTY()
+		FString MenuDesc;
+
+	UPROPERTY()
+		FString ToolTip;
+
+	UPROPERTY()
+		FString CodeClip;
+
+	FString ToString()
+	{
+		return FString::Printf(TEXT("PromptNode Category[%s] MenuDesc[%s] ToolTip[%s] CodeClip[%s] "), *Category, *MenuDesc, *ToolTip, *CodeClip);
+	}
+
+};
+
 UCLASS(config = Editor)
 class  UScriptDebuggerSetting : public UObject
 {
@@ -158,6 +186,7 @@ public:
 	static const FString SelfScalerName;
 	static const FString FVectorName;
 	static const FString FRotatorName;
+	static const FString ReturnValueName;
 
 	//transform type
 	static const FText SelfLocationText;
@@ -184,14 +213,26 @@ public:
 	UPROPERTY(config)
 		TArray<FScriptBreakPointNode> RecentBreakPoint;
 
+	//UPROPERTY(config)
+	TMap<FString, TMap<FString, FScriptPromptNode>> ScriptPromptGroup;
+
+	TArray<FScriptPromptNode> ScriptPromptArray;
+
 	UPROPERTY()
 		FScriptBreakPointNode HittingPoint;
 
+	void OnObjectBinded(UObjectBaseUtility* InObject);
+
 	void RegisterLuaState(lua_State* State);
+
 	virtual void Continue();
+
 	virtual void StepOver();
+
 	virtual void StepIn();
+
 	virtual void StepOut();
+
 	void UnRegisterLuaState(bool bFullCleanup);
 
 	bool NameTranslate(int32 KindType, FString& VarName, int32 StackIndex);
