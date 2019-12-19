@@ -16,7 +16,7 @@
 #define  LOCTEXT_NAMESPACE "CodeEditableText"
 
 
-void SCodeEditableText::Construct( const FArguments& InArgs )
+void SCodeEditableText::Construct(const FArguments& InArgs)
 {
 	SMultiLineEditableText::Construct(
 		SMultiLineEditableText::FArguments()
@@ -30,7 +30,7 @@ void SCodeEditableText::Construct( const FArguments& InArgs )
 		.VScrollBar(InArgs._VScrollBar)
 		.OnTextChanged(InArgs._OnTextChanged)
 		.OnCursorMoved(this, &SCodeEditableText::OnCursorMoved)
-		.ContextMenuExtender(this,&SCodeEditableText::ContextMenuExtender)
+		.ContextMenuExtender(this, &SCodeEditableText::ContextMenuExtender)
 	);
 
 	ExtenderCommands = MakeShareable(new FUICommandList);
@@ -50,7 +50,7 @@ void SCodeEditableText::GoToLineColumn(int32 Line, int32 Column)
 	GoTo(Location);
 	ScrollTo(Location);
 
-	US_Log("Line:%d,Column:%d", Line ,Column);
+	US_Log("GoTo Line:%d,Column:%d", Line, Column);
 }
 
 
@@ -132,7 +132,7 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 	FReply Reply = FReply::Unhandled();
 
 	const TCHAR Character = InCharacterEvent.GetCharacter();
-	if(Character == TEXT('\t'))
+	if (Character == TEXT('\t'))
 	{
 		if (!IsTextReadOnly())
 		{
@@ -148,10 +148,32 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 	}
 	else
 	{
-		Reply = SMultiLineEditableText::OnKeyChar( MyGeometry, InCharacterEvent );
+		Reply = SMultiLineEditableText::OnKeyChar(MyGeometry, InCharacterEvent);
 	}
 
 	return Reply;
+}
+
+FReply SCodeEditableText::OnKeyDown(const FGeometry &Geometry, const FKeyEvent &KeyEvent)
+{
+	if (IsTextReadOnly()) { return FReply::Unhandled(); }
+	FKey Key = KeyEvent.GetKey();
+
+	if (Key == EKeys::Tab) {
+		FString Selected;
+		Selected.AppendChar(TEXT('\t'));
+		//
+		if (!GetSelectedText().IsEmpty()) {
+			Selected.Append(GetSelectedText().ToString());
+			Selected.ReplaceInline(TEXT("\n"), TEXT("\n\t"));
+			Selected.RemoveFromEnd(TEXT("\t"));
+			Selected.AppendChar(TEXT('\n'));
+			InsertTextAtCursor(Selected);
+		}///
+		//
+		return FReply::Handled();
+	}///
+	return SMultiLineEditableText::OnKeyDown(Geometry, KeyEvent);
 }
 
 FReply SCodeEditableText::OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)

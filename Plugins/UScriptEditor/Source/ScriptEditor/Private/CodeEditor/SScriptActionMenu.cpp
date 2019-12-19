@@ -427,6 +427,7 @@ void SScriptActionMenu::CollectAllActions(FGraphActionListBuilderBase& OutAllAct
 
 	if (UScriptActionCollecter::Get())
 	{
+		UScriptActionCollecter::Get()->Reflash();
 
 		for (TSharedPtr<FEdGraphSchemaAction> Action:UScriptActionCollecter::Get()->GetScriptActions())
 		{

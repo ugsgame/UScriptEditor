@@ -6,6 +6,8 @@
 #include "Developer/AssetTools/Public/IAssetTools.h"
 #include "Developer/AssetTools/Public/AssetToolsModule.h"
 
+
+
 class FExtender;
 class FScriptEditor;
 

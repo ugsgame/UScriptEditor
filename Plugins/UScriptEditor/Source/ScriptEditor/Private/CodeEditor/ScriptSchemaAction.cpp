@@ -1,4 +1,6 @@
 ﻿#include "ScriptSchemaAction.h"
+#include "UScriptDebuggerSetting.h"
+//#include "UnLua/Private/DefaultParamCollection.h"
 
 #define  LOCTEXT_NAMESPACE "ScriptActionCollecter"
 
@@ -76,9 +78,21 @@ void UScriptActionCollecter::CreateScriptActions()
 	ScriptActions.Empty();
 	ScriptActionList->Empty();
 
-	AddScriptAction(ConcatCategories("Test", "AA"), "TestFun1", "This is a TestFun1","");
-	AddScriptAction("Test2", "TestFun2", "This is a TestFun2","");
-	AddScriptAction("Test3", "TestFun3", "This is a TestFun3","");
+// 	//
+// 	for (auto& Klasses : GDefaultParamCollection)
+// 	{
+// 		FString ClassCategory(Klasses.Key.ToString());
+// 		for (auto& Funs : (Klasses.Value).Functions)
+// 		{
+// 			AddScriptAction(ClassCategory, Funs.Key.ToString(), "", "");
+// 		}
+// 	}
+// 	//
+
+	for (auto PromptNode:UScriptDebuggerSetting::Get()->ScriptPromptArray)
+	{
+		AddScriptAction(PromptNode.Category, PromptNode.MenuDesc, PromptNode.ToolTip, PromptNode.CodeClip);
+	}
 }
 
 void UScriptActionCollecter::CreateLuaActions()

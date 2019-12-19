@@ -139,9 +139,9 @@ struct FScriptPromptNode
 {
 	GENERATED_BODY()
 
-		FScriptPromptNode() {}
+	FScriptPromptNode() {}
 
-		FScriptPromptNode(FString InCategory, FString InMenuDesc, FString InToolTip, FString InCodeClip) : Category(InCategory), MenuDesc(InMenuDesc), ToolTip(InToolTip), CodeClip(InCodeClip) {}
+	FScriptPromptNode(FString InCategory, FString InMenuDesc, FString InToolTip, FString InCodeClip) : Category(InCategory), MenuDesc(InMenuDesc), ToolTip(InToolTip), CodeClip(InCodeClip) {}
 
 	UPROPERTY()
 		FString Category;

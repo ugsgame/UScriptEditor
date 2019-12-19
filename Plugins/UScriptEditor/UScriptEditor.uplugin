@@ -14,6 +14,7 @@
   "CanContainContent": false,
   "IsBetaVersion": true,
   "Installed": false,
+  "CanBeUsedWithUnrealHeaderTool": true,
   "Modules": [
     {
       "Name": "ScriptHelper",
@@ -24,6 +25,11 @@
       "Name": "ScriptEditor",
       "Type": "Editor",
       "LoadingPhase": "Default"
+    },
+    {
+      "Name": "ScriptParamCollector",
+      "Type": "Program",
+      "LoadingPhase": "PostConfigInit"
     }
   ],
   "Plugins": [
