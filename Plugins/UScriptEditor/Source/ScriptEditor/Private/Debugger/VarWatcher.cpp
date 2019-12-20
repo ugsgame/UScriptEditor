@@ -29,7 +29,7 @@ TSharedRef<ITableRow> SVarWatcher::HandleVarTreeGenerateRow(TSharedRef<FVarWatch
 
 void SVarWatcher::HandleVarTreeGetChildren(TSharedRef<FVarWatcherNode> InVarNode, TArray<TSharedRef<FVarWatcherNode>>& OutChildren)
 {
-
+	InVarNode->GetChildren(OutChildren);
 }
 
 
@@ -150,6 +150,12 @@ void SVarWatcher::Update(float Delta)
 	UVarWatcherSetting::Get()->Update(Delta);
 }
 
+
+void SVarWatcher::RefreshVarTree()
+{
+	if (VarTreePtr.IsValid())
+		VarTreePtr.Pin()->RequestListRefresh();
+}
 
 #undef LOCTEXT_NAMESPACE
 

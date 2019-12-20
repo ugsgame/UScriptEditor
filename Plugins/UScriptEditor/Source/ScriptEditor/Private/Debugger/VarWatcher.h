@@ -59,6 +59,9 @@ public:
 	virtual void ShutdownModule() ;
 	
 	void Update(float Delta);
+
+	void RefreshVarTree();
+
 private:
 
 	void OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);

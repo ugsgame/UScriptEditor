@@ -6,8 +6,10 @@
 #include "UnLua.h"
 #include "SScriptDebugger.h"
 #include "UEReflectionUtils.h"
+#include "LuaContext.h"
 #include "GameFramework/Actor.h"
 #include "ScriptEditor.h"
+
 
 
 
@@ -50,8 +52,6 @@ void FScriptDebuggerVarNode::GetChildren(TArray<TSharedRef<FScriptDebuggerVarNod
 
 
 /********Hook Debug Statement********/
-
-static const FString TempVarName("(*temporary)");
 
 struct unlua_State
 {
@@ -199,6 +199,8 @@ static unlua_out u_out;
 
 static EHookMode hook_mode = EHookMode::Continue;
 
+const FString UScriptDebuggerSetting::TempVarName(TEXT("(*temporary)"));
+
 const FString UScriptDebuggerSetting::SelfName(TEXT("self"));
 
 const FString UScriptDebuggerSetting::OverriddenName(TEXT("Overridden"));
@@ -288,7 +290,6 @@ void UScriptDebuggerSetting::UnRegisterLuaState(bool bFullCleanup)
 		L = NULL;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("Prompt UnRegisterLuaState"));
 
 	ScriptPromptArray.Empty();
 
@@ -306,8 +307,37 @@ void UScriptDebuggerSetting::UnRegisterLuaState(bool bFullCleanup)
 		ScriptPromptArray.Append(TempArray);
 	}
 
+#if 0
 	//for(auto Item : ScriptPromptArray)
 	//	UE_LOG(LogTemp, Log, TEXT("Prompt [%s]"), *Item.ToString());
+
+	FLuaContext* LuaContext = FLuaContext::Create();
+
+	TMap<FName, UnLua::IExportedClass*> ExportedReflectedClasses = LuaContext->GetExportedReflectedClasses();
+	TMap<FName, UnLua::IExportedClass*> ExportedNonReflectedClasses = LuaContext->GetExportedNonReflectedClasses();
+	TArray<UnLua::IExportedEnum*> ExportedEnums = LuaContext->GetExportedEnums();
+	TArray<UnLua::IExportedFunction*> ExportedFunctions = LuaContext->GetExportedFunctions();
+
+	for (TMap<FName, UnLua::IExportedClass*>::TIterator It(ExportedReflectedClasses); It; ++It)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Prompt ReClass [%s] [%s]"), *It->Key.ToString(), *It->Value->GetName().ToString());
+	}
+
+	for (TMap<FName, UnLua::IExportedClass*>::TIterator It(ExportedNonReflectedClasses); It; ++It)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Prompt NoReClass [%s] [%s]"), *It->Key.ToString(), *It->Value->GetName().ToString());
+	}
+
+	for (auto Item : ExportedEnums)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Prompt Enum [%s]"), *Item->GetName());
+	}
+
+	for (auto Item : ExportedFunctions)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Prompt Func [%s]"), *Item->GetName());
+	}
+#endif
 
 }
 
@@ -327,14 +357,15 @@ bool UScriptDebuggerSetting::NameTranslate(int32 KindType, FString& VarName, int
 
 void UScriptDebuggerSetting::ValueTranslate(int32 KindType, FString& VarValue, FString& VarType, int32 StackIndex)
 {
+	VarValue.Empty();
 	switch (KindType)
 	{
 	case LUA_TNONE:
-		VarValue = TEXT("LUA_TNONE");
+		//VarValue = TEXT("LUA_TNONE");
 		VarType = TEXT("LUA_TNONE");
 		break;
 	case LUA_TNIL:
-		VarValue = TEXT("LUA_TNIL");
+		//VarValue = TEXT("LUA_TNIL");
 		VarType = TEXT("LUA_TNIL");
 		break;
 	case LUA_TBOOLEAN:
@@ -354,7 +385,7 @@ void UScriptDebuggerSetting::ValueTranslate(int32 KindType, FString& VarValue, F
 		VarType = TEXT("LUA_TSTRING");
 		break;
 	case LUA_TTABLE:
-		VarValue = TEXT("LUA_TTABLE");
+		//VarValue = TEXT("LUA_TTABLE");
 		VarType = TEXT("LUA_TTABLE");
 		break;
 	case LUA_TFUNCTION:
@@ -366,11 +397,11 @@ void UScriptDebuggerSetting::ValueTranslate(int32 KindType, FString& VarValue, F
 		VarType = TEXT("LUA_TUSERDATA");
 		break;
 	case LUA_TTHREAD:
-		VarValue = TEXT("LUA_TTHREAD");
+		//VarValue = TEXT("LUA_TTHREAD");
 		VarType = TEXT("LUA_TTHREAD");
 		break;
 	case LUA_NUMTAGS:
-		VarValue = TEXT("LUA_NUMTAGS");
+		//VarValue = TEXT("LUA_NUMTAGS");
 		VarType = TEXT("LUA_NUMTAGS");
 		break;
 	}
@@ -1303,7 +1334,7 @@ void UScriptDebuggerSetting::OnObjectBinded(UObjectBaseUtility* InObject)
 		ToolTip.RemoveFromEnd(TEXT(", "));
 		ToolTip += TEXT(")");
 
-		if(!HasReturn)
+		if (!HasReturn)
 			ToolTip = FString::Printf(TEXT("void%s"), *ToolTip);
 
 		ScriptPromptGroup.FindOrAdd(ClassName).Add(FuncName, FScriptPromptNode(ClassName, FuncName, ToolTip, CodeClip));
@@ -1586,7 +1617,7 @@ static void debugger_hook_c(lua_State *L, lua_Debug *ar)
 			hook_line_option(L);
 			break;
 		}
-}
+	}
 }
 
 #undef UNLUA_DEBUG

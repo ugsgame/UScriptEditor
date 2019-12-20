@@ -175,6 +175,7 @@ public:
 
 	class FClassDesc* UEClassDesc;
 	UObject* UEObject;
+	static const FString TempVarName;
 	static const FString SelfName;
 	static const FString OverriddenName;
 	static const FText ClassDescText;
@@ -213,7 +214,6 @@ public:
 	UPROPERTY(config)
 		TArray<FScriptBreakPointNode> RecentBreakPoint;
 
-	//UPROPERTY(config)
 	TMap<FString, TMap<FString, FScriptPromptNode>> ScriptPromptGroup;
 
 	TArray<FScriptPromptNode> ScriptPromptArray;
