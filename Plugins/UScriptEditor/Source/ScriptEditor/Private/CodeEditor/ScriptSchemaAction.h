@@ -47,6 +47,8 @@ protected:
 	void CreateScriptActions();
 	void CreateLuaActions();
 
+	void AddActionByClass(UClass* Class);
+
 	void AddScriptAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString CodeClip);
 	void AddLuaAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString CodeClip);
 private:

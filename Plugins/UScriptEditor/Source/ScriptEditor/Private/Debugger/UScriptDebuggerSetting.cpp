@@ -282,7 +282,10 @@ void UScriptDebuggerSetting::UnRegisterLuaState(bool bFullCleanup)
 
 	lua_sethook(L, NULL, 0, 0);
 	// Clear Stack Info UseLess
-	SScriptDebugger::Get()->ClearStackInfo();
+	if (SScriptDebugger::Get())
+	{
+		SScriptDebugger::Get()->ClearStackInfo();
+	}
 
 	if (bFullCleanup)
 	{

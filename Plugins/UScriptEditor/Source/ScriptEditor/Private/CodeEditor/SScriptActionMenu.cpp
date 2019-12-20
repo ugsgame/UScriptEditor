@@ -28,6 +28,8 @@
 #include "SCodeEditableText.h"
 #include "ScriptEditorStyle.h"
 #include "ScriptSchemaAction.h"
+#include "BlueprintActionDatabase.h"
+#include "MetaData.h"
 
 #define LOCTEXT_NAMESPACE "SScriptActionMenu"
 
@@ -427,7 +429,7 @@ void SScriptActionMenu::CollectAllActions(FGraphActionListBuilderBase& OutAllAct
 
 	if (UScriptActionCollecter::Get())
 	{
-		UScriptActionCollecter::Get()->Reflash();
+		//UScriptActionCollecter::Get()->Reflash();
 
 		for (TSharedPtr<FEdGraphSchemaAction> Action:UScriptActionCollecter::Get()->GetScriptActions())
 		{
@@ -444,6 +446,7 @@ void SScriptActionMenu::CollectAllActions(FGraphActionListBuilderBase& OutAllAct
 		OutAllActions.Append(*UScriptActionCollecter::Get()->GetLuaActionList());
 		*/
 	}
+
 }
 
 void SScriptActionMenu::ConstructActionContext(FBlueprintActionContext& ContextDescOut)

@@ -29,7 +29,7 @@ public:
 
     virtual bool ShouldExportClassesForModule(const FString& ModuleName, EBuildModuleType::Type ModuleType, const FString& ModuleGeneratedIncludeDirectory) const override
     {
-        return ModuleType == EBuildModuleType::EngineRuntime || ModuleType == EBuildModuleType::GameRuntime || ModuleType == EBuildModuleType::GameDeveloper;    // only 'EngineRuntime' and 'GameRuntime' are valid
+        return ModuleType == EBuildModuleType::EngineRuntime /*|| ModuleType == EBuildModuleType::GameRuntime || ModuleType == EBuildModuleType::GameDeveloper*/;    // only 'EngineRuntime' and 'GameRuntime' are valid
     }
     
     virtual void Initialize(const FString& RootLocalPath, const FString& RootBuildPath, const FString& OutputDirectory, const FString& IncludeBase) override
@@ -63,8 +63,9 @@ public:
                 continue;
             }
 
+			PreAddProperty(Class, Function);
             // parameters
-            for (TFieldIterator<UProperty> It(Function); It /*&& (It->PropertyFlags & CPF_Parm)*/; ++It)
+            for (TFieldIterator<UProperty> It(Function); It && (It->PropertyFlags & CPF_Parm ); ++It)
             {
                 UProperty *Property = *It;
 
@@ -98,13 +99,12 @@ public:
                             float X = TCString<TCHAR>::Atof(*Values[0]);
                             float Y = TCString<TCHAR>::Atof(*Values[1]);
                             float Z = TCString<TCHAR>::Atof(*Values[2]);
-                            if (FVector::ZeroVector.Equals(FVector(X, Y, Z)))
-                            {
-                                continue;
-                            }
-                            PreAddProperty(Class, Function);
                             GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FVectorParamValue(FVector(%ff,%ff,%ff)));\r\n"), *Property->GetName(), X, Y, Z);
                         }
+						else
+						{
+							GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FVectorParamValue(FVector(%ff,%ff,%ff)));\r\n"), *Property->GetName(), 0.f, 0.f, 0.f);
+						}
                     }
                     else if (StructProperty->Struct == RotatorStruct)               // FRotator
                     {
@@ -115,23 +115,17 @@ public:
                             float Pitch = TCString<TCHAR>::Atof(*Values[0]);
                             float Yaw = TCString<TCHAR>::Atof(*Values[1]);
                             float Roll = TCString<TCHAR>::Atof(*Values[2]);
-                            if (FRotator::ZeroRotator.Equals(FRotator(Pitch, Yaw, Roll)))
-                            {
-                                continue;
-                            }
-                            PreAddProperty(Class, Function);
                             GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FRotatorParamValue(FRotator(%ff,%ff,%ff)));\r\n"), *Property->GetName(), Pitch, Yaw, Roll);
                         }
+						else
+						{
+							GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FRotatorParamValue(FRotator(%ff,%ff,%ff)));\r\n"), *Property->GetName(), 0.f, 0.f, 0.f);
+						}
                     }
                     else if (StructProperty->Struct == Vector2DStruct)              // FVector2D
                     {
                         FVector2D Value;
                         Value.InitFromString(ValueStr);
-                        if (FVector2D::ZeroVector.Equals(Value))
-                        {
-                            continue;
-                        }
-                        PreAddProperty(Class, Function);
                         GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FVector2DParamValue(FVector2D(%ff,%ff)));\r\n"), *Property->GetName(), Value.X, Value.Y);
                     }
                     else if (StructProperty->Struct == LinearColorStruct)           // FLinearColor
@@ -139,11 +133,6 @@ public:
                         static FLinearColor ZeroLinearColor(ForceInit);
                         FLinearColor Value;
                         Value.InitFromString(ValueStr);
-                        if (ZeroLinearColor.Equals(Value))
-                        {
-                            continue;
-                        }
-                        PreAddProperty(Class, Function);
                         GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FLinearColorParamValue(FLinearColor(%ff,%ff,%ff,%ff)));\r\n"), *Property->GetName(), Value.R, Value.G, Value.B, Value.A);
                     }
                     else if (StructProperty->Struct == ColorStruct)                 // FColor
@@ -151,11 +140,6 @@ public:
                         static FColor ZeroColor(ForceInit);
                         FColor Value;
                         Value.InitFromString(ValueStr);
-                        if (ZeroColor == Value)
-                        {
-                            continue;
-                        }
-                        PreAddProperty(Class, Function);
                         GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FColorParamValue(FColor(%d,%d,%d,%d)));\r\n"), *Property->GetName(), Value.R, Value.G, Value.B, Value.A);
                     }
                 }
@@ -164,79 +148,42 @@ public:
                     if (Property->IsA(UIntProperty::StaticClass()))                 // int
                     {
                         int32 Value = TCString<TCHAR>::Atoi(*ValueStr);
-                        if (Value == 0)
-                        {
-                            continue;
-                        }
-                        PreAddProperty(Class, Function);
                         GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FIntParamValue(%d));\r\n"), *Property->GetName(), Value);
                     }
                     else if (Property->IsA(UByteProperty::StaticClass()))           // byte
                     {
                         const UEnum *Enum = CastChecked<UByteProperty>(Property)->Enum;
                         int32 Value = Enum ? (int32)Enum->GetValueByNameString(ValueStr) : TCString<TCHAR>::Atoi(*ValueStr);
-                        //check(Value >= 0 && Value <= 255);
-                        if (Value == 0)
-                        {
-                            continue;
-                        }
-                        PreAddProperty(Class, Function);
                         GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FByteParamValue(%d));\r\n"), *Property->GetName(), Value);
                     }
                     else if (Property->IsA(UEnumProperty::StaticClass()))           // enum
                     {
                         const UEnum *Enum = CastChecked<UEnumProperty>(Property)->GetEnum();
                         int64 Value = Enum ? Enum->GetValueByNameString(ValueStr) : TCString<TCHAR>::Atoi64(*ValueStr);
-                        if (Value == 0)
-                        {
-                            continue;
-                        }
-                        PreAddProperty(Class, Function);
                         GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FEnumParamValue(%ld));\r\n"), *Property->GetName(), Value);
                     }
                     else if (Property->IsA(UFloatProperty::StaticClass()))          // float
                     {
                         float Value = TCString<TCHAR>::Atof(*ValueStr);
-                        if (FMath::IsNearlyZero(Value))
-                        {
-                            continue;
-                        }
-                        PreAddProperty(Class, Function);
                         GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FFloatParamValue(%ff));\r\n"), *Property->GetName(), Value);
                     }
                     else if (Property->IsA(UDoubleProperty::StaticClass()))         // double
                     {
                         double Value = TCString<TCHAR>::Atod(*ValueStr);
-                        if (FMath::IsNearlyZero(Value))
-                        {
-                            continue;
-                        }
-                        PreAddProperty(Class, Function);
                         GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FDoubleParamValue(%lf));\r\n"), *Property->GetName(), Value);
                     }
                     else if (Property->IsA(UBoolProperty::StaticClass()))           // boolean
                     {
                         static FString FalseValue(TEXT("false"));
-                        if (ValueStr == FalseValue)
-                        {
-                            continue;
-                        }
-                        PreAddProperty(Class, Function);
                         GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FBoolParamValue(true));\r\n"), *Property->GetName());
                     }
                     else if (Property->IsA(UNameProperty::StaticClass()))           // FName
                     {
                         static FString NoneValue(TEXT("None"));
-                        if (ValueStr == NoneValue)
-                        {
-                            continue;
-                        }
-                        PreAddProperty(Class, Function);
                         GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FNameParamValue(FName(\"%s\")));\r\n"), *Property->GetName(), *ValueStr);
                     }
                     else if (Property->IsA(UTextProperty::StaticClass()))           // FText
                     {
-                        PreAddProperty(Class, Function);
 #if ENGINE_MINOR_VERSION > 20
                         if (ValueStr.StartsWith(TEXT("INVTEXT(\"")))
                         {
@@ -250,12 +197,20 @@ public:
                     }
                     else if (Property->IsA(UStrProperty::StaticClass()))            // FString
                     {
-                        PreAddProperty(Class, Function);
                         GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FStringParamValue(TEXT(\"%s\")));\r\n"), *Property->GetName(), *ValueStr);
                     }
+					else if (Property->IsA(UArrayProperty::StaticClass()))
+					{
+						GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FTArrayParamValue(TEXT(\"%s(TArrayType)\")));\r\n"), *Property->GetName(), *ValueStr);
+					}
+					else if (Property->IsA(UObjectProperty::StaticClass()))
+					{
+						GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FUObjectParamValue(TEXT(\"%s(UObjectType)\")));\r\n"), *Property->GetName(), *ValueStr);
+					}
                     else
                     {
-                        continue;
+                        //continue;
+						GeneratedFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FUnknowParamValue(TEXT(\"%s(UnknowType)\")));\r\n"), *Property->GetName(), *ValueStr);
                     }
                 }
             }
@@ -300,7 +255,42 @@ private:
             CurrentFunctionName = Function->GetName();
             GeneratedFileContent += FString::Printf(TEXT("PC = &FC->Functions.Add(TEXT(\"%s\"));\r\n"), *CurrentFunctionName);
         }
-    }
+
+		FString ClassName = FString::Printf(TEXT("%s%s"), Class->GetPrefixCPP(), *Class->GetName());
+		// filter out functions without meta data
+		TMap<FName, FString> *MetaMap = UMetaData::GetMapForObject(Function);
+		if (MetaMap)
+		{
+			//////////////////////////////////////////////////////////////////////////
+			FString *CategoryPtr = MetaMap->Find("Category");
+			if (!CategoryPtr)
+			{
+				CategoryPtr = new FString("");
+				CategoryPtr->Append(ClassName);
+			}
+
+			FString CategoryStr = FString(*CategoryPtr);
+			GeneratedFileContent += FString::Printf(TEXT("PC->Category = TEXT(\"%s\");\r\n"), *CategoryStr);
+			//////////////////////////////////////////////////////////////////////////
+
+			//////////////////////////////////////////////////////////////////////////		                                                          
+			FString *ToolTipPtr = MetaMap->Find("ToolTip");
+			if (!ToolTipPtr)
+			{
+				ToolTipPtr = new FString("");
+			}
+			FString ToolTipStr = FString(*ToolTipPtr);
+			ToolTipStr = ToolTipStr.Replace(TEXT("\\"), TEXT("\\\\"));
+			ToolTipStr = ToolTipStr.Replace(TEXT("\n"), TEXT("\\n \\\n\t"));
+			ToolTipStr = ToolTipStr.Replace(TEXT("\""), TEXT("\\\""));
+
+			//ToolTipStr = ToolTipStr.Replace(TEXT("\c"), TEXT("c"));
+
+			GeneratedFileContent += FString::Printf(TEXT("PC->ToolTip = TEXT(\"%s\");\r\n"), *ToolTipStr);
+			//////////////////////////////////////////////////////////////////////////
+
+		}
+	}
 
     FString OutputDir;
     FString CurrentClassName;

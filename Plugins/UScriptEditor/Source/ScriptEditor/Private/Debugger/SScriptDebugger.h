@@ -89,7 +89,7 @@ public:
 	void Construct(const FArguments& InArgs);
 public:
 	static SScriptDebugger* Ptr;
-	static SScriptDebugger* Get() { return Ptr; }
+	static SScriptDebugger* Get() {return Ptr;}
 
 	FDateTime ModifyTimeOfNowFile;
 	EStackListState StackListState;
