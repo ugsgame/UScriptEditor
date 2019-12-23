@@ -36,6 +36,8 @@ namespace UnrealBuildTool.Rules
 				{
 					"Core",
 					"CoreUObject",
+                    "Sockets",
+                    "Networking",
 					"SlateCore",
 					"Slate",
 					"AssetTools",
