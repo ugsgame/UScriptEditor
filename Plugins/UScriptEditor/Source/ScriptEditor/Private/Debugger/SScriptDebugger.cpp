@@ -471,6 +471,12 @@ void SScriptDebugger::DebugTabClose(TSharedRef<SDockTab> DockTab)
 {
 	UScriptDebuggerSetting::Get()->SetTabIsOpen(false);
 
+	if (IsEnterDebugMode)
+	{
+		FSlateApplication::Get().LeaveDebuggingMode();
+		IsEnterDebugMode = false;
+	}
+
 	FSlateApplication::Get().UnregisterInputPreProcessor(ptr_HandleKeyDown);
 	SaveDebuggerConfig();
 	NowLuaCodeFilePath = "";

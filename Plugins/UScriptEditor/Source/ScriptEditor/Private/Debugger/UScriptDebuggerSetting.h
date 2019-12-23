@@ -196,6 +196,9 @@ public:
 	static const FText FVectorText;
 	static const FText FRotatorText;
 
+	FDelegateHandle RegLuaHandle;
+	FDelegateHandle UnRegLuaHandle;
+
 public:
 
 	UScriptDebuggerSetting() :L(nullptr) {}

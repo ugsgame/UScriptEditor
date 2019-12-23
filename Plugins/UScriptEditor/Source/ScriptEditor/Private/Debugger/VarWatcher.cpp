@@ -63,6 +63,8 @@ void SVarWatcher::ShutdownModule()
 
 void SVarWatcher::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
+	UVarWatcherSetting::Get()->SetTapIsOpen(true);
+
 	bNeedTickTreeView = true;
 	bShowFunction = false;
 
@@ -155,6 +157,11 @@ void SVarWatcher::RefreshVarTree()
 {
 	if (VarTreePtr.IsValid())
 		VarTreePtr.Pin()->RequestListRefresh();
+}
+
+void SVarWatcher::WatcherTabClose(TSharedRef<SDockTab> DockTab)
+{
+	UVarWatcherSetting::Get()->SetTapIsOpen(false);
 }
 
 #undef LOCTEXT_NAMESPACE
