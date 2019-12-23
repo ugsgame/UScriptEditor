@@ -29,6 +29,7 @@
 #include "SScriptEditorLog.h"
 #include "ScriptEditorSetting.h"
 #include "LuaWrapper/LuaScript.h"
+#include "ScriptParamCollection.h"
 
 #define LOCTEXT_NAMESPACE "ScriptEditorModule"
 
@@ -98,9 +99,13 @@ void FScriptEditorModule::StartupModule()
 	AssetRegistryModule.Get().OnFilesLoaded().AddRaw(this, &FScriptEditorModule::OnClearInvalidScriptAssets);
 
 	FCoreDelegates::OnPreExit.AddRaw(this, &FScriptEditorModule::BeforeExit);
+
 	//
 	IsCheckScriptAssetsOver = false;
 	IsEditorOpen = false;
+
+	//
+	CreateDefaultParamCollection();
 }
 
 void FScriptEditorModule::ShutdownModule()

@@ -5,9 +5,26 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Engine/BlueprintGeneratedClass.h"
 #include "KismetEditorUtilities.h"
-//#include "UnLua/Private/DefaultParamCollection.h"
+#include "ScriptParamCollection.h"
 
 #define  LOCTEXT_NAMESPACE "ScriptActionCollecter"
+
+USTRUCT()
+struct FParameterData
+{
+	bool IsDefaultValve;
+	FString ParamName;
+	IParamValue* ParamValue;
+	FString ValueString;
+
+	FParameterData(bool IsDefaul, FString InParamName, IParamValue* InParamValue, FString InValueString)
+		: IsDefaultValve(IsDefaul)
+		, ParamName(InParamName)
+		, ParamValue(InParamValue)
+		, ValueString(InValueString)
+	{}
+};
+
 
 static FString ConcatCategories(FString RootCategory, FString const& SubCategory)
 {
@@ -56,6 +73,280 @@ void UScriptActionCollecter::AddLuaAction(FString InNodeCategory, FString InMenu
 	LuaActions.Add(NewAction);
 
 	LuaActionList->AddAction(NewAction);
+}
+
+FString UScriptActionCollecter::GetAPICodeClip(UClass *Class, UFunction *Function,bool WithNote) const
+{
+	FString FullClassName = FString::Printf(TEXT("%s%s"), Class->GetPrefixCPP(), *Class->GetName());
+	FString FunctionName = Function->GetName();
+
+	TMap<FName, FString> *MetaMap = UMetaData::GetMapForObject(Function);
+	if (!MetaMap)
+	{
+		return "";
+	}
+
+	bool bIsStatic = Function->HasAllFunctionFlags(FUNC_Static);
+	TArray<FParameterData> Parameters;
+
+	for (TFieldIterator<UProperty> It(Function); It && (It->PropertyFlags & CPF_Parm); ++It)
+	{
+		UProperty *Property = *It;
+		bool IsDefaultValve = true;
+
+		// filter out properties without default value
+		FName KeyName = FName(*FString::Printf(TEXT("CPP_Default_%s"), *Property->GetName()));
+		FString *ValuePtr = MetaMap->Find(KeyName);
+		if (!ValuePtr)
+		{
+			//continue;
+			ValuePtr = new FString("");
+			IsDefaultValve = false;
+		}
+
+		const FString &ValueStr = *ValuePtr;
+		if (Property->IsA(UStructProperty::StaticClass()))
+		{
+			// get all possible script structs
+			UPackage* CoreUObjectPackage = UObject::StaticClass()->GetOutermost();
+			static const UScriptStruct* VectorStruct = FindObjectChecked<UScriptStruct>(CoreUObjectPackage, TEXT("Vector"));
+			static const UScriptStruct* Vector2DStruct = FindObjectChecked<UScriptStruct>(CoreUObjectPackage, TEXT("Vector2D"));
+			static const UScriptStruct* RotatorStruct = FindObjectChecked<UScriptStruct>(CoreUObjectPackage, TEXT("Rotator"));
+			static const UScriptStruct* LinearColorStruct = FindObjectChecked<UScriptStruct>(CoreUObjectPackage, TEXT("LinearColor"));
+			static const UScriptStruct* ColorStruct = FindObjectChecked<UScriptStruct>(CoreUObjectPackage, TEXT("Color"));
+
+			const UStructProperty *StructProperty = CastChecked<UStructProperty>(Property);
+			if (StructProperty->Struct == VectorStruct)                     // FVector
+			{
+				TArray<FString> Values;
+				ValueStr.ParseIntoArray(Values, TEXT(","));
+				if (Values.Num() == 3)
+				{
+					float X = TCString<TCHAR>::Atof(*Values[0]);
+					float Y = TCString<TCHAR>::Atof(*Values[1]);
+					float Z = TCString<TCHAR>::Atof(*Values[2]);
+					Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FVectorParamValue(FVector(X, Y, Z), EScriptParamType::Vector), ValueStr));
+				}
+				else
+				{
+					Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FVectorParamValue(FVector(), EScriptParamType::Vector), ValueStr));
+				}
+			}
+			else if (StructProperty->Struct == RotatorStruct)               // FRotator
+			{
+				TArray<FString> Values;
+				ValueStr.ParseIntoArray(Values, TEXT(","));
+				if (Values.Num() == 3)
+				{
+					float Pitch = TCString<TCHAR>::Atof(*Values[0]);
+					float Yaw = TCString<TCHAR>::Atof(*Values[1]);
+					float Roll = TCString<TCHAR>::Atof(*Values[2]);
+					Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FRotatorParamValue(FRotator(Pitch, Yaw, Roll), EScriptParamType::Rotator), ValueStr));
+				}
+				else
+				{
+					Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FRotatorParamValue(FRotator(0, 0, 0), EScriptParamType::Rotator), ValueStr));
+				}
+			}
+			else if (StructProperty->Struct == Vector2DStruct)              // FVector2D
+			{
+				FVector2D Value;
+				Value.InitFromString(ValueStr);
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FVector2DParamValue(Value, EScriptParamType::Vector2D), ValueStr));
+			}
+			else if (StructProperty->Struct == LinearColorStruct)           // FLinearColor
+			{
+				static FLinearColor ZeroLinearColor(ForceInit);
+				FLinearColor Value;
+				Value.InitFromString(ValueStr);
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FLinearColorParamValue(Value, EScriptParamType::LinearColor), ValueStr));
+			}
+			else if (StructProperty->Struct == ColorStruct)                 // FColor
+			{
+				static FColor ZeroColor(ForceInit);
+				FColor Value;
+				Value.InitFromString(ValueStr);
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FColorParamValue(Value, EScriptParamType::Color), ValueStr));
+			}
+		}
+		else
+		{
+			if (Property->IsA(UIntProperty::StaticClass()))                 // int
+			{
+				int32 Value = TCString<TCHAR>::Atoi(*ValueStr);
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FIntParamValue(Value, EScriptParamType::Int), ValueStr));
+			}
+			else if (Property->IsA(UByteProperty::StaticClass()))           // byte
+			{
+				const UEnum *Enum = CastChecked<UByteProperty>(Property)->Enum;
+				int32 Value = Enum ? (int32)Enum->GetValueByNameString(ValueStr) : TCString<TCHAR>::Atoi(*ValueStr);
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FByteParamValue(Value, EScriptParamType::Byte), ValueStr));
+			}
+			else if (Property->IsA(UEnumProperty::StaticClass()))           // enum
+			{
+				const UEnum *Enum = CastChecked<UEnumProperty>(Property)->GetEnum();
+				int64 Value = Enum ? Enum->GetValueByNameString(ValueStr) : TCString<TCHAR>::Atoi64(*ValueStr);
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FEnumParamValue(Value, EScriptParamType::Enum), ValueStr));
+			}
+			else if (Property->IsA(UFloatProperty::StaticClass()))          // float
+			{
+				float Value = TCString<TCHAR>::Atof(*ValueStr);
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FFloatParamValue(Value, EScriptParamType::Float), ValueStr));
+			}
+			else if (Property->IsA(UDoubleProperty::StaticClass()))         // double
+			{
+				double Value = TCString<TCHAR>::Atod(*ValueStr);
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FDoubleParamValue(Value, EScriptParamType::Double), ValueStr));
+			}
+			else if (Property->IsA(UBoolProperty::StaticClass()))           // boolean
+			{
+				static FString FalseValue(TEXT("false"));
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FBoolParamValue(true, EScriptParamType::Bool), ValueStr));
+			}
+			else if (Property->IsA(UNameProperty::StaticClass()))           // FName
+			{
+				static FString NoneValue(TEXT("None"));
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FNameParamValue(*ValueStr, EScriptParamType::Name), ValueStr));
+			}
+			else if (Property->IsA(UTextProperty::StaticClass()))           // FText
+			{
+#if ENGINE_MINOR_VERSION > 20
+				if (ValueStr.StartsWith(TEXT("INVTEXT(\"")))
+				{
+					Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FTextParamValue(FText::FromString(*ValueStr), EScriptParamType::Text), ValueStr));
+				}
+				else
+#endif
+				{
+					Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FTextParamValue(FText::FromString(*ValueStr), EScriptParamType::Text), ValueStr));
+				}
+			}
+			else if (Property->IsA(UStrProperty::StaticClass()))            // FString
+			{
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FStringParamValue(*ValueStr, EScriptParamType::String), ValueStr));
+			}
+			else if (Property->IsA(UArrayProperty::StaticClass()))			// UArray
+			{
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FTArrayParamValue(*ValueStr, EScriptParamType::Array), ValueStr));
+			}
+			else if (Property->IsA(UObjectProperty::StaticClass()))			// UObject
+			{
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FUObjectParamValue(*ValueStr, EScriptParamType::Object), ValueStr));
+			}
+			else
+			{
+				//continue;
+				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FUnknowParamValue(*ValueStr, EScriptParamType::Unknow), ValueStr));
+			}
+		}
+	}
+
+
+	FString ParameterListString;
+	FString ParameterNotesString;
+
+	for (int32 i = 0; i < Parameters.Num(); i++)
+	{
+		FString StringType = "UnKnow";
+		if (Parameters[i].ParamName != "ReturnValue")
+		{		
+			switch (Parameters[i].ParamValue->GetType())
+			{
+			case EScriptParamType::Bool:
+				StringType = "Bool";
+				ParameterListString += "true";
+				break;
+			case EScriptParamType::Byte:
+				StringType = "Byte";
+				ParameterListString += Parameters[i].ValueString;
+				
+				break;
+			case EScriptParamType::Int:
+				StringType = "Int";
+				ParameterListString += Parameters[i].ValueString;
+				
+				break;
+			case EScriptParamType::Enum:
+				StringType = "Enum";
+				ParameterListString += Parameters[i].ValueString;
+				
+				break;
+			case EScriptParamType::Float:
+				StringType = "Float";
+				ParameterListString += Parameters[i].ValueString;
+				
+				break;
+			case EScriptParamType::Double:
+				StringType = "Double";
+				ParameterListString += Parameters[i].ValueString;
+				break;
+			case EScriptParamType::Name:
+				StringType = "Name";
+				ParameterListString += Parameters[i].ValueString;			
+				break;
+			case EScriptParamType::Text:
+				StringType = "Text";
+				ParameterListString += Parameters[i].ValueString;			
+				break;
+			case EScriptParamType::String:
+				StringType = "String";
+				ParameterListString += FString::Printf(TEXT("\"%s\""), *Parameters[i].ValueString);
+				break;
+			case EScriptParamType::Vector:
+				StringType = "Vector";
+				ParameterListString += FString::Printf(TEXT("FVector(%s)"), *Parameters[i].ValueString);				
+				break;
+			case EScriptParamType::Vector2D:
+				StringType = "FVector2D";
+				ParameterListString += FString::Printf(TEXT("FVector2D(%s)"), *Parameters[i].ValueString);			
+				break;
+			case EScriptParamType::Rotator:
+				StringType = "Rotator";
+				ParameterListString += FString::Printf(TEXT("FRotator(%s)"), *Parameters[i].ValueString);
+				break;
+			case EScriptParamType::LinearColor:
+				StringType = "LinearColor";
+				ParameterListString += FString::Printf(TEXT("FLinearColor(%s)"), *Parameters[i].ValueString);				
+				break;
+			case EScriptParamType::Color:
+				StringType = "Color";
+				ParameterListString += FString::Printf(TEXT("FColor(%s)"), *Parameters[i].ValueString);			
+				break;
+			case EScriptParamType::Array:
+				StringType = "Array";
+				ParameterListString += FString::Printf(TEXT("[TArray]"));
+				break;
+			case EScriptParamType::Object:
+				StringType = "Object";
+				ParameterListString += FString::Printf(TEXT("[UObject]"));
+				break;
+			default:
+				StringType = "Unknow";
+				ParameterListString += FString::Printf(TEXT("[Unknow]"));
+				break;
+			}
+			ParameterListString += ",";
+		}
+
+		ParameterNotesString += FString::Printf(TEXT("%s(%s)"), *Parameters[i].ParamName, *StringType);
+		ParameterNotesString += ",";
+		
+	}
+	ParameterListString.RemoveFromStart(",");
+	ParameterNotesString.RemoveFromStart(",");
+	ParameterListString.RemoveFromEnd(",");
+	ParameterNotesString.RemoveFromEnd(",");
+
+	ParameterNotesString = "-[[" + ParameterNotesString + "--]]";
+	ParameterNotesString = WithNote ? ParameterNotesString : "";
+	if (bIsStatic)
+	{
+		return FString::Printf(TEXT("UE4.%s.%s(%s)%s"),*FullClassName, *FunctionName, *ParameterListString, *ParameterNotesString);
+	}
+	else
+	{
+		return FString::Printf(TEXT("%s:%s(%s)%s"),*FullClassName, *FunctionName, *ParameterListString, *ParameterNotesString);
+	}
 }
 
 TArray<TSharedPtr<FEdGraphSchemaAction>> UScriptActionCollecter::GetScriptActions()
@@ -206,47 +497,55 @@ void UScriptActionCollecter::CreateLuaActions()
 	AddLuaAction(ConcatCategories(LuaCategory, "Table"), "table.maxn", "", "table.maxn(table)");
 }
 
-void UScriptActionCollecter::AddActionByClass(UClass* InClass)
+void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByClass)
 {
 	UClass* Class = InClass;
 	FString ClassName = *Class->GetName();
 
+	FString FullClassName = FString::Printf(TEXT("%s%s"), Class->GetPrefixCPP(), *ClassName);
 
-	for (TFieldIterator<UFunction> FuncIt(Class, EFieldIteratorFlags::ExcludeSuper, EFieldIteratorFlags::ExcludeDeprecated); FuncIt; ++FuncIt)
+	for (FString DefaultClass : GDefaultClassCollection)
 	{
-
-		UFunction *Function = *FuncIt;
-		TMap<FName, FString> *MetaMap = UMetaData::GetMapForObject(Function);
-		if (!MetaMap)
+		if (DefaultClass == FullClassName)
 		{
-			continue;
+			for (TFieldIterator<UFunction> FuncIt(Class, EFieldIteratorFlags::ExcludeSuper, EFieldIteratorFlags::ExcludeDeprecated); FuncIt; ++FuncIt)
+			{
+
+				UFunction *Function = *FuncIt;
+				TMap<FName, FString> *MetaMap = UMetaData::GetMapForObject(Function);
+				if (!MetaMap)
+				{
+					continue;
+				}
+
+				//US_Log("Function:%s", *Function->GetName());
+				FString FunctionName = *Function->GetName();
+
+				FString *CategoryPtr = MetaMap->Find("Category");
+				if (!CategoryPtr)
+				{
+					CategoryPtr = new FString("");
+					//US_Log("Category:%s", *CategoryStr);
+					CategoryPtr->Append(ClassName);
+				}
+
+				FString CategoryStr = FString(*CategoryPtr);
+
+				FString *ToolTipPtr = MetaMap->Find("ToolTip");
+				if (!ToolTipPtr)
+				{
+					ToolTipPtr = new FString(FunctionName);
+				}
+				FString ToolTipStr = FString(*ToolTipPtr);
+				ToolTipStr += FString::Printf(TEXT("\n\nTarget is %s"), *FullClassName);
+
+				FString CodeClip = GetAPICodeClip(Class, Function);
+
+				CategoryStr = CategoryByClass ? ConcatCategories(ClassName, CategoryStr) : CategoryStr;
+				AddScriptAction(CategoryStr, FunctionName, ToolTipStr, CodeClip);
+			}
 		}
-
-		//US_Log("Function:%s", *Function->GetName());
-		FString FunctionName = *Function->GetName();
-
-		FString *CategoryPtr = MetaMap->Find("Category");
-		if (!CategoryPtr)
-		{
-			CategoryPtr = new FString("");
-			//US_Log("Category:%s", *CategoryStr);
-			//CategoryPtr->Append(ClassName);
-		}
-
-		FString CategoryStr = FString(*CategoryPtr);
-
-		FString *ToolTipPtr = MetaMap->Find("ToolTip");
-		if (!ToolTipPtr)
-		{
-			ToolTipPtr = new FString(FunctionName);
-		}
-		FString ToolTipStr = FString(*ToolTipPtr);
-
-		FString CodeClip = "";
-
-		AddScriptAction(ConcatCategories(ClassName, CategoryStr), FunctionName, ToolTipStr, CodeClip);
 	}
-
 }
 
 #undef LOCTEXT_NAMESPACE

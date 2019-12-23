@@ -47,10 +47,12 @@ protected:
 	void CreateScriptActions();
 	void CreateLuaActions();
 
-	void AddActionByClass(UClass* Class);
+	void AddActionByClass(UClass* Class,bool CategoryByClass = false);
 
 	void AddScriptAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString CodeClip);
 	void AddLuaAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString CodeClip);
+	
+	FString GetAPICodeClip(UClass *Class, UFunction *Function,bool WithNote = false)const;
 private:
 
 	TArray<TSharedPtr<FEdGraphSchemaAction>> ScriptActions;
