@@ -51,20 +51,47 @@ UVarWatcherSetting* UVarWatcherSetting::Get()
 		Singleton = NewObject<UVarWatcherSetting>();
 		Singleton->AddToRoot();
 
-		//Bind UnLUa Create Lua_State delegate
-		FUnLuaDelegates::OnLuaStateCreated.AddUObject(Singleton, &UVarWatcherSetting::RegisterLuaState);
-
-		FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(Singleton, &UVarWatcherSetting::UnRegisterLuaState);
-
-		FUnLuaDelegates::OnObjectBinded.AddUObject(Singleton, &UVarWatcherSetting::OnObjectBinded);
-
-		FUnLuaDelegates::OnObjectUnbinded.AddUObject(Singleton, &UVarWatcherSetting::OnObjectUnbinded);
 	}
 	return Singleton;
 }
 
+void UVarWatcherSetting::SetTapIsOpen(bool IsOpen)
+{
+	IsTapOpen = IsOpen;
+
+	if (IsTapOpen)
+	{
+		RegLuaHandle = FUnLuaDelegates::OnLuaStateCreated.AddUObject(this, &UVarWatcherSetting::RegisterLuaState);
+
+		UnRegLuaHandle = FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(this, &UVarWatcherSetting::UnRegisterLuaState);
+
+		BindObjectHandle = FUnLuaDelegates::OnObjectBinded.AddUObject(this, &UVarWatcherSetting::OnObjectBinded);
+
+		UnBindObjectHandle = FUnLuaDelegates::OnObjectUnbinded.AddUObject(this, &UVarWatcherSetting::OnObjectUnbinded);
+
+		//UE_LOG(LogTemp, Log, TEXT("UVarWatcherSetting::SetTapIsOpen open"));
+	}
+	else
+	{
+		FUnLuaDelegates::OnLuaStateCreated.Remove(RegLuaHandle);
+
+		FUnLuaDelegates::OnPostLuaContextCleanup.Remove(UnRegLuaHandle);
+
+		FUnLuaDelegates::OnObjectBinded.Remove(BindObjectHandle);
+
+		FUnLuaDelegates::OnObjectUnbinded.Remove(UnBindObjectHandle);
+
+		VarTreeRoot.Reset();
+
+		SVarWatcher::Get()->RefreshVarTree();
+
+		//UE_LOG(LogTemp, Log, TEXT("UVarWatcherSetting::SetTapIsOpen close"));
+	}
+}
+
 void UVarWatcherSetting::RegisterLuaState(lua_State* State)
 {
+
 	L = State;
 
 	//add global node
@@ -78,6 +105,7 @@ void UVarWatcherSetting::RegisterLuaState(lua_State* State)
 
 void UVarWatcherSetting::UnRegisterLuaState(bool bFullCleanup)
 {
+
 	L = NULL;
 
 	VarTreeRoot.Reset();
@@ -86,6 +114,7 @@ void UVarWatcherSetting::UnRegisterLuaState(bool bFullCleanup)
 
 void UVarWatcherSetting::OnObjectBinded(UObjectBaseUtility* InObject)
 {
+
 	ObjectGroup.Add(InObject);
 
 	//add this Object
@@ -101,6 +130,7 @@ void UVarWatcherSetting::OnObjectBinded(UObjectBaseUtility* InObject)
 
 void UVarWatcherSetting::OnObjectUnbinded(UObjectBaseUtility* InObject)
 {
+	
 	ObjectGroup.Remove(InObject);
 
 	for (auto Node : VarTreeRoot)
@@ -111,6 +141,8 @@ void UVarWatcherSetting::OnObjectUnbinded(UObjectBaseUtility* InObject)
 			break;
 		}
 	}
+
+	SVarWatcher::Get()->RefreshVarTree();
 }
 
 void UVarWatcherSetting::Update(float DeltaTime)

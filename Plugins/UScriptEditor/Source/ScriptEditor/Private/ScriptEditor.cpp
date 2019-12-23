@@ -231,6 +231,20 @@ public:
 	{
 		return SNew(SVarWatcher);
 	}
+
+	virtual TSharedRef<SDockTab> SpawnTab(const FWorkflowTabSpawnInfo& Info) const override
+	{
+		TSharedRef<SDockTab> Tab = FWorkflowTabFactory::SpawnTab(Info);
+		Tab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &FVarWatcherViewSummoner::OnTabClosed));
+
+		return Tab;
+	}
+
+	void OnTabClosed(TSharedRef<class SDockTab> DebugTab)
+	{
+		SVarWatcher::Get()->WatcherTabClose(DebugTab);
+	}
+
 };
 
 struct FAPIBrowserViewSummoner : public FWorkflowTabFactory

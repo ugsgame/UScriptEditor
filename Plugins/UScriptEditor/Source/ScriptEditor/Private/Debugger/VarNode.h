@@ -42,6 +42,8 @@ public:
 
 	static UVarWatcherSetting* Get();
 
+	void SetTapIsOpen(bool IsOpen);
+
 	void RegisterLuaState(lua_State* State);
 
 	void UnRegisterLuaState(bool bFullCleanup);
@@ -96,6 +98,13 @@ private:
 	static const FText SelfScalerText;
 	static const FText FVectorText;
 	static const FText FRotatorText;
+
+	bool IsTapOpen;
+
+	FDelegateHandle RegLuaHandle;
+	FDelegateHandle UnRegLuaHandle;
+	FDelegateHandle BindObjectHandle;
+	FDelegateHandle UnBindObjectHandle;
 
 };
 

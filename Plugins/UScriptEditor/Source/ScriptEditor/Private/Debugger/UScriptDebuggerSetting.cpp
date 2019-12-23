@@ -21,26 +21,37 @@ UScriptDebuggerSetting* UScriptDebuggerSetting::Get()
 		Singleton = NewObject<UScriptDebuggerSetting>();
 		Singleton->AddToRoot();
 
-		//Bind UnLUa Create Lua_State delegate
-		FUnLuaDelegates::OnLuaStateCreated.AddUObject(Singleton, &UScriptDebuggerSetting::RegisterLuaState);
-
-		FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(Singleton, &UScriptDebuggerSetting::UnRegisterLuaState);
-
 		FUnLuaDelegates::OnObjectBinded.AddUObject(Singleton, &UScriptDebuggerSetting::OnObjectBinded);
 	}
 	return Singleton;
 }
 
-
-
 void UScriptDebuggerSetting::SetTabIsOpen(bool IsOpen)
 {
 	bTabIsOpen = IsOpen;
-	// Close Debug
 
+	if (bTabIsOpen)
+	{
+		//Bind UnLUa Create Lua_State delegate
+		RegLuaHandle = FUnLuaDelegates::OnLuaStateCreated.AddUObject(this, &UScriptDebuggerSetting::RegisterLuaState);
+
+		UnRegLuaHandle = FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(this, &UScriptDebuggerSetting::UnRegisterLuaState);
+	}
+	else
+	{
+		FUnLuaDelegates::OnLuaStateCreated.Remove(RegLuaHandle);
+		
+		FUnLuaDelegates::OnPostLuaContextCleanup.Remove(UnRegLuaHandle);
+	}
+
+	//if close tap and hook exit , remove hook
+	if (L && !bTabIsOpen)
+	{
+		lua_sethook(L, NULL, 0, 0);
+
+		L = NULL;
+	}
 }
-
-
 
 void FScriptDebuggerVarNode::GetChildren(TArray<TSharedRef<FScriptDebuggerVarNode>>& OutChildren)
 {
@@ -48,8 +59,6 @@ void FScriptDebuggerVarNode::GetChildren(TArray<TSharedRef<FScriptDebuggerVarNod
 
 	NodeChildren.GenerateValueArray(OutChildren);
 }
-
-
 
 /********Hook Debug Statement********/
 
@@ -267,6 +276,34 @@ void UScriptDebuggerSetting::RegisterLuaState(lua_State* State)
 
 	//empty ScriptPromptGroup
 	ScriptPromptGroup.Empty();
+
+#if 0
+
+	FString ThirdPersonGameModeName(TEXT("ThirdPersonGameMode"));
+	FString ThirdPersonCharacterName(TEXT("ThirdPersonCharacter"));
+
+	for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
+	{
+		UClass* Class = *ClassIt;
+
+		UE_LOG(LogTemp, Log, TEXT("Iter Type[%d] Class[%s]"), Class->ClassFlags, *Class->GetName());
+
+		if (Class->GetName().Contains(ThirdPersonGameModeName) || Class->GetName().Contains(ThirdPersonCharacterName))
+		{
+
+			//get function
+			for (TFieldIterator<UFunction> FunIt(Class); FunIt; ++FunIt)
+			{
+				UFunction* Function = *FunIt;
+
+				UE_LOG(LogTemp, Log, TEXT("Iter Class[%s] Func[%s]"), *Class->GetName(), *Function->GetName());
+
+			}
+		}
+	}
+
+#endif
+
 }
 
 void UScriptDebuggerSetting::UnRegisterLuaState(bool bFullCleanup)
@@ -279,6 +316,9 @@ void UScriptDebuggerSetting::UnRegisterLuaState(bool bFullCleanup)
 	else
 		UE_LOG(LogTemp, Log, TEXT("unlua_Debug UnRegisterLuaState Not FullCleanup"));
 #endif
+
+	if (L == NULL)
+		return;
 
 	lua_sethook(L, NULL, 0, 0);
 	// Clear Stack Info UseLess

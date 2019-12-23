@@ -62,6 +62,8 @@ public:
 
 	void RefreshVarTree();
 
+	void WatcherTabClose(TSharedRef<SDockTab> DockTab);
+
 private:
 
 	void OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);
