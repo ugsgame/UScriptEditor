@@ -46,13 +46,13 @@ namespace ScriptEditorUtils
 		if (FFileHelper::LoadFileToString(CodeText, *FullPath))
 		{
 			ScriptAsset->SourceCode = CodeText;
-			ScriptEditorUtils::StringToByteArray(CodeText, ScriptAsset->ByteCode);
-			//
+			FFileHelper::LoadFileToArray(ScriptAsset->ByteCode, *FullPath);
+			//ScriptEditorUtils::StringToByteArray(CodeText, ScriptAsset->ByteCode);		
 		}
 		else
 		{
 			FString LuaTemp = CreateLuaTemplate(TemplateType, ScriptAsset->GetName());
-			FFileHelper::SaveStringToFile(*LuaTemp, *FullPath);
+			FFileHelper::SaveStringToFile(*LuaTemp, *FullPath,FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 		}
 		ScriptAsset->Path = ScriptRelativePath;
 

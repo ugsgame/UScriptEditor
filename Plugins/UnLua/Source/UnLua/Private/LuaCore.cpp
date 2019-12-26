@@ -2021,7 +2021,7 @@ UNLUA_API int32 Global_LoadString(lua_State *L)
 	}
 
 	lua_pop(L, 1);
-
+	/*
 	//////////////////////////////////////////////////////////////////////////
 	FString OldCodeString(ModuleCode);
 	TArray<TCHAR> CharArray = OldCodeString.GetCharArray();
@@ -2034,8 +2034,10 @@ UNLUA_API int32 Global_LoadString(lua_State *L)
 		}
 	}
 	//////////////////////////////////////////////////////////////////////////
+	bool bSuccess = UnLua::LoadString(L, TCHAR_TO_ANSI(CharArray.GetData()));
+	*/
+	bool bSuccess = UnLua::LoadString(L, ModuleCode);
 
-	bool bSuccess = UnLua::LoadString(L, TCHAR_TO_UTF8(CharArray.GetData()));
 	if (!bSuccess)
 	{
 		UE_LOG(LogUnLua, Log, TEXT("%s:error load string %s!"), ANSI_TO_TCHAR(__FUNCTION__), ANSI_TO_TCHAR(ModuleName));
@@ -2077,7 +2079,7 @@ UNLUA_API int32 Global_LoadContext(lua_State *L)
         return 0;
     }
 
-	if (GCodeContext.ByteCode.Num()<=0)
+	if (GCodeContext.ByteCode.Num()<=0 || GCodeContext.SourceCode.Len()<=0)
 	{
 		UNLUA_LOGERROR(L, LogUnLua, Log, TEXT("%s: Invalid code context!"), ANSI_TO_TCHAR(__FUNCTION__));
 		return 0;
@@ -2095,23 +2097,46 @@ UNLUA_API int32 Global_LoadContext(lua_State *L)
 
     lua_pop(L, 1);
 
+	bool bSuccess = false;
+
     FString RelativeFilePath = GCodeContext.Path;
-	TArray<uint8> Data = GCodeContext.ByteCode;
-	//////////////////////////////////////////////////////////////////////////
-	//remove '\0'
-	for (int32 i = 0; i < Data.Num(); i++)
+	if (1)
 	{
-		if (Data[i] == '\0')
+		TArray<TCHAR>  CharArray = GCodeContext.SourceCode.GetCharArray();
+		for (int32 i = 0;i< CharArray.Num();i++)
 		{
-			Data.RemoveAt(i);
-			i--;
+			if (CharArray[i] == '\0')
+			{
+				CharArray.RemoveAt(i);
+				i--;
+			}
 		}
+		//bSuccess = UnLua::LoadString(L, TCHAR_TO_UTF8(*GCodeContext.SourceCode));
+		bSuccess = UnLua::LoadString(L, TCHAR_TO_UTF8(CharArray.GetData()));
 	}
-	//////////////////////////////////////////////////////////////////////////
-	int32 SkipLen = (3 < Data.Num()) && (0xEF == Data[0]) && (0xBB == Data[1]) && (0xBF == Data[2]) ? 3 : 0;        // skip UTF-8 BOM mark
-	bool bSuccess = UnLua::LoadChunk(L, (const char*)(Data.GetData() + SkipLen), Data.Num() - SkipLen, TCHAR_TO_ANSI(*RelativeFilePath), "bt", 0);    // loads the buffer as a Lua chunk
-	//Reset it;
-	GCodeContext = FCodeContext();
+	else
+	{
+		TArray<uint8> Data = GCodeContext.ByteCode;
+		//////////////////////////////////////////////////////////////////////////
+		//remove '\0'
+		for (int32 i = 0; i < Data.Num(); i++)
+		{
+			if (Data[i] == '\0')
+			{
+				Data.RemoveAt(i);
+				i--;
+			}
+		}
+		//////////////////////////////////////////////////////////////////////////
+		int32 SkipLen = (3 < Data.Num()) && (0xEF == Data[0]) && (0xBB == Data[1]) && (0xBF == Data[2]) ? 3 : 0;        // skip UTF-8 BOM mark
+		bSuccess = UnLua::LoadChunk(L, (const char*)(Data.GetData() + SkipLen), Data.Num() - SkipLen, TCHAR_TO_ANSI(*RelativeFilePath), "bt", 0);    // loads the buffer as a Lua chunk
+	}
+
+	//Reset golbal CodeContext;
+	GCodeContext.Path.Empty();
+	GCodeContext.ByteCode.Empty();
+	GCodeContext.SourceCode.Empty();
+	//GCodeContext = FCodeContext();
 
     if (!bSuccess)
     {

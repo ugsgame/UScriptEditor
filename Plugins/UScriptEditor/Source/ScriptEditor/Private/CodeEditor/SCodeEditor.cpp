@@ -179,6 +179,7 @@ void SCodeEditor::OnTextChanged(const FText& NewText)
 	{
 		FString CodeText = CodeEditableText->GetText().ToString();
 		CodeProjectItem->ScriptDataAsset->SourceCode = CodeText;
+		//TODO:Should be UTF-8 to bytes
 		ScriptEditorUtils::StringToByteArray(CodeText, CodeProjectItem->ScriptDataAsset->ByteCode);
 		//
 	
@@ -209,11 +210,11 @@ bool SCodeEditor::Save() const
 			bDirty = false;
 			//Save to asset
 			if (CodeProjectItem->ScriptDataAsset)
-			{
-				//
+			{		
 				CodeProjectItem->ScriptDataAsset->SourceCode = CodeEditableText->GetText().ToString();
-				ScriptEditorUtils::StringToByteArray(CodeProjectItem->ScriptDataAsset->SourceCode, CodeProjectItem->ScriptDataAsset->ByteCode);
-				//
+				FFileHelper::LoadFileToArray(CodeProjectItem->ScriptDataAsset->ByteCode, *CodeProjectItem->Path);
+				//ScriptEditorUtils::StringToByteArray(CodeProjectItem->ScriptDataAsset->SourceCode, CodeProjectItem->ScriptDataAsset->ByteCode);
+				
 				ScriptEditorUtils::SaveScriptAsset(CodeProjectItem->ScriptDataAsset);
 			}
 		}

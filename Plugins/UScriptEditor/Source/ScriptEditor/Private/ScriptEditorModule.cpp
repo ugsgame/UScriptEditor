@@ -211,7 +211,7 @@ void FScriptEditorModule::OnScriptAssetRenamed(const FAssetData& RenamedAsset, c
 		{
 			//create new script file
 			FString NewScriptPath = FPaths::GetPath(ScriptPath) + "/" + ScriptAsset->GetName() + FPaths::GetExtension(ScriptPath, true);
-			FFileHelper::SaveStringToFile(ScriptAsset->SourceCode, *NewScriptPath);
+			FFileHelper::SaveStringToFile(ScriptAsset->SourceCode, *NewScriptPath,FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 			//delete old script file
 			IFileManager::Get().Delete(*ScriptPath);
 			//

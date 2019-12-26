@@ -84,9 +84,9 @@ bool UUnLuaManager::Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR 
 			GCodeContext.SourceCode = InModuleCodeContext.SourceCode;
 			GCodeContext.ByteCode = InModuleCodeContext.ByteCode;
 
-			UnLua::FLuaRetValues LoadStringValues = UnLua::Call(L, "LoadString", TCHAR_TO_ANSI(InModuleName), TCHAR_TO_UTF8(*InModuleCodeContext.SourceCode));    // load Lua string
-			//UnLua::FLuaRetValues LoadStringValues = UnLua::Call(L, "LoadContext", TCHAR_TO_ANSI(InModuleName));
-			bSuccess = LoadStringValues.IsValid();
+			UnLua::FLuaRetValues LoadContextValues = UnLua::Call(L, "LoadContext", TCHAR_TO_ANSI(InModuleName), TCHAR_TO_UTF8(*InModuleCodeContext.SourceCode));	//load Code context
+			//UnLua::FLuaRetValues LoadContextValues = UnLua::Call(L, "LoadContext", TCHAR_TO_ANSI(InModuleName));	//load Code context
+			bSuccess = LoadContextValues.IsValid();			
 		}
 
 		if (bSuccess)
