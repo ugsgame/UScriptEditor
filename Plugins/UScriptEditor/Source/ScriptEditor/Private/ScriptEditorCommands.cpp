@@ -15,6 +15,8 @@ FScriptEditorCommands::FScriptEditorCommands()
 
 void FScriptEditorCommands::RegisterCommands()
 {
+	UI_COMMAND(TestAction, "TestAction", "A Test Action", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control, EKeys::T));
+
 	UI_COMMAND(OpenPluginWindow, "UScriptEditor", "Bring up UScriptEditor", EUserInterfaceActionType::Button, FInputGesture());
 
 	UI_COMMAND(Reload, "Reload", "Reload the currently active document file.", EUserInterfaceActionType::Button, FInputChord());
@@ -31,7 +33,7 @@ void FScriptEditorCommands::RegisterCommands()
 	UI_COMMAND(DebugStepin, "Step In", "Step In", EUserInterfaceActionType::Button, FInputChord(EKeys::F11));
 	UI_COMMAND(DebugStepout, "Step Out", "Step Out", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Shift, EKeys::F11));
 
-	UI_COMMAND(APIBroswer, "API Broswe", "API Broswe", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control,EKeys::G));
+	UI_COMMAND(APIBroswer, "API Broswe", "API Broswe", EUserInterfaceActionType::Button, FInputGesture(EModifierKey::Control,EKeys::G));
 }
 
 

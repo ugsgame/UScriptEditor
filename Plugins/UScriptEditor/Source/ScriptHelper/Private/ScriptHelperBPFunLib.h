@@ -15,9 +15,12 @@ class SCRIPTHELPER_API UScriptHelperBPFunLib : public UBlueprintFunctionLibrary
 
 public:
 
-	UFUNCTION(BlueprintPure, Category = "UBPFuncLib")
+	UFUNCTION(BlueprintPure, Category = "Script|UBPFuncLib")
 	static FString ScriptSourceRoot();
 
-	UFUNCTION(BlueprintPure, Category = "UBPFuncLib")
+	UFUNCTION(BlueprintPure, Category = "Script|UBPFuncLib")
 	static FString ScriptSourceDir();
+
+	UFUNCTION(BlueprintCallable, Category = "Script|UBPFuncLib")
+	static bool TryToBindingScript(UObject* InObject, class UScriptDataAsset *InScriptData);
 };

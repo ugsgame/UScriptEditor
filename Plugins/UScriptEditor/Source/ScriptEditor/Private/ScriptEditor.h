@@ -85,6 +85,9 @@ private:
 	void Reload_Internal();
 	void ReloadAll_Internal();
 
+	void TestAction();
+	bool CanTestAction() const;
+
 	bool CanSave() const;
 	bool CanSaveAll() const;
 	bool CanReload() const;

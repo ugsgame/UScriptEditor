@@ -429,6 +429,12 @@ void FScriptEditor::InitScriptEditor(const EToolkitMode::Type Mode, const TShare
 
 void FScriptEditor::BindCommands()
 {
+
+	ToolkitCommands->MapAction(FScriptEditorCommands::Get().TestAction,
+			FExecuteAction::CreateSP(this, &FScriptEditor::TestAction),
+			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanTestAction)
+			);
+
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().Save,
 			FExecuteAction::CreateSP(this, &FScriptEditor::Save_Internal),
 			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanSave)
@@ -626,6 +632,16 @@ void FScriptEditor::Reload_Internal()
 void FScriptEditor::ReloadAll_Internal()
 {
 	ReloadAll();
+}
+
+void FScriptEditor::TestAction()
+{
+	US_Log("Test Action");
+}
+
+bool FScriptEditor::CanTestAction() const
+{
+	return true;
 }
 
 bool FScriptEditor::SaveAll()

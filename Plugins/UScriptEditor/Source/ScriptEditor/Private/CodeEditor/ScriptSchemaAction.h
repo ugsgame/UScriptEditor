@@ -47,7 +47,7 @@ protected:
 	void CreateScriptActions();
 	void CreateLuaActions();
 
-	void AddActionByClass(UClass* Class,bool CategoryByClass = false);
+	void AddActionByClass(UClass* Class,bool CategoryByClass = false,UClass* ContextClass = nullptr);
 
 	void AddScriptAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString CodeClip);
 	void AddLuaAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString CodeClip);

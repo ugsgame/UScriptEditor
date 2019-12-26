@@ -37,8 +37,8 @@ void SCodeEditableText::Construct(const FArguments& InArgs)
 	{
 		ExtenderCommands->MapAction(
 			FScriptEditorCommands::Get().APIBroswer,
-			FExecuteAction::CreateRaw(this, &SCodeEditableText::OpenAPIBrowser),
-			FCanExecuteAction());
+			FExecuteAction::CreateSP(this, &SCodeEditableText::OpenAPIBrowser),
+			FCanExecuteAction::CreateSP(this,&SCodeEditableText::CanOpenAPIBrowser));
 	}
 
 }
@@ -116,6 +116,11 @@ void SCodeEditableText::OpenAPIBrowser()
 	{
 		FocusedContent.OnMenuDismissed.Broadcast();
 	}
+}
+
+bool SCodeEditableText::CanOpenAPIBrowser() const
+{
+	return true;
 }
 
 void SCodeEditableText::SelectLine() {

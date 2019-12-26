@@ -1,4 +1,4 @@
-// Tencent is pleased to support the open source community by making UnLua available.
+﻿// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -47,7 +47,7 @@ namespace UnrealBuildTool.Rules
                 }
                 );
 
-            PublicDefinitions.Add("ENABLE_INTELLISENSE=0");
+            PublicDefinitions.Add("ENABLE_INTELLISENSE=1");
 
             PublicDefinitions.Add("HACK_HEADER_GENERATOR=1");
         }

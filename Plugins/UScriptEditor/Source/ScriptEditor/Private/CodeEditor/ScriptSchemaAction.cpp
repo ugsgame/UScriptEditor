@@ -345,7 +345,7 @@ FString UScriptActionCollecter::GetAPICodeClip(UClass *Class, UFunction *Functio
 	}
 	else
 	{
-		return FString::Printf(TEXT("%s:%s(%s)%s"),*FullClassName, *FunctionName, *ParameterListString, *ParameterNotesString);
+		return FString::Printf(TEXT("[%s]:%s(%s)%s"),*FullClassName, *FunctionName, *ParameterListString, *ParameterNotesString);
 	}
 }
 
@@ -497,7 +497,7 @@ void UScriptActionCollecter::CreateLuaActions()
 	AddLuaAction(ConcatCategories(LuaCategory, "Table"), "table.maxn", "", "table.maxn(table)");
 }
 
-void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByClass)
+void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByClass, UClass* ContextClass)
 {
 	UClass* Class = InClass;
 	FString ClassName = *Class->GetName();
@@ -540,9 +540,28 @@ void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByCl
 				ToolTipStr += FString::Printf(TEXT("\n\nTarget is %s"), *FullClassName);
 
 				FString CodeClip = GetAPICodeClip(Class, Function);
-
 				CategoryStr = CategoryByClass ? ConcatCategories(ClassName, CategoryStr) : CategoryStr;
-				AddScriptAction(CategoryStr, FunctionName, ToolTipStr, CodeClip);
+
+				//////////////////////////////////////////////////////////////////////////
+				if (ContextClass)
+				{
+					if (ContextClass->GetName() == Class->GetName())
+					{
+						AddScriptAction(CategoryStr, FunctionName, ToolTipStr, CodeClip);
+					}
+					else
+					{
+						if (Function->HasAllFunctionFlags(FUNC_Static))
+						{
+							AddScriptAction(CategoryStr, FunctionName, ToolTipStr, CodeClip);
+						}
+					}
+				}
+				else
+				{
+					AddScriptAction(CategoryStr, FunctionName, ToolTipStr, CodeClip);
+				}
+
 			}
 		}
 	}

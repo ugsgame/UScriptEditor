@@ -10,6 +10,8 @@ class FScriptEditorCommands : public TCommands<FScriptEditorCommands>
 public:
 	FScriptEditorCommands();
 
+	TSharedPtr<FUICommandInfo> TestAction;
+	//////////////////////////////////////////////////////////////////////////
 	TSharedPtr<FUICommandInfo> Reload;
 	TSharedPtr<FUICommandInfo> ReloadAll;
 	TSharedPtr<FUICommandInfo> Save;

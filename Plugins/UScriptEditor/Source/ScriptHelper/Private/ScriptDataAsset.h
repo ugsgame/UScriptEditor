@@ -19,10 +19,12 @@ public:
 	bool EFlag_IsValid;
 #endif // WITH_EDITORONLY_DATA
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = Script)
+	FString GetDotPath() const;
+	UFUNCTION(BlueprintCallable,Category = Script)
 	FString GetPath() const;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable,Category = Script)
 	FString GetCode() const;
 
 public:

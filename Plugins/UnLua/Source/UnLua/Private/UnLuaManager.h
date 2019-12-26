@@ -21,7 +21,7 @@
 #include "UnLuaManager.generated.h"
 
 UCLASS()
-class UUnLuaManager : public UObject
+class UNLUA_API UUnLuaManager : public UObject
 {
     GENERATED_BODY()
 

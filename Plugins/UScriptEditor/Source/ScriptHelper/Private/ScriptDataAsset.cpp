@@ -1,5 +1,5 @@
 ﻿#include "ScriptDataAsset.h"
-#include "Runtime/Core/Public/Misc/OutputDeviceNull.h"
+#include "Misc/Paths.h"
 
 UScriptDataAsset::UScriptDataAsset(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -7,6 +7,13 @@ UScriptDataAsset::UScriptDataAsset(const FObjectInitializer& ObjectInitializer)
 #if WITH_EDITORONLY_DATA
 	EFlag_IsValid = true;
 #endif // WITH_EDITORONLY_DATA
+}
+
+FString UScriptDataAsset::GetDotPath() const
+{
+	FString DotPath = FPaths::GetPath(Path)/FPaths::GetBaseFilename(Path);
+	DotPath = DotPath.Replace(TEXT("/"), TEXT("."));
+	return DotPath;
 }
 
 FString UScriptDataAsset::GetPath() const

@@ -63,6 +63,7 @@ protected:
 
 	void OpenAPIBrowser();
 
+	bool CanOpenAPIBrowser()const;
 private:
 	virtual FReply OnKeyChar(const FGeometry& MyGeometry,const FCharacterEvent& InCharacterEvent) override;
 	virtual FReply OnKeyDown(const FGeometry &Geometry, const FKeyEvent &KeyEvent) override;

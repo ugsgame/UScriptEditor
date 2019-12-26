@@ -17,7 +17,7 @@
 #include "CoreMinimal.h"
 #include "CoreUObject.h"
 
-struct FLuaDynamicBinding
+UNLUA_API struct FLuaDynamicBinding
 {
     FLuaDynamicBinding()
         : Class(nullptr), InitializerTableRef(INDEX_NONE)
@@ -32,7 +32,7 @@ struct FLuaDynamicBinding
     int32 InitializerTableRef;
 };
 
-extern FLuaDynamicBinding GLuaDynamicBinding;
+extern UNLUA_API FLuaDynamicBinding GLuaDynamicBinding;
 
 struct lua_State;
 
