@@ -454,3 +454,5 @@ bool HotfixLua()
 
 FString GLuaSrcRelativePath = TEXT("Script/");
 FString GLuaSrcFullPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() + GLuaSrcRelativePath);
+
+FCodeContext GCodeContext;

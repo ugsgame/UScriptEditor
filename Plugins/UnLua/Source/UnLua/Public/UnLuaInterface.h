@@ -30,7 +30,10 @@ struct FCodeContext
 	FString Path;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	FString Code;
+	FString SourceCode;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TArray<uint8> ByteCode;
 };
 
 UINTERFACE()

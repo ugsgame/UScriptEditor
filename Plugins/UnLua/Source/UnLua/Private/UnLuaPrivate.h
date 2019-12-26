@@ -1,4 +1,4 @@
-// Tencent is pleased to support the open source community by making UnLua available.
+﻿// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -16,6 +16,7 @@
 
 #include "CoreUObject.h"
 #include "UnLuaBase.h"
+#include "UnLuaInterface.h"
 
 #define UNLUA_LOGERROR(L, CategoryName, Verbosity, Format, ...) \
     {\
@@ -35,3 +36,5 @@ UNLUA_API bool HotfixLua();
 
 UNLUA_API extern FString GLuaSrcRelativePath;
 UNLUA_API extern FString GLuaSrcFullPath;
+
+UNLUA_API extern FCodeContext GCodeContext;

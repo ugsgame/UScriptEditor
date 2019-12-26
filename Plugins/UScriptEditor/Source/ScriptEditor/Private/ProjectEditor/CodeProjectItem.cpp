@@ -300,10 +300,14 @@ bool UCodeProjectItem::BuildScriptAssetContext()
 				ScriptDataAsset = ScriptAsset;
 				ScriptAsset->Path = ScriptEditorUtils::CoverToRelativeScriptPath(Path);
 				//
+				TArray<uint8> CodeByte;
 				FString CodeText;
 				if (FFileHelper::LoadFileToString(CodeText, *Path))
 				{
-					ScriptAsset->CodeText = CodeText;
+					FFileHelper::LoadFileToArray(CodeByte, *Path);
+
+					ScriptAsset->SourceCode = CodeText;
+					ScriptAsset->ByteCode = CodeByte;
 					ScriptAsset->UserObject = this;
 				}
 				//Log

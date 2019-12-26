@@ -177,7 +177,11 @@ void SCodeEditor::OnTextChanged(const FText& NewText)
 	
 	if (CodeProjectItem->ScriptDataAsset)
 	{
-		CodeProjectItem->ScriptDataAsset->CodeText = CodeEditableText->GetText().ToString();
+		FString CodeText = CodeEditableText->GetText().ToString();
+		CodeProjectItem->ScriptDataAsset->SourceCode = CodeText;
+		ScriptEditorUtils::StringToByteArray(CodeText, CodeProjectItem->ScriptDataAsset->ByteCode);
+		//
+	
 		//Set Asset To Dirty
 		CodeProjectItem->ScriptDataAsset->MarkPackageDirty();
 	}
@@ -199,14 +203,17 @@ bool SCodeEditor::Save() const
 {
 	if(bDirty)
 	{
-		bool bResult = FFileHelper::SaveStringToFile(CodeEditableText->GetText().ToString(), *CodeProjectItem->Path);
+		bool bResult = FFileHelper::SaveStringToFile(CodeEditableText->GetText().ToString(), *CodeProjectItem->Path,FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 		if(bResult)
 		{
 			bDirty = false;
 			//Save to asset
 			if (CodeProjectItem->ScriptDataAsset)
 			{
-				CodeProjectItem->ScriptDataAsset->CodeText = CodeEditableText->GetText().ToString();
+				//
+				CodeProjectItem->ScriptDataAsset->SourceCode = CodeEditableText->GetText().ToString();
+				ScriptEditorUtils::StringToByteArray(CodeProjectItem->ScriptDataAsset->SourceCode, CodeProjectItem->ScriptDataAsset->ByteCode);
+				//
 				ScriptEditorUtils::SaveScriptAsset(CodeProjectItem->ScriptDataAsset);
 			}
 		}

@@ -45,7 +45,9 @@ namespace ScriptEditorUtils
 		FString CodeText;
 		if (FFileHelper::LoadFileToString(CodeText, *FullPath))
 		{
-			ScriptAsset->CodeText = CodeText;
+			ScriptAsset->SourceCode = CodeText;
+			ScriptEditorUtils::StringToByteArray(CodeText, ScriptAsset->ByteCode);
+			//
 		}
 		else
 		{
@@ -74,7 +76,7 @@ namespace ScriptEditorUtils
 			if (NewAsset)
 			{
 				NewAsset->Path = ScriptEditorUtils::CoverToRelativeScriptPath(LuaScriptFileFullPath);
-				NewAsset->CodeText = CodeText;
+				NewAsset->SourceCode = CodeText;
 
 				//TArray<UObject*> ObjectsToSync;
 				//ObjectsToSync.Add(NewAsset);
@@ -109,6 +111,17 @@ namespace ScriptEditorUtils
 		FString Content;
 		FFileHelper::LoadFileToString(Content, *TemplatePath);
 		return Content.Replace(TEXT("TemplateName"), *TemplateName);
+	}
+
+	bool StringToByteArray(FString InString, TArray<uint8>& InArray)
+	{
+		//TODO:
+		InArray.Empty();
+		for (TCHAR chr : InString.GetCharArray())
+		{
+			if (chr != '\0')InArray.Add(chr);
+		}
+		return true;
 	}
 
 	FString CoverScriptPathToContentPath(FString ScriptFullPath)

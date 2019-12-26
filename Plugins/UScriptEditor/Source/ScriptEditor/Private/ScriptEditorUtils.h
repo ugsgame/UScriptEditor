@@ -37,6 +37,9 @@ namespace ScriptEditorUtils
 
 	FString CreateLuaTemplate(EScriptTemplateType TempType, FString TemplateName);
 
+	//
+	bool StringToByteArray(FString InString, TArray<uint8>& InArray);
+	//
 	FString CoverScriptPathToContentPath(FString ScriptFullPath);
 
     FString CovertContentPathToGamePath(FString ContentPath);

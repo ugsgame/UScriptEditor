@@ -25,13 +25,18 @@ public:
 	FString GetPath() const;
 
 	UFUNCTION(BlueprintCallable,Category = Script)
-	FString GetCode() const;
+	FString GetSourceCode() const;
+
+	UFUNCTION(BlueprintCallable, Category = Script)
+	TArray<uint8> GetByteCode() const;
 
 public:
 	UPROPERTY()
 	FString Path;
 	UPROPERTY()
-	FString CodeText;
+	FString SourceCode;
+	UPROPERTY()
+	TArray<uint8>  ByteCode;
 
 	//UPROPERTY()
 	UObject* UserObject;

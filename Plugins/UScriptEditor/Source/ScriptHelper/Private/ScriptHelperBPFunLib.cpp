@@ -28,8 +28,9 @@ bool UScriptHelperBPFunLib::TryToBindingScript(UObject* InObject, UScriptDataAss
 
 		if (InScriptData)
 		{
-			//ModuleName = InScriptData->GetDotPath();
-			CodeContext.Code = InScriptData->GetCode();
+			ModuleName = InScriptData->GetDotPath();
+			CodeContext.SourceCode = InScriptData->GetSourceCode();
+			CodeContext.ByteCode = InScriptData->GetByteCode();
 			CodeContext.Path = InScriptData->GetPath();
 		}
 

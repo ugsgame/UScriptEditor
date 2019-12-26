@@ -21,8 +21,13 @@ FString UScriptDataAsset::GetPath() const
 	return Path;
 }
 
-FString UScriptDataAsset::GetCode() const
+FString UScriptDataAsset::GetSourceCode() const
 {
-	return CodeText;
+	return SourceCode;
+}
+
+TArray<uint8> UScriptDataAsset::GetByteCode() const
+{
+	return ByteCode;
 }
 

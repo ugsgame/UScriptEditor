@@ -194,6 +194,7 @@ void FLuaContext::CreateState()
 
         lua_register(L, "UEPrint", Global_Print);
 		lua_register(L, "LoadString", Global_LoadString);
+		lua_register(L, "LoadContext", Global_LoadContext);
         if (FPlatformProperties::RequiresCookedData())
         {
             lua_register(L, "require", Global_Require);             // override 'require' when running with cooked data
