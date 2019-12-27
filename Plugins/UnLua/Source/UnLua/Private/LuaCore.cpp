@@ -1986,83 +1986,6 @@ int32 Global_Require(lua_State *L)
     return 1;
 }
 
-
-
-UNLUA_API int32 Global_LoadString(lua_State *L)
-{
-	int32 NumParams = lua_gettop(L);
-	if (NumParams < 1)
-	{
-		UNLUA_LOGERROR(L, LogUnLua, Log, TEXT("%s: Invalid parameters!"), ANSI_TO_TCHAR(__FUNCTION__));
-		return 0;
-	}
-
-	const char *ModuleName = lua_tostring(L, 1);
-	if (!ModuleName)
-	{
-		UNLUA_LOGERROR(L, LogUnLua, Log, TEXT("%s: Invalid module name!"), ANSI_TO_TCHAR(__FUNCTION__));
-		return 0;
-	}
-
-	const char *ModuleCode = lua_tostring(L, 2);
-	if (!ModuleCode)
-	{
-		UNLUA_LOGERROR(L, LogUnLua, Log, TEXT("%s: Invalid module code!"), ANSI_TO_TCHAR(__FUNCTION__));
-		return 0;
-	}
-
-	lua_settop(L, 1);       /* LOADED table will be at index 2 */
-
-	lua_getfield(L, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
-	lua_getfield(L, 2, ModuleName);
-	if (lua_toboolean(L, -1))
-	{
-		return 1;
-	}
-
-	lua_pop(L, 1);
-	/*
-	//////////////////////////////////////////////////////////////////////////
-	FString OldCodeString(ModuleCode);
-	TArray<TCHAR> CharArray = OldCodeString.GetCharArray();
-	for (int32 i = 0; i < CharArray.Num(); i++)
-	{
-		if (CharArray[i] == '\0')
-		{
-			CharArray.RemoveAt(i);
-			i--;
-		}
-	}
-	//////////////////////////////////////////////////////////////////////////
-	bool bSuccess = UnLua::LoadString(L, TCHAR_TO_ANSI(CharArray.GetData()));
-	*/
-	bool bSuccess = UnLua::LoadString(L, ModuleCode);
-
-	if (!bSuccess)
-	{
-		UE_LOG(LogUnLua, Log, TEXT("%s:error load string %s!"), ANSI_TO_TCHAR(__FUNCTION__), ANSI_TO_TCHAR(ModuleName));
-		lua_pushboolean(L, 0);
-		return 1;
-	}
-	
-	FString FullFilePath = GLuaSrcFullPath + ModuleName;
-	lua_pushvalue(L, 1);
-	lua_pushstring(L, TCHAR_TO_UTF8(*FullFilePath));
-	lua_pcall(L, 2, 1, 0);
-
-	if (!lua_isnil(L, -1))
-	{
-		lua_setfield(L, 2, ModuleName);
-	}
-	if (lua_getfield(L, 2, ModuleName) == LUA_TNIL)
-	{
-		lua_pushboolean(L, 1);
-		lua_pushvalue(L, -1);
-		lua_setfield(L, 2, ModuleName);
-	}
-	return 1;
-}
-
 UNLUA_API int32 Global_LoadContext(lua_State *L)
 {
 	int32 NumParams = lua_gettop(L);
@@ -2079,12 +2002,19 @@ UNLUA_API int32 Global_LoadContext(lua_State *L)
         return 0;
     }
 
+	bool LoadString = true;	//Otherwise load buffer, false
+	if (NumParams >= 2)
+	{
+		LoadString = lua_toboolean(L, 2);
+	}
+
+	
 	if (GCodeContext.ByteCode.Num()<=0 || GCodeContext.SourceCode.Len()<=0)
 	{
 		UNLUA_LOGERROR(L, LogUnLua, Log, TEXT("%s: Invalid code context!"), ANSI_TO_TCHAR(__FUNCTION__));
 		return 0;
 	}
-
+	
 
     lua_settop(L, 1);       /* LOADED table will be at index 2 */
 
@@ -2100,7 +2030,7 @@ UNLUA_API int32 Global_LoadContext(lua_State *L)
 	bool bSuccess = false;
 
     FString RelativeFilePath = GCodeContext.Path;
-	if (1)
+	if (LoadString)
 	{
 		TArray<TCHAR>  CharArray = GCodeContext.SourceCode.GetCharArray();
 		for (int32 i = 0;i< CharArray.Num();i++)

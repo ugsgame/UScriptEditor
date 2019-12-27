@@ -15,6 +15,12 @@ class SCRIPTHELPER_API UScriptHelperBPFunLib : public UBlueprintFunctionLibrary
 
 public:
 
+	UFUNCTION(BlueprintCallable, Category = "Script|UBPFuncLib|Test")
+	static bool GetFloatByName(UObject* Target, FName VarName, float &outFloat);
+
+	UFUNCTION(BlueprintCallable, Category = "Script|UBPFuncLib")
+	static bool GetScriptDataByName(UObject* Target, FName VarName, class UScriptDataAsset* &outScriptData);
+
 	UFUNCTION(BlueprintPure, Category = "Script|UBPFuncLib")
 	static FString ScriptSourceRoot();
 

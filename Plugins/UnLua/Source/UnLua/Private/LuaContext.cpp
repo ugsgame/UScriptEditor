@@ -193,7 +193,6 @@ void FLuaContext::CreateState()
         lua_register(L, "NewObject", Global_NewObject);
 
         lua_register(L, "UEPrint", Global_Print);
-		lua_register(L, "LoadString", Global_LoadString);
 		lua_register(L, "LoadContext", Global_LoadContext);
         if (FPlatformProperties::RequiresCookedData())
         {
@@ -373,21 +372,23 @@ UnLua::ITypeInterface* FLuaContext::FindTypeInterface(FName Name)
  */
 bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
 {
+	UE_LOG(LogTemp, Log, TEXT("TryToBindLua OOOOOOOOOOOOOOOO"));
     if (!bEnable || !Object || !Manager)
     {
         return false;
     }
-
+	UE_LOG(LogTemp, Log, TEXT("TryToBindLua 11111111111111"));
 #if WITH_EDITOR
     if (GIsEditor && !bIsPIE)
     {
         return false;
     }
 #endif
-
+	UE_LOG(LogTemp, Log, TEXT("TryToBindLua 2222222222222"));
     static UClass *InterfaceClass = UUnLuaInterface::StaticClass();
     if (!Object->HasAnyFlags(RF_ClassDefaultObject | RF_ArchetypeObject))           // filter out CDO and ArchetypeObjects
     {
+		UE_LOG(LogTemp, Log, TEXT("TryToBindLua 333333333333333"));
         check(!Object->IsPendingKill());
         UClass *Class = Object->GetClass();
         if (Class->IsChildOf<UPackage>() || Class->IsChildOf<UClass>())             // filter out UPackage and UClass
@@ -396,31 +397,45 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
         }
         if (Class->ImplementsInterface(InterfaceClass))                             // static binding
         {
+			UE_LOG(LogTemp, Log, TEXT("TryToBindLua 44444444444444"));
             UFunction *GetNameFunc = Class->FindFunctionByName(FName("GetModuleName"));    // find UFunction 'GetModuleName'. hard coded!!!
-			UFunction *GetCodeFunc = Class->FindFunctionByName(FName("GetModuleCode"));    // find UFunction 'GetModuleCode'. hard coded!!!
-            if (GetNameFunc && GetCodeFunc)
+			UFunction *GetContextFunc = Class->FindFunctionByName(FName("GetModuleContext"));    // find UFunction 'GetModuleCode'. hard coded!!!
+
+            if (GetNameFunc && GetContextFunc)
             {
-                if (GetNameFunc->GetNativeFunc() && GetCodeFunc->GetNativeFunc()  && IsInGameThread())
+				UE_LOG(LogTemp, Log, TEXT("TryToBindLua 555555555555555"));
+                if (GetNameFunc->GetNativeFunc() && GetContextFunc->GetNativeFunc()  && IsInGameThread())
                 {
                     FString ModuleName;
-					FCodeContext CodeContext;
+					FCodeContext ModuleContext;
+					UE_LOG(LogTemp, Log, TEXT("TryToBindLua 66666666666666666"));
+                    UObject *DefaultObject = Class->GetDefaultObject();						// get CDO
+                    DefaultObject->UObject::ProcessEvent(GetNameFunc, &ModuleName);			// force to invoke UObject::ProcessEvent(...)
+					DefaultObject->UObject::ProcessEvent(GetContextFunc, &ModuleContext);
 
-                    UObject *DefaultObject = Class->GetDefaultObject();             // get CDO
-                    DefaultObject->UObject::ProcessEvent(GetNameFunc, &ModuleName);        // force to invoke UObject::ProcessEvent(...)
-					DefaultObject->UObject::ProcessEvent(GetCodeFunc, &CodeContext);        // force to invoke UObject::ProcessEvent(...)
+					UE_LOG(LogTemp, Log, TEXT("TryToBindLua 77777777777777777"));
+					UE_LOG(LogTemp, Log, TEXT("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
+					UE_LOG(LogUnLua, Log, TEXT("ModuleContext Loading"));
+					UE_LOG(LogUnLua,Log,TEXT("ModuleContext:%s"),*ModuleContext.SourceCode);
+
+
+					//GCodeContext = ModuleContext;
+
                     UClass *OuterClass = GetNameFunc->GetOuterUClass();                    // get UFunction's outer class
                     Class = OuterClass == InterfaceClass ? Class : OuterClass;      // select the target UClass to bind Lua module
                     if (ModuleName.Len() < 1)
                     {
                         ModuleName = Class->GetName();
                     }
-
-					return Manager->Bind(Object, Class, *ModuleName, CodeContext, GLuaDynamicBinding.InitializerTableRef);
+					UE_LOG(LogTemp, Log, TEXT("TryToBindLua 8888888888888888888888888888"));
+					return Manager->Bind(Object, Class, *ModuleName, ModuleContext, GLuaDynamicBinding.InitializerTableRef);
                 }
                 else
                 {
+					UE_LOG(LogTemp, Log, TEXT("TryToBindLua 999999999999999999999999"));
                     if (IsAsyncLoading())
                     {
+						UE_LOG(LogTemp, Log, TEXT("TryToBindLua aaaaaaaaaaaaaaaaaaaaaaaaa"));
                         // check FAsyncLoadingThread::IsMultithreaded()?
                         FScopeLock Lock(&CandidatesCS);
                         Candidates.Add((UObject*)Object);                           // mark the UObject as a candidate
@@ -430,6 +445,7 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
         }
         else if (GLuaDynamicBinding.IsValid(Class))                                 // dynamic binding(TODO:Bind code)
         {
+			UE_LOG(LogTemp, Log, TEXT("TryToBindLua bbbbbbbbbbbbbbbbbbbbbbbbbb"));
             return Manager->Bind(Object, Class, *GLuaDynamicBinding.ModuleName, FCodeContext(), GLuaDynamicBinding.InitializerTableRef);
         }
     }
@@ -610,21 +626,35 @@ void FLuaContext::OnAsyncLoadingFlushUpdate()
             if (Object && !Object->HasAnyFlags(RF_NeedPostLoad))
             {
                 // see FLuaContext::TryToBindLua
-                UFunction *Func = Object->FindFunction(FName("GetModuleName"));
-                if (!Func || !Func->GetNativeFunc())
+                UFunction *GetNameFunc = Object->FindFunction(FName("GetModuleName"));
+				UFunction *GetContextFunc = Object->FindFunction(FName("GetModuleContext"));
+
+                if (!GetNameFunc || !GetNameFunc->GetNativeFunc())
                 {
                     continue;
                 }
+				if (!GetContextFunc || !GetContextFunc->GetNativeFunc())
+				{
+					continue;
+				}
+
                 FString ModuleName;
-                Object->UObject::ProcessEvent(Func, &ModuleName);    // force to invoke UObject::ProcessEvent(...)
-                UClass *Class = Func->GetOuterUClass();
+				FCodeContext ModuleContext;
+
+                Object->UObject::ProcessEvent(GetNameFunc, &ModuleName);    // force to invoke UObject::ProcessEvent(...)
+				Object->UObject::ProcessEvent(GetContextFunc, &ModuleContext);    // force to invoke UObject::ProcessEvent(...)
+
+				UE_LOG(LogUnLua, Log, TEXT("ModuleContext Loading"));
+				UE_LOG(LogUnLua, Log, TEXT("ModuleContext:%s"), *ModuleContext.SourceCode);
+
+                UClass *Class = GetNameFunc->GetOuterUClass();
                 Class = Class == InterfaceClass ? Object->GetClass() : Class;
                 if (ModuleName.Len() < 1)
                 {
                     ModuleName = Class->GetName();
                 }
 
-                Manager->Bind(Object, Class, *ModuleName, FCodeContext());
+                Manager->Bind(Object, Class, *ModuleName, ModuleContext);
                 Candidates.RemoveAt(i);
             }
         }

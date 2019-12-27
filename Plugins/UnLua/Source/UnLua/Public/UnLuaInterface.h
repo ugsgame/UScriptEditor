@@ -21,18 +21,12 @@
  * Interface for binding UCLASS and Lua module
  */
 
-USTRUCT(BlueprintType)
 struct FCodeContext
 {
-	GENERATED_BODY()
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	FString Path;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	FString SourceCode;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TArray<uint8> ByteCode;
 };
 
@@ -53,8 +47,8 @@ public:
     UFUNCTION(BlueprintNativeEvent)
     FString GetModuleName() const;
 	/**
-	 * return a Lua code string
+	 * return  code context
 	 */
 	UFUNCTION(BlueprintNativeEvent)
-	FCodeContext GetModuleCode() const;
+	void GetModuleContext(FString& Path,FString& SourceCode,TArray<uint8>& ByteCode) const;
 };
