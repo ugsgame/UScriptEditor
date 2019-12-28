@@ -2005,16 +2005,20 @@ UNLUA_API int32 Global_LoadContext(lua_State *L)
 	bool LoadString = true;	//Otherwise load buffer, false
 	if (NumParams >= 2)
 	{
-		LoadString = lua_toboolean(L, 2);
+		LoadString = (bool)lua_toboolean(L, 2);
 	}
 
-	
-	if (GCodeContext.ByteCode.Num()<=0 || GCodeContext.SourceCode.Len()<=0)
+	if (LoadString && GCodeContext.SourceCode.Len() <1 )
 	{
-		UNLUA_LOGERROR(L, LogUnLua, Log, TEXT("%s: Invalid code context!"), ANSI_TO_TCHAR(__FUNCTION__));
+		UNLUA_LOGERROR(L, LogUnLua, Log, TEXT("%s: Invalid code context:source code len < 1"), ANSI_TO_TCHAR(__FUNCTION__));
 		return 0;
 	}
-	
+	if (!LoadString && GCodeContext.ByteCode.Num() <1 )
+	{
+		UNLUA_LOGERROR(L, LogUnLua, Log, TEXT("%s: Invalid code context:byte code len < 1"), ANSI_TO_TCHAR(__FUNCTION__));
+		return 0;
+	}
+
 
     lua_settop(L, 1);       /* LOADED table will be at index 2 */
 

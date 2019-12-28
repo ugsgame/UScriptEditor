@@ -4,6 +4,7 @@
 #include "Runtime/SlateCore/Public/Rendering/SlateRenderer.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 #include "Modules/ModuleManager.h"
+#include "ScriptHelperBPFunLib.h"
 
 #define LOCTEXT_NAMESPACE "ScriptHelper"
 
@@ -16,7 +17,7 @@ public:
 	virtual void ShutdownModule() override;
 
 private:
-
+	bool SpawnSystemScriptFiles();
 	void Initialize(TSharedPtr<SWindow> InRootWindow, bool bIsNewProjectWindow);
 	void AddGraphicsSwitcher(FToolBarBuilder& ToolBarBuilder);
 	TSharedPtr< FExtender > NotificationBarExtender;
@@ -28,7 +29,15 @@ IMPLEMENT_MODULE(FScriptHelperModule, ScriptHelper)
 
 void FScriptHelperModule::StartupModule()
 {
+	//Spawn UnLua.lua
+}
 
+bool FScriptHelperModule::SpawnSystemScriptFiles()
+{
+	//TODO:
+	//UnLua.lua
+	FString ScriptPath = UScriptHelperBPFunLib::ScriptSourceDir() + "UnLua.lua";
+	FString ScriptSource = TEXT("\n\");
 }
 
 void FScriptHelperModule::Initialize(TSharedPtr<SWindow> InRootWindow, bool bIsNewProjectWindow)

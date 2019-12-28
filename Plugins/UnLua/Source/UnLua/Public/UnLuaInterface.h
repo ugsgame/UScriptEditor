@@ -21,7 +21,7 @@
  * Interface for binding UCLASS and Lua module
  */
 
-struct FCodeContext
+UNLUA_API struct FCodeContext
 {
 	FString Path;
 
@@ -29,6 +29,8 @@ struct FCodeContext
 
 	TArray<uint8> ByteCode;
 };
+
+UNLUA_API extern FCodeContext GCodeContext;
 
 UINTERFACE()
 class UNLUA_API UUnLuaInterface : public UInterface
@@ -52,3 +54,4 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void GetModuleContext(FString& Path,FString& SourceCode,TArray<uint8>& ByteCode) const;
 };
+

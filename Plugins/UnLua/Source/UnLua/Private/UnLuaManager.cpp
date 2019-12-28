@@ -52,7 +52,7 @@ UUnLuaManager::UUnLuaManager()
 /**
  * Bind a Lua module for a UObject
  */
-bool UUnLuaManager::Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR *InModuleName, const FCodeContext InModuleCodeContext, int32 InitializerTableRef)
+bool UUnLuaManager::Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR *InModuleName, int32 InitializerTableRef)
 {
 	if (!Object || !Class || Object->HasAnyFlags(RF_ClassDefaultObject | RF_ArchetypeObject) || AttachedObjects.Find(Object))
 	{
@@ -78,16 +78,12 @@ bool UUnLuaManager::Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR 
 		UnLua::FLuaRetValues RetValues = UnLua::Call(L, "require", TCHAR_TO_ANSI(InModuleName));    // require Lua module
 		bSuccess = RetValues.IsValid();
 
-		if (!bSuccess && InModuleCodeContext.SourceCode.Len() > 0 && InModuleCodeContext.ByteCode.Num() > 0)
+		if (!bSuccess)
 		{
-			GCodeContext.Path = InModuleCodeContext.Path;
-			GCodeContext.SourceCode = InModuleCodeContext.SourceCode;
-			GCodeContext.ByteCode = InModuleCodeContext.ByteCode;
-
 			//load Code context
 			//TODO：CodeContext should be a param for the LoadContext
 			UnLua::FLuaRetValues LoadContextValues = UnLua::Call(L, "LoadContext", TCHAR_TO_ANSI(InModuleName),true/*true LoadString ,false Loadbuffer,default is true*/);
-			bSuccess = LoadContextValues.IsValid();			
+			bSuccess = LoadContextValues.IsValid();
 		}
 
 		if (bSuccess)

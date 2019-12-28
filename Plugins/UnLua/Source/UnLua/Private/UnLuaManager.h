@@ -28,7 +28,7 @@ class UNLUA_API UUnLuaManager : public UObject
 public:
     UUnLuaManager();
 
-    bool Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR *InModuleName, const FCodeContext InModuleCodeContext, int32 InitializerTableRef = INDEX_NONE);
+    bool Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR *InModuleName, int32 InitializerTableRef = INDEX_NONE);
 
     bool OnModuleHotfixed(const TCHAR *InModuleName);
 
