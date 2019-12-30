@@ -16,6 +16,8 @@ UNativeScriptComponent::UNativeScriptComponent()
 	bWantsInitializeComponent = true;
 	bAutoActivate = true;
 	// ...
+
+	HasScriptBinding = false;
 }
 
 void UNativeScriptComponent::PostLoad()

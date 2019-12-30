@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+//#include "UnLuaInterface.h"
 #include "ScriptActor.generated.h"
 
 UCLASS()
-class AScriptActor : public AActor
+class SCRIPTHELPER_API AScriptActor : public AActor/*,public IUnLuaInterface*/
 {
 	GENERATED_BODY()
 	
@@ -28,7 +29,11 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+protected:
+	//TODO:Using IUnLuaInterface in CPP would crash in OnAsyncLoadingFlushUpdate
+	//UnLua Module Interface
+	//virtual FString GetModuleName_Implementation() const override;
+	//virtual void GetModuleContext_Implementation(FString& Path, FString& SourceCode, TArray<uint8>& ByteCode) const override;
 protected:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Script")
 	class UScriptDataAsset* ScriptData;

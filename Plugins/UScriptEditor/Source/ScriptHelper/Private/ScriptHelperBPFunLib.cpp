@@ -73,7 +73,7 @@ bool UScriptHelperBPFunLib::TryToBindingScript(UObject* InObject, UScriptDataAss
 			ModuleName = Class->GetName();
 		}
 
-		//
+		//Set Global context
 		GCodeContext = CodeContext;
 		return Context->GetManager()->Bind(InObject, Class, *ModuleName, GLuaDynamicBinding.InitializerTableRef);
 	}

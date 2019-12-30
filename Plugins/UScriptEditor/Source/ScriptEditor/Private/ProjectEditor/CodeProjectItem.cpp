@@ -288,6 +288,8 @@ bool UCodeProjectItem::BuildScriptAssetContext()
 {
 	if (Extension == "lua")
 	{
+		//UnLua.lua do not need to created script asset.
+		if (Name == "UnLua.lua")return true;
 		//Check file exist?
 		FString ScriptContentPath = ScriptEditorUtils::CoverScriptPathToContentPath(Path);
 		FString ScriptAssetPath = ScriptEditorUtils::CovertContentPathToAssetPath(ScriptContentPath);
@@ -327,13 +329,16 @@ bool UCodeProjectItem::BuildScriptAssetContext()
 			{
 				ScriptDataAsset = ScriptAsset;
 				ScriptAsset->UserObject = this;
-				GEditor->AddOnScreenDebugMessage(0, 1, FColor::Red, "Create A New Asset Content:" + ScriptAssetPath);
+
+				US_Log("Create A New Asset Content:%s",*ScriptAssetPath);
 
 				return true;
 			}
 			else
 			{
 				//LogError
+				US_Error_Log("Can not Create Asset Content from:%s", *Path);
+				return false;
 			}
 		}
 

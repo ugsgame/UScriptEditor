@@ -408,6 +408,7 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
                     DefaultObject->UObject::ProcessEvent(GetNameFunc, &ModuleName);			// force to invoke UObject::ProcessEvent(...)
 					DefaultObject->UObject::ProcessEvent(GetContextFunc, &ModuleContext);
 
+					//Set Global Context
 					GCodeContext = ModuleContext;
 
                     UClass *OuterClass = GetNameFunc->GetOuterUClass();                    // get UFunction's outer class
@@ -629,6 +630,7 @@ void FLuaContext::OnAsyncLoadingFlushUpdate()
                 Object->UObject::ProcessEvent(GetNameFunc, &ModuleName);    // force to invoke UObject::ProcessEvent(...)
 				Object->UObject::ProcessEvent(GetContextFunc, &ModuleContext);    // force to invoke UObject::ProcessEvent(...)
 
+				//Set Global Context
 				GCodeContext = ModuleContext;
 
                 UClass *Class = GetNameFunc->GetOuterUClass();

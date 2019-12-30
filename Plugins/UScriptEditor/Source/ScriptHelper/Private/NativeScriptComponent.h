@@ -35,6 +35,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly,Category = "Script")
 	class UScriptDataAsset* ScriptData;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Script")
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Script")
 	bool HasScriptBinding;
 };

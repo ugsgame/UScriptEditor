@@ -82,7 +82,11 @@ bool UUnLuaManager::Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR 
 		{
 			//load Code context
 			//TODO：CodeContext should be a param for the LoadContext
-			UnLua::FLuaRetValues LoadContextValues = UnLua::Call(L, "LoadContext", TCHAR_TO_ANSI(InModuleName),true/*true LoadString ,false Loadbuffer,default is true*/);
+			bool LoadString = false;
+#if WITH_EDITOR
+			LoadString = true;
+#endif
+			UnLua::FLuaRetValues LoadContextValues = UnLua::Call(L, "LoadContext", TCHAR_TO_ANSI(InModuleName),false/*true LoadString ,false Loadbuffer,default is true*/);
 			bSuccess = LoadContextValues.IsValid();
 		}
 

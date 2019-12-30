@@ -17,7 +17,7 @@ void AScriptActor::PostLoad()
 	Super::PostLoad();
 
 	if(!HasScriptBinding)
-	HasScriptBinding = UScriptHelperBPFunLib::TryToBindingScript(this, ScriptData);
+		HasScriptBinding = UScriptHelperBPFunLib::TryToBindingScript(this, ScriptData);
 }
 
 void AScriptActor::PostActorCreated()
@@ -49,4 +49,24 @@ void AScriptActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
+/*
+FString AScriptActor::GetModuleName_Implementation() const
+{
+	if (ScriptData)
+	{
+		return ScriptData->GetDotPath();
+	}
+	return TEXT("");
+}
+
+void AScriptActor::GetModuleContext_Implementation(FString& Path, FString& SourceCode, TArray<uint8>& ByteCode) const
+{
+	if (ScriptData)
+	{
+		Path = ScriptData->GetPath();
+		SourceCode = ScriptData->GetSourceCode();
+		ByteCode = ScriptData->GetByteCode();
+	}
+}
+*/
 

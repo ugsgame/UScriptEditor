@@ -5,6 +5,8 @@
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 #include "Modules/ModuleManager.h"
 #include "ScriptHelperBPFunLib.h"
+#include "Paths.h"
+#include "FileHelper.h"
 
 #define LOCTEXT_NAMESPACE "ScriptHelper"
 
@@ -29,15 +31,27 @@ IMPLEMENT_MODULE(FScriptHelperModule, ScriptHelper)
 
 void FScriptHelperModule::StartupModule()
 {
-	//Spawn UnLua.lua
+	//Spawn Script
+	SpawnSystemScriptFiles();
 }
 
 bool FScriptHelperModule::SpawnSystemScriptFiles()
 {
-	//TODO:
-	//UnLua.lua
+	FString ScriptCode;
 	FString ScriptPath = UScriptHelperBPFunLib::ScriptSourceDir() + "UnLua.lua";
-	FString ScriptSource = TEXT("\n\");
+
+	//UnLua.lua
+	static const auto RawUnlua =
+#include "ScriptDependencyFile/UnLua.lua.inc"
+
+	ScriptCode = FString(RawUnlua);
+
+	if (!FPaths::FileExists(ScriptPath))
+	{
+		FFileHelper::SaveStringToFile(ScriptCode, *ScriptPath);
+	}
+
+	return false;
 }
 
 void FScriptHelperModule::Initialize(TSharedPtr<SWindow> InRootWindow, bool bIsNewProjectWindow)
