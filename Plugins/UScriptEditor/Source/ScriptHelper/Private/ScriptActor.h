@@ -35,7 +35,7 @@ protected:
 	//virtual FString GetModuleName_Implementation() const override;
 	//virtual void GetModuleContext_Implementation(FString& Path, FString& SourceCode, TArray<uint8>& ByteCode) const override;
 protected:
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Script")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, /*EditDefaultsOnly,*/ Category = "Script")
 	class UScriptDataAsset* ScriptData;
 	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Transient, Category = "Script")

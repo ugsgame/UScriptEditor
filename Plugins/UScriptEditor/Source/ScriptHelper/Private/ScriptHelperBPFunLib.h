@@ -28,5 +28,14 @@ public:
 	static FString ScriptSourceDir();
 
 	UFUNCTION(BlueprintCallable, Category = "Script|UBPFuncLib")
+	static bool TryToRegisterScriptAsset(FString ModuleName);
+	UFUNCTION(BlueprintCallable, Category = "Script|UBPFuncLib")
 	static bool TryToBindingScript(UObject* InObject, class UScriptDataAsset *InScriptData);
+
+	//TODO:move to utils category
+	static FString ConvertAnyPathToObjectPath(const FString& AnyAssetPath, FString& OutFailureReason);
+	static bool HasValidRoot(const FString& ObjectPath);
+	static FString RemoveFullName(const FString& AnyAssetPath, FString& OutFailureReason);
+	static bool IsAValidPath(const FString& Path, const TCHAR* InvalidChar, FString& OutFailureReason);
+	//
 };

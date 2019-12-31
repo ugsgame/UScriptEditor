@@ -32,9 +32,9 @@ public:
 	
 protected:
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly,Category = "Script")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category = "Script")
 	class UScriptDataAsset* ScriptData;
 
-	UPROPERTY(BlueprintReadOnly, Transient, Category = "Script")
+	UPROPERTY(BlueprintReadOnly,Transient, Category = "Script")
 	bool HasScriptBinding;
 };

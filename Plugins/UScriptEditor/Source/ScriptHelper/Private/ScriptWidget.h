@@ -16,9 +16,9 @@ protected:
 	virtual bool Initialize() override;
 
 protected:
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Script")
+	UPROPERTY(/*VisibleAnywhere,*/ BlueprintReadOnly, EditDefaultsOnly, Category = "Script")
 	class UScriptDataAsset* ScriptData;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category = "Script")
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Script")
 	bool HasScriptBinding;
 };
 
