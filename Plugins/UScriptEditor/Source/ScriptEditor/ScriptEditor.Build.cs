@@ -56,6 +56,9 @@ namespace UnrealBuildTool.Rules
                     "Lua",
                     "Unlua",
                     "ScriptHelper",
+                    "Sockets",
+                    "Networking",
+                    "ScriptHook",
                 }
 				);
 		}

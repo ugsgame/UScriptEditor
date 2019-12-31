@@ -30,6 +30,11 @@
       "Name": "ScriptParamCollector",
       "Type": "Program",
       "LoadingPhase": "PostConfigInit"
+    },
+    {
+      "Name": "ScriptHook",
+      "Type": "Runtime",
+      "LoadingPhase": "PreDefault"
     }
   ],
   "Plugins": [

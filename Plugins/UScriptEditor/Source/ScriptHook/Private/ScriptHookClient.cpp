@@ -1,228 +1,671 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "UScriptDebuggerSetting.h"
-#include "UnLuaDelegates.h"
+#include "ScriptHookClient.h"
 #include "UnLua.h"
-#include "SScriptDebugger.h"
-#include "UEReflectionUtils.h"
-#include "LuaContext.h"
+#include "UnLuaDelegates.h"
+#include "SocketSubsystem.h"
+#include "Networking/Public/Interfaces/IPv4/IPv4Address.h"
+#include "Sockets.h"
+#include "ScriptHookReceive.h"
+#include "ScriptHookDeal.h"
+#include "ScriptBreakPoints.h"
+#include "ScriptDebugInfo.h"
+#include "ScriptReqStack.h"
+#include "ScriptStackVars.h"
+#include "ScriptReqChild.h"
+#include "ScriptChildVars.h"
+#include "SlateApplication.h"
 #include "GameFramework/Actor.h"
-#include "ScriptEditor.h"
+#include "LuaContext.h"
+#include "UEReflectionUtils.h"
 
+static void debugger_hook_c(lua_State *L, lua_Debug *ar);
 
-UScriptDebuggerSetting* UScriptDebuggerSetting::Get()
+const FString UScriptHookClient::TempVarName(TEXT("(*temporary)"));
+
+const FString UScriptHookClient::SelfName(TEXT("self"));
+
+const FString UScriptHookClient::OverriddenName(TEXT("Overridden"));
+
+const FText UScriptHookClient::UFunctionText = FText::FromString(TEXT("UFunction"));
+
+const FText UScriptHookClient::ClassDescText = FText::FromString(TEXT("ClassDesc"));
+
+const FString UScriptHookClient::SelfLocationName(TEXT("SelfLocation"));
+
+const FString UScriptHookClient::SelfRotatorName(TEXT("SelfRotator"));
+
+const FString UScriptHookClient::SelfScalerName(TEXT("SelfScaler"));
+
+const FString UScriptHookClient::FVectorName(TEXT("FVector"));
+
+const FString UScriptHookClient::FRotatorName(TEXT("FRotator"));
+
+const FString UScriptHookClient::ReturnValueName(TEXT("ReturnValue"));
+
+const FText UScriptHookClient::SelfLocationText = FText::FromString(SelfLocationName);
+
+const FText UScriptHookClient::SelfRotatorText = FText::FromString(SelfRotatorName);
+
+const FText UScriptHookClient::SelfScalerText = FText::FromString(SelfScalerName);
+
+const FText UScriptHookClient::FVectorText = FText::FromString("FVector");
+
+const FText UScriptHookClient::FRotatorText = FText::FromString("FRotator");
+
+const FString UScriptHookClient::ScriptMask(TEXT("/Script/"));
+
+UScriptHookClient* UScriptHookClient::Get()
 {
-	static UScriptDebuggerSetting* Singleton = nullptr;
+	static UScriptHookClient* Singleton = nullptr;
 	if (Singleton == nullptr)
 	{
-		Singleton = NewObject<UScriptDebuggerSetting>();
+		Singleton = NewObject<UScriptHookClient>();
 		Singleton->AddToRoot();
 
-		FUnLuaDelegates::OnObjectBinded.AddUObject(Singleton, &UScriptDebuggerSetting::OnObjectBinded);
+		Singleton->BindDebugState();
+
 	}
 	return Singleton;
 }
 
-void UScriptDebuggerSetting::SetTabIsOpen(bool IsOpen)
+void UScriptHookClient::BindDebugState()
 {
-	bTabIsOpen = IsOpen;
+	if (!RegLuaHandle.IsValid())
+		RegLuaHandle = FUnLuaDelegates::OnLuaStateCreated.AddUObject(this, &UScriptHookClient::RegisterLuaState);
 
-	if (bTabIsOpen)
+	if (!UnRegLuaHandle.IsValid())
+		UnRegLuaHandle = FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(this, &UScriptHookClient::UnRegisterLuaState);
+}
+
+void UScriptHookClient::UnBindDebugState()
+{
+	if (RegLuaHandle.IsValid())
 	{
-		BindDebugState();
+		FUnLuaDelegates::OnLuaStateCreated.Remove(RegLuaHandle);
+		RegLuaHandle.Reset();
 	}
-	else
+
+	if (UnRegLuaHandle.IsValid())
 	{
-		UnBindDebugState();
+		FUnLuaDelegates::OnPostLuaContextCleanup.Remove(UnRegLuaHandle);
+		UnRegLuaHandle.Reset();
+	}
+
+	if (L)
+	{
+		lua_sethook(L, nullptr, 0, 0);
+		L = nullptr;
 	}
 }
 
 
-/********Hook Debug Statement********/
-
-//#define UNLUA_DEBUG
-#ifdef UNLUA_DEBUG
-static unlua_Debug ur;
-#else
-static unlua_State ur;
-#endif // UNLUA_DEBUG
-
-//#define UNFOLD_FUNCTION
-
-const FString UScriptDebuggerSetting::TempVarName(TEXT("(*temporary)"));
-
-const FString UScriptDebuggerSetting::SelfName(TEXT("self"));
-
-const FString UScriptDebuggerSetting::OverriddenName(TEXT("Overridden"));
-
-const FText UScriptDebuggerSetting::UFunctionText = FText::FromString(TEXT("UFunction"));
-
-const FText UScriptDebuggerSetting::ClassDescText = FText::FromString(TEXT("ClassDesc"));
-
-const FString UScriptDebuggerSetting::SelfLocationName(TEXT("SelfLocation"));
-
-const FString UScriptDebuggerSetting::SelfRotatorName(TEXT("SelfRotator"));
-
-const FString UScriptDebuggerSetting::SelfScalerName(TEXT("SelfScaler"));
-
-const FString UScriptDebuggerSetting::FVectorName(TEXT("FVector"));
-
-const FString UScriptDebuggerSetting::FRotatorName(TEXT("FRotator"));
-
-const FString UScriptDebuggerSetting::ReturnValueName(TEXT("ReturnValue"));
-
-const FText UScriptDebuggerSetting::SelfLocationText = FText::FromString(SelfLocationName);
-
-const FText UScriptDebuggerSetting::SelfRotatorText = FText::FromString(SelfRotatorName);
-
-const FText UScriptDebuggerSetting::SelfScalerText = FText::FromString(SelfScalerName);
-
-const FText UScriptDebuggerSetting::FVectorText = FText::FromString("FVector");
-
-const FText UScriptDebuggerSetting::FRotatorText = FText::FromString("FRotator");
-
-static void debugger_hook_c(lua_State *L, lua_Debug *ar);
-
-/********Hook Debug Statement********/
-
-void UScriptDebuggerSetting::RegisterLuaState(lua_State* State)
+void UScriptHookClient::RegisterLuaState(lua_State* State)
 {
 	L = State;
 
-#if 0
+	hook_mode = EHookMode::H_Continue;
 
-	UE_LOG(LogTemp, Log, TEXT("unlua_Debug RegisterLuaState"));
-
-	lua_sethook(L, debugger_hook_c, LUA_MASKCALL | LUA_MASKRET | LUA_MASKLINE, 0);
-
-#else
-	if (FScriptEditor::Get()->EnableBreakPoint.Num() > 0)
+	const FString IPStr("127.0.0.1");
+	if (FIPv4Address::Parse(IPStr, ServerIp))
 	{
-		//Bind Lua Hook
-		lua_sethook(L, debugger_hook_c, LUA_MASKCALL | LUA_MASKRET | LUA_MASKLINE, 0);
 
-#ifdef UNLUA_DEBUG
-		for (TMap<FString, TSet<int32>>::TIterator It(FScriptEditor::Get()->EnableBreakPoint); It; ++It)
+		//craete client
+		ServerAddr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
+		ServerAddr->SetIp(ServerIp.Value);
+		ServerAddr->SetPort(8890);
+
+		HostSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, TEXT("HostSocket"), false);
+
+		if (HostSocket->Connect(*ServerAddr))
+		{
+			UE_LOG(LogTemp, Log, TEXT("Remote HostSocket Connect Succeed"));
+
+			//open receive thread
+			HookReceiveThread = FRunnableThread::Create(new FHookReceiveThread(), TEXT("HookReceiveThread"));
+
+			//stop game and wait server to call
+			FSlateApplication::Get().EnterDebuggingMode();
+
+		}
+		else
+		{
+			UE_LOG(LogTemp, Log, TEXT("Remote HostSocket Connect Failed"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("Remote Parse IPStr Error %s"), *IPStr);
+	}
+}
+
+void UScriptHookClient::UnRegisterLuaState(bool bFullCleanup)
+{
+	//tell hook server to exit client
+	SendClientExit();
+
+	if (L == nullptr)
+		return;
+
+	lua_sethook(L, nullptr, 0, 0);
+
+	if (bFullCleanup)
+		L = nullptr;
+
+	//destroy TickDelete
+	if (TickerHandle.IsValid())
+	{
+		FTicker::GetCoreTicker().RemoveTicker(TickerHandle);
+	}
+	//destroy receive thread
+	if (HookReceiveThread)
+	{
+		HookReceiveThread->Kill(true);
+		delete HookReceiveThread;
+		HookReceiveThread = nullptr;
+	}
+	//destroy client
+	if (HostSocket)
+	{
+		HostSocket->Close();
+		ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(HostSocket);
+		HostSocket = nullptr;
+	}
+
+}
+
+
+bool UScriptHookClient::HookReceiveListener()
+{
+	//UE_LOG(LogTemp, Log, TEXT("Remote HookReceiveListener"));
+
+	if (!HostSocket)
+		return true;
+
+	//Binary Array!
+	TArray<uint8> ReceivedData;
+
+	uint32 Size;
+	while (HostSocket->HasPendingData(Size))
+	{
+		ReceivedData.Init(0, FMath::Min(Size, 65507u));
+
+		int32 BytesRead = 0;
+		HostSocket->Recv(ReceivedData.GetData(), ReceivedData.Num(), BytesRead);
+
+		flatbuffers::FlatBufferBuilder HookDealBuilder;
+		HookDealBuilder.PushBytes(ReceivedData.GetData(), BytesRead);
+		flatbuffers::Verifier HookDealVerifier(HookDealBuilder.GetCurrentBufferPointer(), HookDealBuilder.GetSize());
+		if (!NScriptHook::VerifyFHookDealBuffer(HookDealVerifier))
+		{
+			UE_LOG(LogTemp, Log, TEXT("Remote HookDealVerifier failed"));
+			continue;
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("Remote ReceiveData [%d]"), BytesRead);
+
+		auto HookDeal = NScriptHook::GetFHookDeal(HookDealBuilder.GetCurrentBufferPointer());
+
+		switch (HookDeal->DealOrder())
+		{
+		case EDealOrder::O_Default:
+			break;
+		case EDealOrder::O_InitData:
+			ReceInitData(HookDeal->DealData()->Data(), HookDeal->DealData()->size());
+			break;
+		case EDealOrder::O_BreakPoints:
+			ReceBreakPoints(HookDeal->DealData()->Data(), HookDeal->DealData()->size());
+			break;
+		case EDealOrder::O_ReqStack:
+			ReceReqStack(HookDeal->DealData()->Data(), HookDeal->DealData()->size());
+			break;
+		case EDealOrder::O_ReqChild:
+			ReceReqChild(HookDeal->DealData()->Data(), HookDeal->DealData()->size());
+			break;
+		case EDealOrder::O_Continue:
+			ReceContinue();
+			break;
+		case EDealOrder::O_StepIn:
+			ReceStepIn();
+			break;
+		case EDealOrder::O_StepOver:
+			ReceStepOver();
+			break;
+		case EDealOrder::O_StepOut:
+			ReceStepOut();
+			break;
+		}
+
+		//delete HookDeal;
+	}
+
+	return false;
+}
+
+
+bool UScriptHookClient::HasBreakPoint(FString FilePath, int32 Line)
+{
+	FString FileName = FPaths::GetCleanFilename(FilePath);
+
+	for (TMap<FString, TSet<int32>>::TIterator It(EnableBreakPoint); It; ++It)
+	{
+		if (FPaths::GetCleanFilename(It->Key).Equals(FileName))
+		{
+			if (It->Value.Contains(Line))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+
+FString UScriptHookClient::StringFromBinaryArray(TArray<uint8>& BinaryArray)
+{
+	BinaryArray.Add(0); // Add 0 termination. Even if the string is already 0-terminated, it doesn't change the results.
+	// Create a string from a byte array. The string is expected to be 0 terminated (i.e. a byte set to 0).
+	// Use UTF8_TO_TCHAR if needed.
+	// If you happen to know the data is UTF-16 (USC2) formatted, you do not need any conversion to begin with.
+	// Otherwise you might have to write your own conversion algorithm to convert between multilingual UTF-16 planes.
+	return FString(ANSI_TO_TCHAR(reinterpret_cast<const char*>(BinaryArray.GetData())));
+}
+
+void UScriptHookClient::ReceInitData(const uint8* BinaryPointer, uint32_t BinarySize)
+{
+	UE_LOG(LogTemp, Log, TEXT("Remote ReceInitData"));
+
+	ReceBreakPoints(BinaryPointer, BinarySize);
+
+	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
+	{
+		// run game and bind tick
+		FSlateApplication::Get().LeaveDebuggingMode();
+	}, TStatId(), NULL, ENamedThreads::GameThread);
+}
+
+void UScriptHookClient::ReceBreakPoints(const uint8* BinaryPointer, uint32_t BinarySize)
+{
+	UE_LOG(LogTemp, Log, TEXT("Remote ReceBreakPoints"));
+
+	flatbuffers::FlatBufferBuilder BreakPointsBuilder;
+	BreakPointsBuilder.PushBytes(BinaryPointer, BinarySize);
+
+	flatbuffers::Verifier BreakPointsVerifier(BreakPointsBuilder.GetCurrentBufferPointer(), BreakPointsBuilder.GetSize());
+	if (!NScriptHook::VerifyFBreakPointsBuffer(BreakPointsVerifier))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Remote ReceBreakPoints Verifier failed"));
+		return;
+	}
+
+	auto BreakPoints = NScriptHook::GetFBreakPoints(BreakPointsBuilder.GetCurrentBufferPointer());
+
+	//lock BreakPoints and L
+	FScopeLock* QueueLock = new FScopeLock(&QueueCritical);
+	if (BreakPoints->Group()->Length() > 0)
+	{
+		if (HostScriptPath.IsEmpty())
+		{
+			FString TempStr;
+			FString FullPath = ((*BreakPoints->Group())[0]->FilePath()->c_str());
+			FullPath.Split(ScriptMask, &HostScriptPath, &TempStr);
+			HostScriptPath = FPaths::Combine(HostScriptPath, ScriptMask);
+
+			//UE_LOG(LogTemp, Log, TEXT("Remote HostScriptPath %s"), *HostScriptPath);
+		}
+
+		EnableBreakPoint.Empty();
+		for (auto BreakPoint : *BreakPoints->Group())
+		{
+			TSet<int32>& Lines = EnableBreakPoint.Add(BreakPoint->FilePath()->c_str());
+			for (flatbuffers::uoffset_t i = 0; i < BreakPoint->Lines()->Length(); ++i)
+			{
+				Lines.Add(BreakPoint->Lines()->Get(i));
+			}
+		}
+
+		//check Lua Hook Exit and bind hook
+		if (L && lua_gethook(L) == nullptr)
+			lua_sethook(L, debugger_hook_c, LUA_MASKCALL | LUA_MASKRET | LUA_MASKLINE, 0);
+#if 0
+		for (TMap<FString, TSet<int32>>::TIterator It(EnableBreakPoint); It; ++It)
 		{
 			for (auto Line : It->Value)
 			{
-				UE_LOG(LogTemp, Log, TEXT("unlua_Debug BreakPoints file[%s] line[%i]"), *It->Key, Line);
-			}
-		}
+				UE_LOG(LogTemp, Log, TEXT("Remote SyncBreakPoints Line[%d] FilePath[%s]"), Line, *It->Key);
+	}
+}
 #endif
 	}
-#endif
+	else
+	{
+		//check Lua Hook Exit and unbind hook
+		if (L && lua_gethook(L))
+			lua_sethook(L, nullptr, 0, 0);
+	}
+	//unlock BreakPoints and L
+	delete QueueLock;
+
+	//delete BreakPoints;
+}
+
+
+void UScriptHookClient::ReceContinue()
+{
+	if (L == nullptr)
+		return;
 
 	hook_mode = EHookMode::H_Continue;
 
-	//empty ScriptPromptGroup
-	ScriptPromptGroup.Empty();
-
-#if 0
-
-	FString ThirdPersonGameModeName(TEXT("ThirdPersonGameMode"));
-	FString ThirdPersonCharacterName(TEXT("ThirdPersonCharacter"));
-
-	for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
+	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
 	{
-		UClass* Class = *ClassIt;
+		FSlateApplication::Get().LeaveDebuggingMode();
+	}, TStatId(), NULL, ENamedThreads::GameThread);
+}
 
-		UE_LOG(LogTemp, Log, TEXT("Iter Type[%d] Class[%s]"), Class->ClassFlags, *Class->GetName());
+void UScriptHookClient::ReceStepOver()
+{
+	if (L == nullptr)
+		return;
 
-		if (Class->GetName().Contains(ThirdPersonGameModeName) || Class->GetName().Contains(ThirdPersonCharacterName))
+	u_over.Reset();
+	hook_mode = EHookMode::H_StepOver;
+	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
+	{
+		FSlateApplication::Get().LeaveDebuggingMode();
+	}, TStatId(), NULL, ENamedThreads::GameThread);
+}
+
+void UScriptHookClient::ReceStepIn()
+{
+	if (L == nullptr)
+		return;
+
+	hook_mode = EHookMode::H_StepIn;
+	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
+	{
+		FSlateApplication::Get().LeaveDebuggingMode();
+	}, TStatId(), NULL, ENamedThreads::GameThread);
+}
+
+void UScriptHookClient::ReceStepOut()
+{
+	if (L == nullptr)
+		return;
+
+	u_out.Reset();
+	hook_mode = EHookMode::H_StepOut;
+	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
+	{
+		FSlateApplication::Get().LeaveDebuggingMode();
+	}, TStatId(), NULL, ENamedThreads::GameThread);
+}
+
+void UScriptHookClient::ReceReqStack(const uint8* BinaryPointer, uint32_t BinarySize)
+{
+	UE_LOG(LogTemp, Log, TEXT("Remote ReceReqStack"));
+
+	flatbuffers::FlatBufferBuilder ReqStackBuilder;
+	ReqStackBuilder.PushBytes(BinaryPointer, BinarySize);
+
+	flatbuffers::Verifier ReqStackVerifier(ReqStackBuilder.GetCurrentBufferPointer(), ReqStackBuilder.GetSize());
+	if (!NScriptHook::VerifyFReqStackBuffer(ReqStackVerifier))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Remote ReceReqStack Verifier failed"));
+		return;
+	}
+
+	auto ReqStack = NScriptHook::GetFReqStack(ReqStackBuilder.GetCurrentBufferPointer());
+
+	GetStackVars(ReqStack->StackIndex());
+
+	flatbuffers::FlatBufferBuilder StackVarsBuilder;
+	std::vector<flatbuffers::Offset<NScriptHook::FVarNode>> VarParentList;
+	int i = 0;
+	for (auto VarParent : VarList)
+	{
+		VarParent->NodeMask.Add(i);
+
+		std::vector<flatbuffers::Offset<NScriptHook::FVarNode>> VarChildrenList;
+		int j = 0;
+		for (TMap<FString, TSharedRef<FScriptDebuggerVarNode>>::TIterator VarChild(VarParent->NodeChildren); VarChild; ++VarChild)
 		{
+			VarChild->Value->NodeMask.Add(i);
+			VarChild->Value->NodeMask.Add(j);
 
-			//get function
-			for (TFieldIterator<UFunction> FunIt(Class); FunIt; ++FunIt)
+			std::vector<int32> NodeChildMask;
+			NodeChildMask.push_back(i);
+			NodeChildMask.push_back(j);
+
+			auto VarChildNode = NScriptHook::CreateFVarNode(StackVarsBuilder, StackVarsBuilder.CreateVector(NodeChildMask), StackVarsBuilder.CreateString(TCHAR_TO_UTF8(*VarChild->Value->VarName.ToString())), StackVarsBuilder.CreateString(TCHAR_TO_UTF8(*VarChild->Value->VarValue.ToString())), StackVarsBuilder.CreateString(TCHAR_TO_UTF8(*VarChild->Value->VarType.ToString())));
+
+			VarChildrenList.push_back(VarChildNode);
+
+			j++;
+		}
+		std::vector<int32> NodeParentMask;
+		NodeParentMask.push_back(i);
+		auto VarParentNode = NScriptHook::CreateFVarNode(StackVarsBuilder, StackVarsBuilder.CreateVector(NodeParentMask), StackVarsBuilder.CreateString(TCHAR_TO_UTF8(*VarParent->VarName.ToString())), StackVarsBuilder.CreateString(TCHAR_TO_UTF8(*VarParent->VarValue.ToString())), StackVarsBuilder.CreateString(TCHAR_TO_UTF8(*VarParent->VarType.ToString())), StackVarsBuilder.CreateVector(VarChildrenList));
+
+		VarParentList.push_back(VarParentNode);
+
+		i++;
+	}
+
+	auto StackVars = NScriptHook::CreateFStackVars(StackVarsBuilder, StackVarsBuilder.CreateVector(VarParentList));
+	StackVarsBuilder.Finish(StackVars);
+
+	flatbuffers::FlatBufferBuilder HookDealBuilder;
+	auto HookDeal = NScriptHook::CreateFHookDeal(HookDealBuilder, EDealOrder::O_StackVars, HookDealBuilder.CreateVector(StackVarsBuilder.GetBufferPointer(), StackVarsBuilder.GetSize()));
+	HookDealBuilder.Finish(HookDeal);
+
+	int32 ByteSent = 0;
+	HostSocket->Send(HookDealBuilder.GetBufferPointer(), HookDealBuilder.GetSize(), ByteSent);
+
+	UE_LOG(LogTemp, Log, TEXT("Remote SendStackVars SendData [%d]"), HookDealBuilder.GetSize());
+}
+
+void UScriptHookClient::ReceReqChild(const uint8* BinaryPointer, uint32_t BinarySize)
+{
+	UE_LOG(LogTemp, Log, TEXT("Remote ReceReqChild"));
+
+	flatbuffers::FlatBufferBuilder ReqChildBuilder;
+	ReqChildBuilder.PushBytes(BinaryPointer, BinarySize);
+
+	flatbuffers::Verifier ReqChildVerifier(ReqChildBuilder.GetCurrentBufferPointer(), ReqChildBuilder.GetSize());
+	if (!NScriptHook::VerifyFReqChildBuffer(ReqChildVerifier))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Remote ReceReqChild Verifier failed"));
+		return;
+	}
+
+	auto ReqChild = NScriptHook::GetFReqChild(ReqChildBuilder.GetCurrentBufferPointer());
+
+	FString NodeMaskStr;
+	for (auto NodeIndex : *ReqChild->NodeMask())
+	{
+		NodeMaskStr += FString::Printf(TEXT(" --> %d"), NodeIndex);
+	}
+	//UE_LOG(LogTemp, Log, TEXT("Remote NodeMask [%s]"), *NodeMaskStr);
+
+	std::vector<int32> NodeParentMask;
+	NodeParentMask.push_back((*ReqChild->NodeMask())[0]);
+	//get the node
+	FScriptDebuggerVarNode_Ref ParentNode = VarList[(*ReqChild->NodeMask())[0]];
+	uint32 i = 1;
+	while (i < ReqChild->NodeMask()->size())
+	{
+		TArray<FScriptDebuggerVarNode_Ref> ChildNodes;
+		ParentNode->NodeChildren.GenerateValueArray(ChildNodes);
+		if ((*ReqChild->NodeMask())[i] >= ChildNodes.Num())
+			return;
+		ParentNode = ChildNodes[(*ReqChild->NodeMask())[i]];
+		NodeParentMask.push_back((*ReqChild->NodeMask())[i]);
+
+		i++;
+	}
+
+	//get node children
+	GetVarsChildren(ParentNode.Get());
+
+	//Send ChildVars
+	flatbuffers::FlatBufferBuilder ChildVarsBuilder;
+
+	std::vector<flatbuffers::Offset<NScriptHook::FVarNode>> VarChildrenList;
+	int j = 0;
+	for (TMap<FString, TSharedRef<FScriptDebuggerVarNode>>::TIterator VarChild(ParentNode->NodeChildren); VarChild; ++VarChild)
+	{
+		VarChild->Value->NodeMask.Reset();
+		VarChild->Value->NodeMask.Append(ParentNode->NodeMask);
+		VarChild->Value->NodeMask.Add(j);
+
+		std::vector<int32> NodeChildMask;
+		NodeChildMask.reserve(ReqChild->NodeMask()->size() + 1);
+		NodeChildMask.insert(NodeChildMask.end(), ReqChild->NodeMask()->begin(), ReqChild->NodeMask()->end());
+		NodeChildMask.push_back(j);
+
+		auto VarChildNode = NScriptHook::CreateFVarNode(ChildVarsBuilder, ChildVarsBuilder.CreateVector(NodeChildMask), ChildVarsBuilder.CreateString(TCHAR_TO_UTF8(*VarChild->Value->VarName.ToString())), ChildVarsBuilder.CreateString(TCHAR_TO_UTF8(*VarChild->Value->VarValue.ToString())), ChildVarsBuilder.CreateString(TCHAR_TO_UTF8(*VarChild->Value->VarType.ToString())));
+
+		VarChildrenList.push_back(VarChildNode);
+
+		//UE_LOG(LogTemp, Log, TEXT("Remote ParentVar [%s] ChildVars [%s]"), *ParentNode->ToString(), *VarChild->Value->ToString());
+
+		j++;
+	}
+
+	auto ChildVars = NScriptHook::CreateFChildVars(ChildVarsBuilder, ChildVarsBuilder.CreateVector(NodeParentMask), ChildVarsBuilder.CreateVector(VarChildrenList));
+	ChildVarsBuilder.Finish(ChildVars);
+
+	flatbuffers::FlatBufferBuilder HookDealBuilder;
+	auto HookDeal = NScriptHook::CreateFHookDeal(HookDealBuilder, EDealOrder::O_ChildVars, HookDealBuilder.CreateVector(ChildVarsBuilder.GetBufferPointer(), ChildVarsBuilder.GetSize()));
+	HookDealBuilder.Finish(HookDeal);
+
+	int32 ByteSent = 0;
+	HostSocket->Send(HookDealBuilder.GetBufferPointer(), HookDealBuilder.GetSize(), ByteSent);
+
+	UE_LOG(LogTemp, Log, TEXT("Remote SendChildVars SendData [%d]"), HookDealBuilder.GetSize());
+}
+
+void UScriptHookClient::GetStackVars(int32 StackIndex)
+{
+	VarList.Reset();
+
+	FScriptDebuggerVarNode_Ref LocalNode = MakeShareable(new FScriptDebuggerVarNode);
+	LocalNode->NodeType = EScriptVarNodeType::V_Local;
+	LocalNode->StackLevel = StackIndex;
+	LocalNode->VarName = FText::FromString("Local");
+
+	FScriptDebuggerVarNode_Ref UpValueNode = MakeShareable(new FScriptDebuggerVarNode);
+	UpValueNode->NodeType = EScriptVarNodeType::V_UpValue;
+	UpValueNode->StackLevel = StackIndex;
+	UpValueNode->VarName = FText::FromString("UpValue");
+
+	FScriptDebuggerVarNode_Ref GlobalNode = MakeShareable(new FScriptDebuggerVarNode);
+	GlobalNode->NodeType = EScriptVarNodeType::V_Global;
+	GlobalNode->StackLevel = StackIndex;
+	GlobalNode->VarName = FText::FromString("Global");
+
+	VarList.Add(LocalNode);
+	VarList.Add(UpValueNode);
+	VarList.Add(GlobalNode);
+
+	// try to get ueobject
+	lua_Debug ar;
+	if (lua_getstack(L, StackIndex, &ar) != 0)
+	{
+		int i = 1;
+		const char* VarName;
+		int32 KindType = -1;
+		while ((VarName = lua_getlocal(L, &ar, i)) != NULL)
+		{
+			// if get the self table
+			if (SelfName.Equals(UTF8_TO_TCHAR(VarName)))
 			{
-				UFunction* Function = *FunIt;
+				KindType = lua_type(L, -1);
+				if (KindType == LUA_TTABLE)
+				{
+					lua_pushstring(L, "Object");
+					lua_rawget(L, -2);
 
-				UE_LOG(LogTemp, Log, TEXT("Iter Class[%s] Func[%s]"), *Class->GetName(), *Function->GetName());
+					if (lua_isuserdata(L, -1))
+					{
+						void* Userdata = lua_touserdata(L, -1);
 
+						UEObject = (UObject*)*((void**)Userdata);
+
+						if (UEObject)
+						{
+
+							// get matetable form userdate
+							lua_getmetatable(L, -1);
+
+							lua_pushstring(L, "ClassDesc");
+							lua_rawget(L, -2);
+							KindType = lua_type(L, -1);
+
+							//makesure ClassDesc is lightuserdata
+							if (lua_islightuserdata(L, -1))
+							{
+								void* UserData = lua_touserdata(L, -1);
+								UEClassDesc = (FClassDesc*)UserData;
+
+								if (UEClassDesc)
+								{
+									FScriptDebuggerVarNode_Ref UEObjectNode = MakeShareable(new FScriptDebuggerVarNode);
+									UEObjectNode->NodeType = EScriptVarNodeType::V_UEObject;
+									UEObjectNode->KindType = (int32)EScriptUEKindType::T_UEObject;
+									UEObjectNode->VarPtr = (void*)UEObject;
+									UEObjectNode->VarName = FText::FromString(UEObject->GetName());
+
+									VarList.Add(UEObjectNode);
+								}
+							}
+							lua_pop(L, 2);
+						}
+					}
+					lua_pop(L, 1);
+				}
+				lua_pop(L, 1);
+				break;
 			}
+			lua_pop(L, 1);
+			i++;
 		}
 	}
 
-#endif
-
+	//iter Varlist and get their children
+	for (auto VarNode : VarList)
+	{
+		GetVarsChildren(*VarNode);
+	}
 }
 
-void UScriptDebuggerSetting::UnRegisterLuaState(bool bFullCleanup)
+void UScriptHookClient::GetVarsChildren(FScriptDebuggerVarNode& InNode)
 {
-#ifdef UNLUA_DEBUG
-	if (bFullCleanup)
+	if (InNode.NodeType == EScriptVarNodeType::V_UEObject)
 	{
-		UE_LOG(LogTemp, Log, TEXT("unlua_Debug UnRegisterLuaState FullCleanup"));
+		UEObjectListen(InNode);
+		return;
 	}
-	else
-		UE_LOG(LogTemp, Log, TEXT("unlua_Debug UnRegisterLuaState Not FullCleanup"));
-#endif
 
-	if (L == NULL)
+	if (InNode.NameList.Num() > 0 && InNode.KindType != LUA_TTABLE)
 		return;
 
-	lua_sethook(L, NULL, 0, 0);
-	// Clear Debug Info
-	SScriptDebugger::Get()->CleanDebugInfo();
-
-	if (bFullCleanup)
+	switch (InNode.NodeType)
 	{
-		hook_mode = EHookMode::H_Continue;
-		L = NULL;
+	case EScriptVarNodeType::V_Local:
+		LocalListen(InNode);
+		break;
+	case EScriptVarNodeType::V_UpValue:
+		UpvalueListen(InNode);
+		break;
+	case EScriptVarNodeType::V_Global:
+		GlobalListen(InNode);
+		break;
 	}
-
-
-	ScriptPromptArray.Empty();
-
-	for (TMap<FString, TMap<FString, FScriptPromptNode>>::TIterator It(ScriptPromptGroup); It; ++It)
-	{
-		/*for (TMap<FString, FScriptPromptNode>::TIterator Ih(It->Value); Ih; ++Ih)
-		{
-			UE_LOG(LogTemp, Log, TEXT("Prompt key[%s] func[%s] value[%s]"), *It->Key, *Ih->Key , *Ih->Value.ToString());
-		}*/
-
-		TArray<FScriptPromptNode> TempArray;
-
-		It->Value.GenerateValueArray(TempArray);
-
-		ScriptPromptArray.Append(TempArray);
-	}
-
-#if 0
-	//for(auto Item : ScriptPromptArray)
-	//	UE_LOG(LogTemp, Log, TEXT("Prompt [%s]"), *Item.ToString());
-
-	FLuaContext* LuaContext = FLuaContext::Create();
-
-	TMap<FName, UnLua::IExportedClass*> ExportedReflectedClasses = LuaContext->GetExportedReflectedClasses();
-	TMap<FName, UnLua::IExportedClass*> ExportedNonReflectedClasses = LuaContext->GetExportedNonReflectedClasses();
-	TArray<UnLua::IExportedEnum*> ExportedEnums = LuaContext->GetExportedEnums();
-	TArray<UnLua::IExportedFunction*> ExportedFunctions = LuaContext->GetExportedFunctions();
-
-	for (TMap<FName, UnLua::IExportedClass*>::TIterator It(ExportedReflectedClasses); It; ++It)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Prompt ReClass [%s] [%s]"), *It->Key.ToString(), *It->Value->GetName().ToString());
-	}
-
-	for (TMap<FName, UnLua::IExportedClass*>::TIterator It(ExportedNonReflectedClasses); It; ++It)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Prompt NoReClass [%s] [%s]"), *It->Key.ToString(), *It->Value->GetName().ToString());
-	}
-
-	for (auto Item : ExportedEnums)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Prompt Enum [%s]"), *Item->GetName());
-	}
-
-	for (auto Item : ExportedFunctions)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Prompt Func [%s]"), *Item->GetName());
-	}
-#endif
-
 }
 
-bool UScriptDebuggerSetting::NameTranslate(int32 KindType, FString& VarName, int32 StackIndex)
+bool UScriptHookClient::NameTranslate(int32 KindType, FString& VarName, int32 StackIndex)
 {
 	switch (KindType)
 	{
@@ -236,7 +679,7 @@ bool UScriptDebuggerSetting::NameTranslate(int32 KindType, FString& VarName, int
 	return false;
 }
 
-void UScriptDebuggerSetting::ValueTranslate(int32 KindType, FString& VarValue, FString& VarType, int32 StackIndex)
+void UScriptHookClient::ValueTranslate(int32 KindType, FString& VarValue, FString& VarType, int32 StackIndex)
 {
 	VarValue.Empty();
 	switch (KindType)
@@ -288,7 +731,7 @@ void UScriptDebuggerSetting::ValueTranslate(int32 KindType, FString& VarValue, F
 	}
 }
 
-void UScriptDebuggerSetting::IteraionTable(FScriptDebuggerVarNode& InNode, int32 NameIndex)
+void UScriptHookClient::IteraionTable(FScriptDebuggerVarNode& InNode, int32 NameIndex)
 {
 	FString VarName;
 	FString VarValue;
@@ -361,7 +804,7 @@ void UScriptDebuggerSetting::IteraionTable(FScriptDebuggerVarNode& InNode, int32
 	lua_pop(L, 1);
 }
 
-void UScriptDebuggerSetting::LocalListen(FScriptDebuggerVarNode& InNode)
+void UScriptHookClient::LocalListen(FScriptDebuggerVarNode& InNode)
 {
 	//Get Local Vars
 	lua_Debug ar;
@@ -420,7 +863,7 @@ void UScriptDebuggerSetting::LocalListen(FScriptDebuggerVarNode& InNode)
 	}
 }
 
-void UScriptDebuggerSetting::UpvalueListen(FScriptDebuggerVarNode& InNode)
+void UScriptHookClient::UpvalueListen(FScriptDebuggerVarNode& InNode)
 {
 	int i = 1;
 	const char* VarName;
@@ -474,7 +917,7 @@ void UScriptDebuggerSetting::UpvalueListen(FScriptDebuggerVarNode& InNode)
 	}
 }
 
-void UScriptDebuggerSetting::GlobalListen(FScriptDebuggerVarNode& InNode)
+void UScriptHookClient::GlobalListen(FScriptDebuggerVarNode& InNode)
 {
 	lua_pushglobaltable(L);
 	lua_pushnil(L);
@@ -531,7 +974,7 @@ void UScriptDebuggerSetting::GlobalListen(FScriptDebuggerVarNode& InNode)
 	lua_pop(L, 1);
 }
 
-bool UScriptDebuggerSetting::PropertyTranslate(FString& VarValue, FString& VarType, int32& KindType, void*& VarPtr, UProperty* Property, UObject* Object)
+bool UScriptHookClient::PropertyTranslate(FString& VarValue, FString& VarType, int32& KindType, void*& VarPtr, UProperty* Property, UObject* Object)
 {
 	//reset data
 	VarValue.Empty();
@@ -666,7 +1109,7 @@ bool UScriptDebuggerSetting::PropertyTranslate(FString& VarValue, FString& VarTy
 }
 
 // UEObjectListen get Object Info by FClassDesc
-void UScriptDebuggerSetting::UEObjectListen(FScriptDebuggerVarNode& InNode)
+void UScriptHookClient::UEObjectListen(FScriptDebuggerVarNode& InNode)
 {
 	int32 LoopIndex = 0;
 	FString VarName;
@@ -1158,270 +1601,120 @@ void UScriptDebuggerSetting::UEObjectListen(FScriptDebuggerVarNode& InNode)
 	}
 }
 
-void UScriptDebuggerSetting::BindDebugState()
+void UScriptHookClient::SendEnterDebug(FString FilePath, int32 Line)
 {
-	if (!RegLuaHandle.IsValid())
-		RegLuaHandle = FUnLuaDelegates::OnLuaStateCreated.AddUObject(this, &UScriptDebuggerSetting::RegisterLuaState);
+	if (!HostSocket)
+		return;
 
-	if (!UnRegLuaHandle.IsValid())
-		UnRegLuaHandle = FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(this, &UScriptDebuggerSetting::UnRegisterLuaState);
-}
+	flatbuffers::FlatBufferBuilder DebugInfoBuilder;
+	std::vector<flatbuffers::Offset<NScriptHook::FStackNode>> StackNodeList;
 
-void UScriptDebuggerSetting::UnBindDebugState()
-{
-	if (RegLuaHandle.IsValid())
-	{
-		FUnLuaDelegates::OnLuaStateCreated.Remove(RegLuaHandle);
-		RegLuaHandle.Reset();
-	}
-
-	if (UnRegLuaHandle.IsValid())
-	{
-		FUnLuaDelegates::OnPostLuaContextCleanup.Remove(UnRegLuaHandle);
-		UnRegLuaHandle.Reset();
-	}
-
-	if (L)
-	{
-		lua_sethook(L, NULL, 0, 0);
-		L = NULL;
-	}
-}
-
-void UScriptDebuggerSetting::OnObjectBinded(UObjectBaseUtility* InObject)
-{
-	FString FuncPath;
-	FString FuncName;
-	FString ClassName;
-	FString TempStr;
-
-	for (TFieldIterator<UFunction> FunIt(InObject->GetClass()); FunIt; ++FunIt)
-	{
-		UFunction* Function = *FunIt;
-
-		Function->GetPathName().Split(":", &FuncPath, &FuncName);
-
-		if (ScriptPromptGroup.FindOrAdd(ClassName).Contains(FuncName))
-		{
-			continue;
-		}
-
-		FuncPath.Split(".", &TempStr, &ClassName);
-
-		FString ProName;
-		FString ProType;
-
-		FString CodeClip = FString::Printf(TEXT("%s("), *FuncName);
-		FString ToolTip = FString::Printf(TEXT("(*%s)("), *FuncName);
-
-		bool HasReturn = false;
-
-		//iter function var
-		for (TFieldIterator<UProperty> ProIt(Function); ProIt; ++ProIt)
-		{
-			UProperty* Property = *ProIt;
-
-			ProName = Property->GetNameCPP();
-			ProType = Property->GetCPPType();
-
-			if (!ProName.Equals(ReturnValueName))
-			{
-				CodeClip += FString::Printf(TEXT("%s, "), *ProName);
-				ToolTip += FString::Printf(TEXT("%s, "), *ProType);
-			}
-			else
-			{
-				ToolTip = FString::Printf(TEXT("%s%s"), *ProType, *ToolTip);
-				HasReturn = true;
-			}
-		}
-
-		CodeClip.RemoveFromEnd(TEXT(", "));
-		CodeClip += TEXT(")");
-
-		ToolTip.RemoveFromEnd(TEXT(", "));
-		ToolTip += TEXT(")");
-
-		if (!HasReturn)
-			ToolTip = FString::Printf(TEXT("void%s"), *ToolTip);
-
-		ScriptPromptGroup.FindOrAdd(ClassName).Add(FuncName, FScriptPromptNode(ClassName, FuncName, ToolTip, CodeClip));
-	}
-}
-
-void UScriptDebuggerSetting::EnterDebug(const FString& LuaFilePath, int32 Line)
-{
-
-	//Collect Stack Info
-	TArray<TTuple<int32, int32, FString, FString>> StackInfos;
+	// get stack info
 	int i = 0;
 	lua_Debug ar;
 	while (lua_getstack(L, i, &ar) != 0 && i < 10)
 	{
 		if (lua_getinfo(L, "Snl", &ar) != 0)
 		{
-			TTuple<int32, int32, FString, FString> StackItem(i, ar.currentline, UTF8_TO_TCHAR(++ar.source), UTF8_TO_TCHAR(ar.name));
-			StackInfos.Add(StackItem);
+			FString StackFilePath(UTF8_TO_TCHAR(++ar.source));
+			FString StackFuncInfo(UTF8_TO_TCHAR(ar.name));
+			auto StackNode = NScriptHook::CreateFStackNode(DebugInfoBuilder, i, ar.currentline, DebugInfoBuilder.CreateString(TCHAR_TO_UTF8(*StackFilePath)), DebugInfoBuilder.CreateString(TCHAR_TO_UTF8(*StackFuncInfo)));
+			StackNodeList.push_back(StackNode);
 		}
 		i++;
 	}
-	SScriptDebugger::Get()->SetStackData(StackInfos);
 
-	SScriptDebugger::Get()->EnterDebug(LuaFilePath, Line);
-}
+	// get StackIndex 0 Var info
+	GetStackVars(0);
 
-void UScriptDebuggerSetting::GetStackVars(int32 StackIndex, TArray<FScriptDebuggerVarNode_Ref>& Vars)
-{
-
-	FScriptDebuggerVarNode_Ref LocalNode = MakeShareable(new FScriptDebuggerVarNode);
-	LocalNode->NodeType = EScriptVarNodeType::V_Local;
-	LocalNode->StackLevel = StackIndex;
-	LocalNode->VarName = FText::FromString("Local");
-
-	FScriptDebuggerVarNode_Ref UpValueNode = MakeShareable(new FScriptDebuggerVarNode);
-	UpValueNode->NodeType = EScriptVarNodeType::V_UpValue;
-	UpValueNode->StackLevel = StackIndex;
-	UpValueNode->VarName = FText::FromString("UpValue");
-
-	FScriptDebuggerVarNode_Ref GlobalNode = MakeShareable(new FScriptDebuggerVarNode);
-	GlobalNode->NodeType = EScriptVarNodeType::V_Global;
-	GlobalNode->StackLevel = StackIndex;
-	GlobalNode->VarName = FText::FromString("Global");
-
-	Vars.Add(LocalNode);
-	Vars.Add(UpValueNode);
-	Vars.Add(GlobalNode);
-
-	// try to get ueobject
-	lua_Debug ar;
-	if (lua_getstack(L, StackIndex, &ar) != 0)
+	std::vector<flatbuffers::Offset<NScriptHook::FVarNode>> VarParentList;
+	i = 0;
+	for (auto VarParent : VarList)
 	{
-		int i = 1;
-		const char* VarName;
-		int32 KindType = -1;
-		while ((VarName = lua_getlocal(L, &ar, i)) != NULL)
+		VarParent->NodeMask.Add(i);
+
+		std::vector<flatbuffers::Offset<NScriptHook::FVarNode>> VarChildrenList;
+		int j = 0;
+		for (TMap<FString, TSharedRef<FScriptDebuggerVarNode>>::TIterator VarChild(VarParent->NodeChildren); VarChild; ++VarChild)
 		{
-			// if get the self table
-			if (SelfName.Equals(UTF8_TO_TCHAR(VarName)))
-			{
-				KindType = lua_type(L, -1);
-				if (KindType == LUA_TTABLE)
-				{
-					lua_pushstring(L, "Object");
-					lua_rawget(L, -2);
+			VarChild->Value->NodeMask.Add(i);
+			VarChild->Value->NodeMask.Add(j);
 
-					if (lua_isuserdata(L, -1))
-					{
-						void* Userdata = lua_touserdata(L, -1);
+			std::vector<int32> NodeChildMask;
+			NodeChildMask.push_back(i);
+			NodeChildMask.push_back(j);
 
-						UEObject = (UObject*)*((void**)Userdata);
+			auto VarChildNode = NScriptHook::CreateFVarNode(DebugInfoBuilder, DebugInfoBuilder.CreateVector(NodeChildMask), DebugInfoBuilder.CreateString(TCHAR_TO_UTF8(*VarChild->Value->VarName.ToString())), DebugInfoBuilder.CreateString(TCHAR_TO_UTF8(*VarChild->Value->VarValue.ToString())), DebugInfoBuilder.CreateString(TCHAR_TO_UTF8(*VarChild->Value->VarType.ToString())));
 
-						if (UEObject)
-						{
+			VarChildrenList.push_back(VarChildNode);
 
-							// get matetable form userdate
-							lua_getmetatable(L, -1);
-
-							lua_pushstring(L, "ClassDesc");
-							lua_rawget(L, -2);
-							KindType = lua_type(L, -1);
-
-							//makesure ClassDesc is lightuserdata
-							if (lua_islightuserdata(L, -1))
-							{
-								void* UserData = lua_touserdata(L, -1);
-								UEClassDesc = (FClassDesc*)UserData;
-
-								if (UEClassDesc)
-								{
-									FScriptDebuggerVarNode_Ref UEObjectNode = MakeShareable(new FScriptDebuggerVarNode);
-									UEObjectNode->NodeType = EScriptVarNodeType::V_UEObject;
-									UEObjectNode->KindType = (int32)EScriptUEKindType::T_UEObject;
-									UEObjectNode->VarPtr = (void*)UEObject;
-									UEObjectNode->VarName = FText::FromString(UEObject->GetName());
-
-									Vars.Add(UEObjectNode);
-								}
-							}
-							lua_pop(L, 2);
-
-						}
-					}
-					lua_pop(L, 1);
-				}
-				lua_pop(L, 1);
-				break;
-			}
-			lua_pop(L, 1);
-			i++;
+			j++;
 		}
-	}
-}
+		std::vector<int32> NodeParentMask;
+		NodeParentMask.push_back(i);
+		auto VarParentNode = NScriptHook::CreateFVarNode(DebugInfoBuilder, DebugInfoBuilder.CreateVector(NodeParentMask), DebugInfoBuilder.CreateString(TCHAR_TO_UTF8(*VarParent->VarName.ToString())), DebugInfoBuilder.CreateString(TCHAR_TO_UTF8(*VarParent->VarValue.ToString())), DebugInfoBuilder.CreateString(TCHAR_TO_UTF8(*VarParent->VarType.ToString())), DebugInfoBuilder.CreateVector(VarChildrenList));
 
-void UScriptDebuggerSetting::GetVarsChildren(FScriptDebuggerVarNode& InNode)
-{
-	//UE_LOG(LogTemp, Log, TEXT("GetVarsChildren luagettop[%d]"), lua_gettop(L));
+		VarParentList.push_back(VarParentNode);
 
-	//UEObject NameList is not empty
-	if (InNode.NodeType == EScriptVarNodeType::V_UEObject)
-	{
-		UEObjectListen(InNode);
-		return;
+		i++;
 	}
 
-	if (InNode.NameList.Num() > 0 && InNode.KindType != LUA_TTABLE)
-		return;
+	FString HostFilePath;
+	FString LocalFileName;
+	FilePath.Split(ScriptMask, &HostFilePath, &LocalFileName);
+	HostFilePath = FPaths::Combine(HostScriptPath, LocalFileName);
+	//UE_LOG(LogTemp, Log, TEXT("Remote HostFilePath %s"), *HostFilePath);
 
-	switch (InNode.NodeType)
-	{
-	case EScriptVarNodeType::V_Local:
-		LocalListen(InNode);
-		break;
-	case EScriptVarNodeType::V_UpValue:
-		UpvalueListen(InNode);
-		break;
-	case EScriptVarNodeType::V_Global:
-		GlobalListen(InNode);
-		break;
-	}
+	auto DebugInfo = NScriptHook::CreateFDebugInfo(DebugInfoBuilder, DebugInfoBuilder.CreateString(TCHAR_TO_UTF8(*HostFilePath)), Line, DebugInfoBuilder.CreateVector(StackNodeList), DebugInfoBuilder.CreateVector(VarParentList));
+	DebugInfoBuilder.Finish(DebugInfo);
+
+	flatbuffers::FlatBufferBuilder HookDealBuilder;
+	auto HookDeal = NScriptHook::CreateFHookDeal(HookDealBuilder, EDealOrder::O_EnterDebug, HookDealBuilder.CreateVector(DebugInfoBuilder.GetBufferPointer(), DebugInfoBuilder.GetSize()));
+	HookDealBuilder.Finish(HookDeal);
+
+	int32 ByteSent = 0;
+	HostSocket->Send(HookDealBuilder.GetBufferPointer(), HookDealBuilder.GetSize(), ByteSent);
+
+	UE_LOG(LogTemp, Log, TEXT("Remote SendEnterDebug SendData [%d]"), HookDealBuilder.GetSize());
+
+	//main thread
+	FSlateApplication::Get().EnterDebuggingMode();
 }
 
-void UScriptDebuggerSetting::Continue()
+void UScriptHookClient::SendClientExit()
 {
-	if (L == NULL)
+	if (!HostSocket)
 		return;
 
-	hook_mode = EHookMode::H_Continue;
+	flatbuffers::FlatBufferBuilder HookDealBuilder;
+	auto HookDeal = NScriptHook::CreateFHookDeal(HookDealBuilder, EDealOrder::O_ClientExit);
+	HookDealBuilder.Finish(HookDeal);
+
+	int32 ByteSent = 0;
+	HostSocket->Send(HookDealBuilder.GetBufferPointer(), HookDealBuilder.GetSize(), ByteSent);
+
+	UE_LOG(LogTemp, Log, TEXT("Remote SendBreakPoints SendData [%d]"), HookDealBuilder.GetSize());
 }
 
-void UScriptDebuggerSetting::StepOver()
-{
-	if (L == NULL)
-		return;
 
-	u_over.Reset();
-	hook_mode = EHookMode::H_StepOver;
+/********Hook Debug Statement********/
 
-}
+//#define UNLUA_DEBUG
+#ifdef UNLUA_DEBUG
+static unlua_Debug ur;
+#else
+static unlua_State ur;
+#endif // UNLUA_DEBUG
 
-void UScriptDebuggerSetting::StepIn()
-{
-	if (L == NULL)
-		return;
-	hook_mode = EHookMode::H_StepIn;
-}
+//#define UNFOLD_FUNCTION
 
-void UScriptDebuggerSetting::StepOut()
-{
-	if (L == NULL)
-		return;
+static unlua_over u_over;
 
-	u_out.Reset();
-	hook_mode = EHookMode::H_StepOut;
+static unlua_out u_out;
 
-}
+static EHookMode hook_mode = EHookMode::H_Continue;
 
-void UScriptDebuggerSetting::hook_call_option()
+void UScriptHookClient::hook_call_option()
 {
 	switch (hook_mode)
 	{
@@ -1438,7 +1731,7 @@ void UScriptDebuggerSetting::hook_call_option()
 	}
 }
 
-void UScriptDebuggerSetting::hook_ret_option()
+void UScriptHookClient::hook_ret_option()
 {
 	switch (hook_mode)
 	{
@@ -1455,40 +1748,41 @@ void UScriptDebuggerSetting::hook_ret_option()
 	}
 }
 
-void UScriptDebuggerSetting::hook_line_option()
+void UScriptHookClient::hook_line_option()
 {
+	FString HostPath;
 	switch (hook_mode)
 	{
 	case EHookMode::H_Continue:
-		if (FScriptEditor::Get()->HasBreakPoint(ur.source, ur.currentline))
+		if (HasBreakPoint(ur.source, ur.currentline))
 		{
-			EnterDebug(ur.source, ur.currentline);
+			SendEnterDebug(ur.source, ur.currentline);
 		}
 		break;
 	case EHookMode::H_StepIn:
-		EnterDebug(ur.source, ur.currentline);
+		SendEnterDebug(ur.source, ur.currentline);
 		break;
 	case EHookMode::H_StepOver:
 		if (u_over.BreakPoint())
 		{
-			EnterDebug(ur.source, ur.currentline);
+			SendEnterDebug(ur.source, ur.currentline);
 			return;
 		}
-		if (FScriptEditor::Get()->HasBreakPoint(ur.source, ur.currentline))
+		if (HasBreakPoint(ur.source, ur.currentline))
 		{
-			EnterDebug(ur.source, ur.currentline);
+			SendEnterDebug(ur.source, ur.currentline);
 			return;
 		}
 		break;
 	case EHookMode::H_StepOut:
 		if (u_out.BreakPoint())
 		{
-			EnterDebug(ur.source, ur.currentline);
+			SendEnterDebug(ur.source, ur.currentline);
 			return;
 		}
-		if (FScriptEditor::Get()->HasBreakPoint(ur.source, ur.currentline))
+		if (HasBreakPoint(ur.source, ur.currentline))
 		{
-			EnterDebug(ur.source, ur.currentline);
+			SendEnterDebug(ur.source, ur.currentline);
 			return;
 		}
 		break;
@@ -1503,7 +1797,7 @@ static void debugger_hook_c(lua_State *L, lua_Debug *ar)
 
 #ifdef UNLUA_DEBUG
 		ur.Init(ar);
-		UE_LOG(LogTemp, Log, TEXT("%s"), *ur.ToString());
+		UE_LOG(LogTemp, Log, TEXT("Remote %s"), *ur.ToString());
 		if (ar->currentline < 0)
 			return;
 #else
@@ -1516,19 +1810,18 @@ static void debugger_hook_c(lua_State *L, lua_Debug *ar)
 		switch (ar->event)
 		{
 		case LUA_HOOKCALL:
-			UScriptDebuggerSetting::Get()->hook_call_option();
+			UScriptHookClient::Get()->hook_call_option();
 			break;
 		case LUA_HOOKRET:
-			UScriptDebuggerSetting::Get()->hook_ret_option();
+			UScriptHookClient::Get()->hook_ret_option();
 			break;
 		case LUA_HOOKLINE:
-			UScriptDebuggerSetting::Get()->hook_line_option();
+			UScriptHookClient::Get()->hook_line_option();
 			break;
 		}
-	}
 }
+}
+
 
 #undef UNLUA_DEBUG
 #undef UNFOLD_FUNCTION
-
-
