@@ -73,7 +73,7 @@ public:
 				SProjectTreeEditor::Get()->ExpanedEditingItem(Item);
 			}
 		}
-	//	InCodeProjectEditorPtr.Pin()->OnCodeEditorFocused(CodeEditor);
+		//	InCodeProjectEditorPtr.Pin()->OnCodeEditorFocused(CodeEditor);
 
 		Tab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &FCodeTabSummoner::OnCloseTab));
 	}
@@ -81,15 +81,15 @@ public:
 	virtual void OnTabRefreshed(TSharedPtr<SDockTab> Tab) const override
 	{
 		TSharedRef<SCodeEditor> GraphEditor = StaticCastSharedRef<SCodeEditor>(Tab->GetContent());
-	//	GraphEditor->NotifyItemChanged();
+		//	GraphEditor->NotifyItemChanged();
 	}
 
 	virtual void SaveState(TSharedPtr<SDockTab> Tab, TSharedPtr<FTabPayload> Payload) const override
 	{
 		TSharedRef<SCodeEditor> GraphEditor = StaticCastSharedRef<SCodeEditor>(Tab->GetContent());
 
-	//	UCodeProjectItem* Graph = FTabPayload_UObject::CastChecked<UCodeProjectItem>(Payload);
-	//	BlueprintEditorPtr.Pin()->GetBlueprintObj()->LastEditedDocuments.Add(FEditedDocumentInfo(Graph, ViewLocation, ZoomAmount));
+		//	UCodeProjectItem* Graph = FTabPayload_UObject::CastChecked<UCodeProjectItem>(Payload);
+		//	BlueprintEditorPtr.Pin()->GetBlueprintObj()->LastEditedDocuments.Add(FEditedDocumentInfo(Graph, ViewLocation, ZoomAmount));
 	}
 
 	void OnCloseTab(TSharedRef<class SDockTab> Tab)
@@ -124,10 +124,10 @@ protected:
 		return FScriptEditorStyle::Get().GetBrush("ProjectEditor.Icon.File");
 	}
 
-/*	virtual TSharedRef<FGenericTabHistory> CreateTabHistoryNode(TSharedPtr<FTabPayload> Payload) override
-	{
-		return MakeShareable(new FSourceTabHistory(SharedThis(this), Payload));
-	}*/
+	/*	virtual TSharedRef<FGenericTabHistory> CreateTabHistoryNode(TSharedPtr<FTabPayload> Payload) override
+		{
+			return MakeShareable(new FSourceTabHistory(SharedThis(this), Payload));
+		}*/
 
 protected:
 	TWeakPtr<class FScriptEditor> ScriptEditorPtr;
@@ -141,7 +141,7 @@ public:
 	FProjectViewSummoner(TSharedPtr<class FAssetEditorToolkit> InHostingApp)
 		: FWorkflowTabFactory(ScriptEditorTabs::ProjectViewID, InHostingApp)
 	{
-		TabLabel = NSLOCTEXT("ProjectTabLabel","TabTitle", "Project");
+		TabLabel = NSLOCTEXT("ProjectTabLabel", "TabTitle", "Project");
 		TabIcon = FSlateIcon(FScriptEditorStyle::Get().GetStyleSetName(), "ProjectEditor.Project");
 
 		bIsSingleton = true;
@@ -153,7 +153,7 @@ public:
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override
 	{
 		TSharedPtr<FScriptEditor> CodeEditorPtr = StaticCastSharedPtr<FScriptEditor>(HostingApp.Pin());
-		return SNew(SProjectTreeEditor, CodeEditorPtr->GetCodeProjectBeingEdited(),CodeEditorPtr->GetScriptProjectBeingEdited());
+		return SNew(SProjectTreeEditor, CodeEditorPtr->GetCodeProjectBeingEdited(), CodeEditorPtr->GetScriptProjectBeingEdited());
 	}
 };
 
@@ -173,7 +173,7 @@ public:
 	}
 
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override
-	{		
+	{
 		return SNew(SScriptEditorLog).Messages(FScriptEditorModule::GetInstance()->ScriptLogHistory->GetMessages());
 	}
 };
@@ -194,7 +194,7 @@ public:
 	}
 
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override
-	{		
+	{
 		return SNew(SScriptDebugger);
 	}
 
@@ -349,7 +349,7 @@ FBasicScriptEditorMode::FBasicScriptEditorMode(TSharedPtr<class FScriptEditor> I
 void FBasicScriptEditorMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager)
 {
 	TSharedPtr<FScriptEditor> Editor = MyScriptEditor.Pin();
-	
+
 	Editor->RegisterToolbarTab(InTabManager.ToSharedRef());
 
 	Editor->PushTabFactories(TabFactories);
@@ -393,7 +393,7 @@ void FScriptEditor::InitScriptEditor(const EToolkitMode::Type Mode, const TShare
 	//
 
 	TSharedPtr<FScriptEditor> ThisPtr(SharedThis(this));
-	if(!DocumentManager.IsValid())
+	if (!DocumentManager.IsValid())
 	{
 		DocumentManager = MakeShareable(new FDocumentTracker);
 		DocumentManager->Initialize(ThisPtr);
@@ -419,7 +419,7 @@ void FScriptEditor::InitScriptEditor(const EToolkitMode::Type Mode, const TShare
 
 	// Create the modes and activate one (which will populate with a real layout)
 	AddApplicationMode(
-		ScriptEditorModes::StandardMode, 
+		ScriptEditorModes::StandardMode,
 		MakeShareable(new FBasicScriptEditorMode(ThisPtr, ScriptEditorModes::StandardMode)));
 
 	SetCurrentMode(ScriptEditorModes::StandardMode);
@@ -436,44 +436,44 @@ void FScriptEditor::BindCommands()
 			);
 
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().Save,
-			FExecuteAction::CreateSP(this, &FScriptEditor::Save_Internal),
-			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanSave)
-			);
+		FExecuteAction::CreateSP(this, &FScriptEditor::Save_Internal),
+		FCanExecuteAction::CreateSP(this, &FScriptEditor::CanSave)
+	);
 
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().SaveAll,
-			FExecuteAction::CreateSP(this, &FScriptEditor::SaveAll_Internal),
-			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanSaveAll)
-			);
+		FExecuteAction::CreateSP(this, &FScriptEditor::SaveAll_Internal),
+		FCanExecuteAction::CreateSP(this, &FScriptEditor::CanSaveAll)
+	);
 
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().Reload,
-			FExecuteAction::CreateSP(this, &FScriptEditor::Reload_Internal),
-			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanReload)
-			);
+		FExecuteAction::CreateSP(this, &FScriptEditor::Reload_Internal),
+		FCanExecuteAction::CreateSP(this, &FScriptEditor::CanReload)
+	);
 
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().ReloadAll,
-			FExecuteAction::CreateSP(this, &FScriptEditor::ReloadAll_Internal),
-			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanReloadAll)
-			);
+		FExecuteAction::CreateSP(this, &FScriptEditor::ReloadAll_Internal),
+		FCanExecuteAction::CreateSP(this, &FScriptEditor::CanReloadAll)
+	);
 
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugContinue,
-			FExecuteAction::CreateSP(this, &FScriptEditor::DebugContinue),
-			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugContinue)
-			);
+		FExecuteAction::CreateSP(this, &FScriptEditor::DebugContinue),
+		FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugContinue)
+	);
 
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugStepover,
-			FExecuteAction::CreateSP(this, &FScriptEditor::DebugStepover),
-			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugStepover)
-			);
+		FExecuteAction::CreateSP(this, &FScriptEditor::DebugStepover),
+		FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugStepover)
+	);
 
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugStepin,
-			FExecuteAction::CreateSP(this, &FScriptEditor::DebugStepin),
-			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugStepin)
-			);
+		FExecuteAction::CreateSP(this, &FScriptEditor::DebugStepin),
+		FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugStepin)
+	);
 
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugStepout,
-			FExecuteAction::CreateSP(this, &FScriptEditor::DebugStepout),
-			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugStepout)
-			);
+		FExecuteAction::CreateSP(this, &FScriptEditor::DebugStepout),
+		FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugStepout)
+	);
 }
 
 void FScriptEditor::OpenFileForEditing(UCodeProjectItem* Item)
@@ -509,7 +509,7 @@ void FScriptEditor::CloseEditingFile(UCodeProjectItem* Item)
 void FScriptEditor::CloseAllEditingFiles()
 {
 	TArray<TSharedPtr<SDockTab>> Tabs = DocumentManager->GetAllDocumentTabs();
-	for (TSharedPtr<SDockTab> Tab:Tabs)
+	for (TSharedPtr<SDockTab> Tab : Tabs)
 	{
 		if (Tab.IsValid())
 		{
@@ -595,7 +595,7 @@ void FScriptEditor::Save_Internal()
 
 bool FScriptEditor::Save()
 {
-	if(DocumentManager.IsValid() && DocumentManager->GetActiveTab().IsValid())
+	if (DocumentManager.IsValid() && DocumentManager->GetActiveTab().IsValid())
 	{
 		TSharedRef<SCodeEditor> CodeEditorRef = StaticCastSharedRef<SCodeEditor>(DocumentManager->GetActiveTab()->GetContent());
 		return CodeEditorRef->Save();
@@ -606,7 +606,7 @@ bool FScriptEditor::Save()
 
 bool FScriptEditor::CanSave() const
 {
-	if(DocumentManager.IsValid() && DocumentManager->GetActiveTab().IsValid())
+	if (DocumentManager.IsValid() && DocumentManager->GetActiveTab().IsValid())
 	{
 		TSharedRef<SWidget> Content = DocumentManager->GetActiveTab()->GetContent();
 		TSharedRef<SCodeEditor> CodeEditorRef = StaticCastSharedRef<SCodeEditor>(Content);
@@ -636,7 +636,7 @@ void FScriptEditor::ReloadAll_Internal()
 
 void FScriptEditor::TestAction()
 {
-	US_Log("Test Action");
+	//US_Log("Test Action");
 }
 
 bool FScriptEditor::CanTestAction() const
@@ -648,15 +648,15 @@ bool FScriptEditor::SaveAll()
 {
 	bool bResult = true;
 
-	if(DocumentManager.IsValid())
+	if (DocumentManager.IsValid())
 	{
 		TArray<TSharedPtr<SDockTab>> AllTabs = DocumentManager->GetAllDocumentTabs();
-		for(auto& Tab : AllTabs)
+		for (auto& Tab : AllTabs)
 		{
-			if(Tab.IsValid())
+			if (Tab.IsValid())
 			{
 				TSharedRef<SCodeEditor> CodeEditorRef = StaticCastSharedRef<SCodeEditor>(Tab->GetContent());
-				if(!CodeEditorRef->Save())
+				if (!CodeEditorRef->Save())
 				{
 					bResult = false;
 				}
@@ -826,6 +826,11 @@ void FScriptEditor::ToggleBreakPoint(FString& FilePath, int32 CodeLine)
 		Set.Add(CodeLine);
 		FBreakPointNode_Ref NewNode = MakeShareable(new FScriptBreakPointNode(CodeLine, FilePath));
 		BreakPointForView.Add(NewNode);
+	}
+
+	if (SScriptDebugger::Get())
+	{
+		SScriptDebugger::Get()->UpdateBreakPoints();
 	}
 }
 

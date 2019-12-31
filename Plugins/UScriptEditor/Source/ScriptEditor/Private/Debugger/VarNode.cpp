@@ -96,7 +96,7 @@ void UVarWatcherSetting::RegisterLuaState(lua_State* State)
 
 	//add global node
 	FVarWatcherNode_Ref GlobalNode = MakeShareable(new FVarWatcherNode);
-	GlobalNode->NodeType = EScriptVarNodeType::Global;
+	GlobalNode->NodeType = EScriptVarNodeType::V_Global;
 	GlobalNode->VarName = FText::FromString("Global");
 
 	VarTreeRoot.Add(GlobalNode);
@@ -119,7 +119,7 @@ void UVarWatcherSetting::OnObjectBinded(UObjectBaseUtility* InObject)
 
 	//add this Object
 	FVarWatcherNode_Ref ObjectNode = MakeShareable(new FVarWatcherNode);
-	ObjectNode->NodeType = EScriptVarNodeType::UEObject;
+	ObjectNode->NodeType = EScriptVarNodeType::V_UEObject;
 	ObjectNode->KindType = (int32)EScriptUEKindType::T_UEObject;
 	ObjectNode->VarName = FText::FromString(InObject->GetName());
 	ObjectNode->VarPtr = (void*)InObject;
@@ -149,7 +149,7 @@ void UVarWatcherSetting::Update(float DeltaTime)
 {
 	for (auto Node : VarTreeRoot)
 	{
-		if (Node->NodeType == EScriptVarNodeType::UEObject)
+		if (Node->NodeType == EScriptVarNodeType::V_UEObject)
 		{
 			if (Node->NodeChildren.Contains(SelfLocationName))
 			{
@@ -335,7 +335,7 @@ void UVarWatcherSetting::GlobalListen(FVarWatcherNode& InNode)
 			if (!InNode.NodeChildren.Contains(VarName))
 			{
 				FVarWatcherNode_Ref NewNode = MakeShareable(new FVarWatcherNode);
-				NewNode->NodeType = EScriptVarNodeType::Global;
+				NewNode->NodeType = EScriptVarNodeType::V_Global;
 				NewNode->KindType = KindType;
 				NewNode->VarName = FText::FromString(UTF8_TO_TCHAR(VarName));
 				NewNode->VarValue = FText::FromString(VarValue);
@@ -914,10 +914,10 @@ void UVarWatcherSetting::GetVarChildren(FVarWatcherNode& InNode)
 {
 	switch (InNode.NodeType)
 	{
-	case EScriptVarNodeType::UEObject:
+	case EScriptVarNodeType::V_UEObject:
 		UEObjectListen(InNode);
 		break;
-	case EScriptVarNodeType::Global:
+	case EScriptVarNodeType::V_Global:
 		GlobalListen(InNode);
 		break;
 	}

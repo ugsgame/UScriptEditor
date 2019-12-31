@@ -20,9 +20,24 @@
 
 #include "ProjectEditor/CodeProjectItem.h"
 #include "ProjectEditor/SProjectTreeEditor.h"
+#include "UScriptRemoteDebuggerSetting.h"
 
 
 #define LOCTEXT_NAMESPACE "SScriptDebugger"
+
+void FScriptDebuggerVarNode::GetChildren(TArray<TSharedRef<FScriptDebuggerVarNode>>& OutChildren)
+{
+	if (!SScriptDebugger::Get()->IsDebugRemote)
+	{
+		UScriptDebuggerSetting::Get()->GetVarsChildren(*this);
+	}
+	else
+	{
+		UScriptRemoteDebuggerSetting::Get()->GetVarsChildren(*this);
+	}
+
+	NodeChildren.GenerateValueArray(OutChildren);
+}
 
 SScriptDebugger* SScriptDebugger::Ptr;
 
@@ -60,184 +75,183 @@ void SScriptDebugger::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
 	UScriptDebuggerSetting::Get()->SetTabIsOpen(true);
 
-	SyncState();
 	FSlateApplication::Get().RegisterInputPreProcessor(ptr_HandleKeyDown);
 
 	TSharedPtr<SOverlay>OverlayWidget; this->ChildSlot
 		[
 			SAssignNew(OverlayWidget, SOverlay)
 			+ SOverlay::Slot()
-			[
-				SNew(SVerticalBox)
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					[
-						SNew(SCheckBox)
-						.Style(FCoreStyle::Get(), "ToggleButtonCheckbox")
-						.IsChecked_Lambda([&]() {return IsDebugRun ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
-						.OnCheckStateChanged_Raw(this, &SScriptDebugger::ToggleStartDebug)
-						[
-							SNew(SBox)
-							.VAlign(VAlign_Center)
-							.HAlign(HAlign_Center)
-							.Padding(FMargin(4.0, 2.0))
-							[
-								SNew(STextBlock)
-								.Text(FText::FromString("Start"))
-							]
-						]
-					]
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					[
-						SNew(SCheckBox)
-						.Style(FCoreStyle::Get(), "ToggleButtonCheckbox")
-						.IsChecked_Lambda([&]() {return IsDebugRemote ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
-						.OnCheckStateChanged_Raw(this, &SScriptDebugger::ToggleRemoteDebug)
-						[
-							SNew(SBox)
-							.VAlign(VAlign_Center)
-							.HAlign(HAlign_Center)
-							.Padding(FMargin(4.0, 2.0))
-							[
-								SNew(STextBlock)
-								.Text(FText::FromString("Remote"))
-							]
-						]
-					]
-					+ SHorizontalBox::Slot()
-					[
-						SNew(SBox)
-						.HAlign(HAlign_Right)
-						[
-							SNew(STextBlock)
-							.Text_Lambda([&]()->FText {return FText::FromString(NowLuaCodeFilePath.Mid(GetLuaSourceDir().Len() + 1)); })
-						]
-					]
-				]
-				+ SVerticalBox::Slot()
-				.FillHeight(1.0f)
-				[
-					SNew(SSplitter)
-					.Orientation(Orient_Vertical)
-					+ SSplitter::Slot()
-					.Value(1.f)
-						[
-							SNew(SBorder)
-							.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
-						[
-							SNew(SSplitter)
-							.Orientation(Orient_Horizontal)
-							+ SSplitter::Slot()
-							.Value(0.618f)
-							[
-								SNew(SBorder)
-								.BorderImage(FEditorStyle::GetBrush("MessageLog.ListBorder"))
-								[
-									SAssignNew(DebuggerVarTree, SDebuggerVarTree)
-									.ItemHeight(24.0f)
-									.TreeItemsSource(&NowVars)
-									.OnGenerateRow_Raw(this, &SScriptDebugger::HandleVarsTreeGenerateRow)
-									.OnGetChildren_Raw(this, &SScriptDebugger::HandleVarsTreeGetChildren)
-									.OnSelectionChanged_Raw(this, &SScriptDebugger::HandleVarsTreeSelectionChanged)
-									.HeaderRow
-									(
-										SNew(SHeaderRow)
-										+ SHeaderRow::Column(SDebuggerVarTreeWidgetItem::Col_Name)
-										.DefaultLabel(LOCTEXT("VarName1", "Key"))
-										.FillWidth(20.0f)
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SCheckBox)
+			.Style(FCoreStyle::Get(), "ToggleButtonCheckbox")
+		.IsChecked_Lambda([&]() {return IsDebugRun ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
+		.OnCheckStateChanged_Raw(this, &SScriptDebugger::ToggleStartDebug)
+		[
+			SNew(SBox)
+			.VAlign(VAlign_Center)
+		.HAlign(HAlign_Center)
+		.Padding(FMargin(4.0, 2.0))
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString("Start"))
+		]
+		]
+		]
+	+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SCheckBox)
+			.Style(FCoreStyle::Get(), "ToggleButtonCheckbox")
+		.IsChecked_Lambda([&]() {return IsDebugRemote ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
+		.OnCheckStateChanged_Raw(this, &SScriptDebugger::ToggleRemoteDebug)
+		[
+			SNew(SBox)
+			.VAlign(VAlign_Center)
+		.HAlign(HAlign_Center)
+		.Padding(FMargin(4.0, 2.0))
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString("Remote"))
+		]
+		]
+		]
+	+ SHorizontalBox::Slot()
+		[
+			SNew(SBox)
+			.HAlign(HAlign_Right)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([&]()->FText {return FText::FromString(NowLuaCodeFilePath.Mid(GetLuaSourceDir().Len() + 1)); })
+		]
+		]
+		]
+	+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		[
+			SNew(SSplitter)
+			.Orientation(Orient_Vertical)
+		+ SSplitter::Slot()
+		.Value(1.f)
+		[
+			SNew(SBorder)
+			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+		[
+			SNew(SSplitter)
+			.Orientation(Orient_Horizontal)
+		+ SSplitter::Slot()
+		.Value(0.618f)
+		[
+			SNew(SBorder)
+			.BorderImage(FEditorStyle::GetBrush("MessageLog.ListBorder"))
+		[
+			SAssignNew(DebuggerVarTree, SDebuggerVarTree)
+			.ItemHeight(24.0f)
+		.TreeItemsSource(&NowVars)
+		.OnGenerateRow_Raw(this, &SScriptDebugger::HandleVarsTreeGenerateRow)
+		.OnGetChildren_Raw(this, &SScriptDebugger::HandleVarsTreeGetChildren)
+		.OnSelectionChanged_Raw(this, &SScriptDebugger::HandleVarsTreeSelectionChanged)
+		.HeaderRow
+		(
+			SNew(SHeaderRow)
+			+ SHeaderRow::Column(SDebuggerVarTreeWidgetItem::Col_Name)
+			.DefaultLabel(LOCTEXT("VarName1", "Key"))
+			.FillWidth(20.0f)
 
-										+ SHeaderRow::Column(SDebuggerVarTreeWidgetItem::Col_Value)
-										.DefaultLabel(LOCTEXT("VarValue1", "Value"))
-										.FillWidth(20.0f)
+			+ SHeaderRow::Column(SDebuggerVarTreeWidgetItem::Col_Value)
+			.DefaultLabel(LOCTEXT("VarValue1", "Value"))
+			.FillWidth(20.0f)
 
-										+ SHeaderRow::Column(SDebuggerVarTreeWidgetItem::Col_Type)
-										.DefaultLabel(LOCTEXT("VarType1", "Type"))
-										.FillWidth(20.0f)
-									)
-								]
-							]
-							+ SSplitter::Slot()
-							.Value(1.0f - 0.618f)
-							[
-								SNew(SBorder)
-								.BorderImage(FEditorStyle::GetBrush("MessageLog.ListBorder"))
-								[
-									SNew(SVerticalBox)
-									+ SVerticalBox::Slot()
-									[
-										SAssignNew(LuaStackListPtr, SLuaStackList)
-										.Visibility_Lambda([&]()->EVisibility {return (StackListState == EStackListState::CallStack) ? EVisibility::Visible : EVisibility::Collapsed; })
-										.ItemHeight(24.0f)
-										.ListItemsSource(&NowLuaStack)
-										.SelectionMode(ESelectionMode::Single)
-										.OnGenerateRow_Raw(this, &SScriptDebugger::HandleStackListGenerateRow)
-										.OnSelectionChanged_Raw(this, &SScriptDebugger::HandleStackListSelectionChanged)
-									]
-									+ SVerticalBox::Slot()
-									[
-										SAssignNew(BreakPointListPtr, SBreakPointList)
-										.Visibility_Lambda([&]()->EVisibility {return (StackListState == EStackListState::BreakPoints) ? EVisibility::Visible : EVisibility::Collapsed; })
-										.ItemHeight(24.0f)
-										.ListItemsSource(& FScriptEditor::Get()->BreakPointForView)
-										.SelectionMode(ESelectionMode::Single)
-										.OnGenerateRow_Raw(this, &SScriptDebugger::HandleBreakPointListGenerateRow)
-										.OnSelectionChanged_Raw(this, &SScriptDebugger::HandleBreakPointListSelectionChanged)
-									]
-									+ SVerticalBox::Slot()
-									.VAlign(VAlign_Bottom)
-									.AutoHeight()
-									[
-										SNew(SHorizontalBox)
-										+ SHorizontalBox::Slot()
-										.HAlign(HAlign_Left)
-										.AutoWidth()
-										[
-											SNew(SCheckBox)
-											.Style(FCoreStyle::Get(), "ToggleButtonCheckbox")
-											.IsChecked_Lambda([&]() {return (StackListState == EStackListState::CallStack) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
-											.OnCheckStateChanged_Raw(this, &SScriptDebugger::ToggleStackListState, EStackListState::CallStack)
-											[
-												SNew(SBox)
-												.VAlign(VAlign_Center)
-												.HAlign(HAlign_Center)
-												.Padding(FMargin(4.0, 2.0))
-												[
-													SNew(STextBlock)
-													.Text(FText::FromString("CallStack"))
-												]
-											]
-										]
-										+ SHorizontalBox::Slot()
-										.HAlign(HAlign_Left)
-										.AutoWidth()
-										[
-											SNew(SCheckBox)
-											.Style(FCoreStyle::Get(), "ToggleButtonCheckbox")
-											.IsChecked_Lambda([&]() {return (StackListState == EStackListState::BreakPoints) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
-											.OnCheckStateChanged_Raw(this, &SScriptDebugger::ToggleStackListState, EStackListState::BreakPoints)
-											[
-												SNew(SBox)
-												.VAlign(VAlign_Center)
-												.HAlign(HAlign_Center)
-												.Padding(FMargin(4.0, 2.0))
-												[
-													SNew(STextBlock)
-													.Text(FText::FromString("Breakpoints"))
-												]
-											]
-										]
-									]
-								]
-							]
-						]
-					]
-				]
-			]
+			+ SHeaderRow::Column(SDebuggerVarTreeWidgetItem::Col_Type)
+			.DefaultLabel(LOCTEXT("VarType1", "Type"))
+			.FillWidth(20.0f)
+		)
+		]
+		]
+	+ SSplitter::Slot()
+		.Value(1.0f - 0.618f)
+		[
+			SNew(SBorder)
+			.BorderImage(FEditorStyle::GetBrush("MessageLog.ListBorder"))
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+		[
+			SAssignNew(LuaStackListPtr, SLuaStackList)
+			.Visibility_Lambda([&]()->EVisibility {return (StackListState == EStackListState::CallStack) ? EVisibility::Visible : EVisibility::Collapsed; })
+		.ItemHeight(24.0f)
+		.ListItemsSource(&NowLuaStack)
+		.SelectionMode(ESelectionMode::Single)
+		.OnGenerateRow_Raw(this, &SScriptDebugger::HandleStackListGenerateRow)
+		.OnSelectionChanged_Raw(this, &SScriptDebugger::HandleStackListSelectionChanged)
+		]
+	+ SVerticalBox::Slot()
+		[
+			SAssignNew(BreakPointListPtr, SBreakPointList)
+			.Visibility_Lambda([&]()->EVisibility {return (StackListState == EStackListState::BreakPoints) ? EVisibility::Visible : EVisibility::Collapsed; })
+		.ItemHeight(24.0f)
+		.ListItemsSource(&FScriptEditor::Get()->BreakPointForView)
+		.SelectionMode(ESelectionMode::Single)
+		.OnGenerateRow_Raw(this, &SScriptDebugger::HandleBreakPointListGenerateRow)
+		.OnSelectionChanged_Raw(this, &SScriptDebugger::HandleBreakPointListSelectionChanged)
+		]
+	+ SVerticalBox::Slot()
+		.VAlign(VAlign_Bottom)
+		.AutoHeight()
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+		.HAlign(HAlign_Left)
+		.AutoWidth()
+		[
+			SNew(SCheckBox)
+			.Style(FCoreStyle::Get(), "ToggleButtonCheckbox")
+		.IsChecked_Lambda([&]() {return (StackListState == EStackListState::CallStack) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
+		.OnCheckStateChanged_Raw(this, &SScriptDebugger::ToggleStackListState, EStackListState::CallStack)
+		[
+			SNew(SBox)
+			.VAlign(VAlign_Center)
+		.HAlign(HAlign_Center)
+		.Padding(FMargin(4.0, 2.0))
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString("CallStack"))
+		]
+		]
+		]
+	+ SHorizontalBox::Slot()
+		.HAlign(HAlign_Left)
+		.AutoWidth()
+		[
+			SNew(SCheckBox)
+			.Style(FCoreStyle::Get(), "ToggleButtonCheckbox")
+		.IsChecked_Lambda([&]() {return (StackListState == EStackListState::BreakPoints) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
+		.OnCheckStateChanged_Raw(this, &SScriptDebugger::ToggleStackListState, EStackListState::BreakPoints)
+		[
+			SNew(SBox)
+			.VAlign(VAlign_Center)
+		.HAlign(HAlign_Center)
+		.Padding(FMargin(4.0, 2.0))
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString("Breakpoints"))
+		]
+		]
+		]
+		]
+		]
+		]
+		]
+		]
+		]
+		]
 		];
 
 	ShowCode(RecentFilePath);
@@ -255,13 +269,38 @@ FText SScriptDebugger::GetBreakPointHitConditionText(FString& FilePath, int32 Co
 void SScriptDebugger::ToggleStartDebug(const ECheckBoxState NewState)
 {
 	IsDebugRun = (NewState == ECheckBoxState::Checked) ? true : false;
-	DebugStateChange();
+	UpdateDebugState();
 }
 
 void SScriptDebugger::ToggleRemoteDebug(const ECheckBoxState NewState)
 {
 	IsDebugRemote = (NewState == ECheckBoxState::Checked) ? true : false;
-	RemoteStateChange();
+	UpdateDebugState();
+}
+
+void SScriptDebugger::UpdateDebugState()
+{
+	if (IsDebugRun)
+	{
+		if (IsDebugRemote)
+		{
+			
+
+			UScriptRemoteDebuggerSetting::Get()->CreateHookServer();
+			UScriptDebuggerSetting::Get()->UnBindDebugState();
+		}
+		else
+		{
+			UScriptRemoteDebuggerSetting::Get()->DestroyHookServer();
+			UScriptDebuggerSetting::Get()->BindDebugState();
+		}
+	}
+	else
+	{
+		UScriptRemoteDebuggerSetting::Get()->DestroyHookServer();
+		UScriptDebuggerSetting::Get()->UnBindDebugState();
+	}
+	IsEnterDebugMode = false;
 }
 
 void SScriptDebugger::ToggleStackListState(const ECheckBoxState NewState, EStackListState State)
@@ -276,24 +315,6 @@ void SScriptDebugger::BreakPointChange()
 {
 	if (BreakPointListPtr.IsValid())
 		BreakPointListPtr.Pin()->RequestListRefresh();
-}
-
-
-void SScriptDebugger::DebugStateChange()
-{
-	DebugContinue();
-}
-
-void SScriptDebugger::RemoteStateChange()
-{
-	DebugStateChange();
-}
-
-void SScriptDebugger::SyncState()
-{
-// 	RemoteStateChange();
-	DebugStateChange();
-	BreakPointChange();
 }
 
 
@@ -314,18 +335,22 @@ FString SScriptDebugger::GetLuaSourceDir()
 
 void SScriptDebugger::EnterDebug(const FString& LuaFilePath, int32 Line)
 {
+	ShowCode(LuaFilePath, Line);
 	UScriptDebuggerSetting::Get()->HittingPoint.Line = Line;
 	UScriptDebuggerSetting::Get()->HittingPoint.FilePath = LuaFilePath;
-
-	ShowCode(LuaFilePath, Line);
-	ShowStackVars(0);
-	IsEnterDebugMode = true;
-	FSlateApplication::Get().EnterDebuggingMode();
-
-	//
 	UScriptDebuggerSetting::Get()->HittingPoint.Line = -1;
 	UScriptDebuggerSetting::Get()->HittingPoint.FilePath = "";
-	//
+
+	if (!IsDebugRemote)
+	{
+		ShowStackVars(0);
+		IsEnterDebugMode = true;
+		FSlateApplication::Get().EnterDebuggingMode();
+	}
+	else
+	{
+		IsEnterDebugMode = true;
+	}
 }
 
 
@@ -356,12 +381,18 @@ void SScriptDebugger::ShowCode(const FString& FilePath, int32 Line /*= 0*/)
 
 void SScriptDebugger::ShowStackVars(int32 StackIndex)
 {
-	NowVars.Reset();
-	UScriptDebuggerSetting::Get()->GetStackVars(StackIndex, NowVars);
-
-	if (DebuggerVarTree.IsValid())
+	if (!IsDebugRemote)
 	{
-		DebuggerVarTree.Pin()->RequestTreeRefresh();
+		NowVars.Reset();
+		UScriptDebuggerSetting::Get()->GetStackVars(StackIndex, NowVars);
+		if (DebuggerVarTree.IsValid())
+		{
+			DebuggerVarTree.Pin()->RequestTreeRefresh();
+		}
+	}
+	else
+	{
+		UScriptRemoteDebuggerSetting::Get()->SendReqStack(StackIndex);
 	}
 }
 
@@ -409,61 +440,84 @@ void SScriptDebugger::HandleVarsTreeGetChildren(FScriptDebuggerVarNode_Ref InNod
 }
 
 
-void SScriptDebugger::HandleVarsTreeSelectionChanged(TSharedPtr<FScriptDebuggerVarNode>, ESelectInfo::Type)
+void SScriptDebugger::HandleVarsTreeSelectionChanged(TSharedPtr<FScriptDebuggerVarNode> InNode, ESelectInfo::Type SelectType)
 {
-
+	//UE_LOG(LogTemp, Log, TEXT("Remote VarsTreeSelection %s"), *InNode->ToString());
 }
 
-void SScriptDebugger::CleanDebugInfo()
+void SScriptDebugger::RemoteRefreshVars(TArray<FScriptDebuggerVarNode_Ref>& VarList)
 {
-	NowLuaStack.Reset();
-	RefreshStackList();
+	NowVars.Reset();
+	NowVars.Append(VarList);
+	if (DebuggerVarTree.IsValid())
+	{
+		DebuggerVarTree.Pin()->RequestTreeRefresh();
+	}
 }
+
+void SScriptDebugger::UpdateBreakPoints()
+{
+	if (IsDebugRemote)
+		UScriptRemoteDebuggerSetting::Get()->SendBreakPoints();
+}
+
 
 void SScriptDebugger::DebugContinue()
 {
-	if (IsEnterDebugMode)
+	IsEnterDebugMode = false;
+	if (!IsDebugRemote)
 	{
-		CleanDebugInfo();
 		FSlateApplication::Get().LeaveDebuggingMode();
-		IsEnterDebugMode = false;
+		UScriptDebuggerSetting::Get()->Continue();
 	}
-	UScriptDebuggerSetting::Get()->Continue();
+	else
+	{
+		UScriptRemoteDebuggerSetting::Get()->SendContinue();
+	}
 }
 
 
 void SScriptDebugger::DebugStepover()
 {
-	if (IsEnterDebugMode)
+	IsEnterDebugMode = false;
+	if (!IsDebugRemote)
 	{
-		CleanDebugInfo();
 		FSlateApplication::Get().LeaveDebuggingMode();
-		IsEnterDebugMode = false;
 		UScriptDebuggerSetting::Get()->StepOver();
+	}
+	else
+	{
+		UScriptRemoteDebuggerSetting::Get()->SendStepOver();
 	}
 }
 
 
 void SScriptDebugger::DebugStepin()
 {
-	if (IsEnterDebugMode)
+	IsEnterDebugMode = false;
+	if (!IsDebugRemote)
 	{
-		CleanDebugInfo();
 		FSlateApplication::Get().LeaveDebuggingMode();
-		IsEnterDebugMode = false;
 		UScriptDebuggerSetting::Get()->StepIn();
+	}
+	else
+	{
+		UScriptRemoteDebuggerSetting::Get()->SendStepIn();
 	}
 }
 
 
 void SScriptDebugger::DebugStepout()
 {
-	if (IsEnterDebugMode)
+	IsEnterDebugMode = false;
+	if (!IsDebugRemote)
 	{
-		CleanDebugInfo();
 		FSlateApplication::Get().LeaveDebuggingMode();
-		IsEnterDebugMode = false;
 		UScriptDebuggerSetting::Get()->StepOut();
+	}
+	else
+	{
+		UScriptRemoteDebuggerSetting::Get()->SendStepOut();
 	}
 }
 
@@ -491,8 +545,11 @@ void SScriptDebugger::RegisterKeyDown()
 	FSlateApplication::Get().RegisterInputPreProcessor(ptr_HandleKeyDown);
 }
 
-void SScriptDebugger::ClearStackInfo()
+void SScriptDebugger::CleanDebugInfo()
 {
+	//she is IsEnterDebugMode false anywhere
+	IsEnterDebugMode = false;
+
 	NowLuaStack.Reset();
 	if (LuaStackListPtr.IsValid())
 	{
@@ -507,19 +564,26 @@ void SScriptDebugger::ClearStackInfo()
 
 void SScriptDebugger::SaveDebuggerConfig()
 {
-	if(IsDebugerClosed)return;
-	
-// 	if (LuaCodeListPtr.IsValid())
-// 	{
-// 		float NowOffset = LuaCodeListPtr.Pin()->GetScrollOffset();
-// 		LastTimeFileOffset.Add(NowLuaCodeFilePath, NowOffset);
-// 	}
+	if (IsDebugerClosed)return;
 
-//	UScriptDebuggerSetting::Get()->LastTimeFileOffset = LastTimeFileOffset;
-//	UScriptDebuggerSetting::Get()->RecentFilePath = RecentFilePath;
-	
+	// 	if (LuaCodeListPtr.IsValid())
+	// 	{
+	// 		float NowOffset = LuaCodeListPtr.Pin()->GetScrollOffset();
+	// 		LastTimeFileOffset.Add(NowLuaCodeFilePath, NowOffset);
+	// 	}
+
+	UScriptDebuggerSetting::Get()->LastTimeFileOffset = LastTimeFileOffset;
+	UScriptDebuggerSetting::Get()->RecentFilePath = RecentFilePath;
+
 }
 
+
+void SScriptDebugger::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+{
+	SWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+
+	//UScriptRemoteDebuggerSetting::Get()->SlateTick(InDeltaTime);
+}
 
 void SScriptDebugger::Update(float Delta)
 {
@@ -551,11 +615,11 @@ void SLuaStackWidgetItem::Construct(const FArguments& InArgs, const TSharedRef<S
 		[
 			SNew(SBox)
 			.MinDesiredHeight(20)
-			.VAlign(VAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text(FText::FromString(Node->Code))
-			]
+		.VAlign(VAlign_Center)
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString(Node->Code))
+		]
 		];
 }
 
@@ -641,11 +705,11 @@ void SBreakPointWidgetItem::Construct(const FArguments& InArgs, const TSharedRef
 		[
 			SNew(SBox)
 			.MinDesiredHeight(20)
-			.VAlign(VAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text(FText::FromString(FString::Printf(TEXT("%s@Line %d"), *BreakPointNode->FilePath.Mid(LuaSourceDir.Len() + 1), BreakPointNode->Line)))
-			]
+		.VAlign(VAlign_Center)
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString(FString::Printf(TEXT("%s@Line %d"), *BreakPointNode->FilePath.Mid(LuaSourceDir.Len() + 1), BreakPointNode->Line)))
+		]
 		];
 }
 

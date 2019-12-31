@@ -6,9 +6,10 @@
 #include "SCompoundWidget.h"
 #include "STableRow.h"
 #include "STreeView.h"
-#include "UScriptDebuggerSetting.h"
+#include "ScriptHookType.h"
 #include "IInputProcessor.h"
 #include "Regex.h"
+
 
 
 struct FStackListNode
@@ -118,11 +119,9 @@ public:
 	FText GetBreakPointHitConditionText(FString& FilePath, int32 CodeLine);
 	void ToggleStartDebug(const ECheckBoxState NewState);
 	void ToggleRemoteDebug(const ECheckBoxState NewState);
+	void UpdateDebugState();
 	void ToggleStackListState(const ECheckBoxState NewState, EStackListState State);
 	void BreakPointChange();
-	void DebugStateChange();
-	void RemoteStateChange();
-	void SyncState();
 	void RefreshStackList();
 	static FString GetLuaSourceDir();
 	void EnterDebug(const FString& LuaFilePath, int32 Line);
@@ -138,17 +137,20 @@ public:
 
 	TSharedRef<ITableRow> HandleVarsTreeGenerateRow(FScriptDebuggerVarNode_Ref InNode, const TSharedRef<STableViewBase>& OwnerTable);
 	void HandleVarsTreeGetChildren(FScriptDebuggerVarNode_Ref InNode, TArray<FScriptDebuggerVarNode_Ref>& OutChildren);
-	void HandleVarsTreeSelectionChanged(TSharedPtr<FScriptDebuggerVarNode>, ESelectInfo::Type);
+	void HandleVarsTreeSelectionChanged(TSharedPtr<FScriptDebuggerVarNode> InNode, ESelectInfo::Type SelectType);
 
-	void CleanDebugInfo();
+	void RemoteRefreshVars(TArray<FScriptDebuggerVarNode_Ref>& VarList);
+	void UpdateBreakPoints();
 	void DebugContinue();
 	void DebugStepover();
 	void DebugStepin();
 	void DebugStepout();
 	void DebugTabClose(TSharedRef<SDockTab> DockTab);
 	void RegisterKeyDown();
-	void ClearStackInfo();
+	void CleanDebugInfo();
 	void SaveDebuggerConfig();
+
+	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 
 	class FHandleKeyDown :public IInputProcessor
 	{
