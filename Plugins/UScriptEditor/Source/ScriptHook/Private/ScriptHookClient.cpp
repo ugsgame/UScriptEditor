@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "ScriptHookClient.h"
 #include "UnLua.h"
@@ -298,16 +298,16 @@ void UScriptHookClient::ReceBreakPoints(const uint8* BinaryPointer, uint32_t Bin
 		return;
 	}
 
-	auto BreakPoints = NScriptHook::GetFBreakPoints(BreakPointsBuilder.GetCurrentBufferPointer());
+	auto NewBreakPoints = NScriptHook::GetFBreakPoints(BreakPointsBuilder.GetCurrentBufferPointer());
 
 	//lock BreakPoints and L
 	FScopeLock* QueueLock = new FScopeLock(&QueueCritical);
-	if (BreakPoints->Group()->Length() > 0)
+	if (NewBreakPoints->Group()->Length() > 0)
 	{
 		if (HostScriptPath.IsEmpty())
 		{
 			FString TempStr;
-			FString FullPath = ((*BreakPoints->Group())[0]->FilePath()->c_str());
+			FString FullPath = ((*NewBreakPoints->Group())[0]->FilePath()->c_str());
 			FullPath.Split(ScriptMask, &HostScriptPath, &TempStr);
 			HostScriptPath = FPaths::Combine(HostScriptPath, ScriptMask);
 
@@ -315,7 +315,7 @@ void UScriptHookClient::ReceBreakPoints(const uint8* BinaryPointer, uint32_t Bin
 		}
 
 		EnableBreakPoint.Empty();
-		for (auto BreakPoint : *BreakPoints->Group())
+		for (auto BreakPoint : *NewBreakPoints->Group())
 		{
 			TSet<int32>& Lines = EnableBreakPoint.Add(BreakPoint->FilePath()->c_str());
 			for (flatbuffers::uoffset_t i = 0; i < BreakPoint->Lines()->Length(); ++i)

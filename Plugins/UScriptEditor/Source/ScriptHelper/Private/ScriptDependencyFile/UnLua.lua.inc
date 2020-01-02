@@ -34,6 +34,12 @@ function _G.Class(super_name)
 	local super_class = nil
 	if super_name ~= nil then
 		super_class = require(super_name)
+		if super_class == nil then
+			local rel = UScriptHelperBPFunLib.TryToRegisterScriptAsset(super_name)
+			if rel then
+				super_class = LoadContext(super_name,true)
+			end			
+		end
 	end
 
 	local new_class = {}

@@ -91,7 +91,7 @@ bool UScriptHelperBPFunLib::TryToRegisterScriptAsset(FString ModuleName)
 		GCodeContext.SourceCode = UScript->SourceCode;
 		GCodeContext.ByteCode = UScript->ByteCode;
 
-		UE_LOG(LogTemp, Error, TEXT("Registered (%s) Success"), *ScriptAssetPath);
+		UE_LOG(LogTemp, Log, TEXT("Registered (%s) Success"), *ScriptAssetPath);
 		return true;
 	}
 	
