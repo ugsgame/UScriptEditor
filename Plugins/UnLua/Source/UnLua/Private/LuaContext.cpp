@@ -639,9 +639,8 @@ void FLuaContext::OnAsyncLoadingFlushUpdate()
                 {
                     ModuleName = Class->GetName();
                 }
-
-                Manager->Bind(Object, Class, *ModuleName);
-                Candidates.RemoveAt(i);
+				Candidates.RemoveAt(i);
+				Manager->Bind(Object, Class, *ModuleName);
             }
         }
     }

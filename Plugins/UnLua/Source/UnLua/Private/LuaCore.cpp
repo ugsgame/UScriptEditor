@@ -36,6 +36,8 @@ extern "C"
 #include "lobject.h"
 #include "UnLuaInterface.h"
 #include "DefaultParamCollection.h"
+#include "UObjectGlobals.h"
+#include "ContextAsset.h"
 }
 
 const FScriptContainerDesc FScriptContainerDesc::Array(sizeof(FLuaArray), "TArray");
@@ -2002,10 +2004,27 @@ UNLUA_API int32 Global_LoadContext(lua_State *L)
         return 0;
     }
 
-	bool LoadString = true;	//Otherwise load buffer, false
+	bool LoadString = false;	//Otherwise load buffer, false
 	if (NumParams >= 2)
 	{
 		LoadString = (bool)lua_toboolean(L, 2);
+	}
+
+	if (GCodeContext.Path.Len()<1 && GCodeContext.ByteCode.Num() < 1  && GCodeContext.SourceCode.Len() < 1)
+	{
+		FString ModulePath = FString(ModuleName).Replace(TEXT("."), TEXT("/"));
+		FString ModuleFileName = FPaths::GetCleanFilename(ModulePath);
+		ModulePath = FString("/Game/") + ModulePath + "." + ModuleFileName;
+
+		UObject* tmpObject = LoadObject<UObject>(nullptr, *ModulePath);
+		if (tmpObject)
+		{
+			//tmpObject->AddToRoot();
+			UContextAsset* ContextAsset = (UContextAsset*)tmpObject;
+			GCodeContext.Path = ContextAsset->Path;
+			GCodeContext.SourceCode = ContextAsset->SourceCode;
+			GCodeContext.ByteCode = ContextAsset->ByteCode;
+		}
 	}
 
 	if (LoadString && GCodeContext.SourceCode.Len() <1 )
@@ -2067,9 +2086,9 @@ UNLUA_API int32 Global_LoadContext(lua_State *L)
 	}
 
 	//Reset golbal CodeContext;
-	GCodeContext.Path.Empty();
-	GCodeContext.ByteCode.Empty();
-	GCodeContext.SourceCode.Empty();
+	 GCodeContext.Path.Empty();
+	 GCodeContext.ByteCode.Empty();
+	 GCodeContext.SourceCode.Empty();
 	//GCodeContext = FCodeContext();
 
     if (!bSuccess)
