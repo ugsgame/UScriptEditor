@@ -33,10 +33,11 @@ end
 function _G.Class(super_name)
 	local super_class = nil
 	if super_name ~= nil then
-		super_class = require(super_name)
-		if super_class == nil then
-			super_class = LoadContext(super_name)					
-		end
+		if CheckModule(super_name) then
+			super_class = require(super_name)
+		else 
+			super_class = LoadContextAsset(super_name)	
+		end	
 	end
 
 	local new_class = {}
