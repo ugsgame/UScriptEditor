@@ -1,4 +1,4 @@
-// Tencent is pleased to support the open source community by making UnLua available.
+﻿// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -15,6 +15,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UnLuaInterface.h"
 
 struct lua_State;
 
@@ -31,6 +32,7 @@ public:
 
     DECLARE_DELEGATE_RetVal_OneParam(int32, FGenericLuaDelegate, lua_State*);
     DECLARE_DELEGATE_RetVal_TwoParams(bool, FLuaFileLoader, const FString&, TArray<uint8>&);
+	DECLARE_DELEGATE_RetVal_TwoParams(bool, FLuaContextLoader, const FString&, FCodeContext&);
 
     static FOnLuaStateCreated OnLuaStateCreated;
     static FOnLuaContextInitialized OnLuaContextInitialized;
@@ -46,4 +48,5 @@ public:
     static FGenericLuaDelegate ConfigureLuaGC;
     
     static FLuaFileLoader LoadLuaFile;
+	static FLuaContextLoader LoadLuaContext;
 };

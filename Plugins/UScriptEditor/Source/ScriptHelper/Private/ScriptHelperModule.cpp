@@ -8,6 +8,10 @@
 #include "Paths.h"
 #include "FileHelper.h"
 
+#include "UnLuaInterface.h"
+#include "UnLuaDelegates.h"
+#include "ScriptDataAsset.h"
+
 #define LOCTEXT_NAMESPACE "ScriptHelper"
 
 class FScriptHelperModule : public IScriptHelperModuleInterface
@@ -18,6 +22,8 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+protected:
+	bool OnLoadScriptAsset(const FString& InModuleName,FCodeContext& InCodeContext);
 private:
 	bool SpawnSystemScriptFiles();
 	void Initialize(TSharedPtr<SWindow> InRootWindow, bool bIsNewProjectWindow);
@@ -33,6 +39,8 @@ void FScriptHelperModule::StartupModule()
 {
 	//Spawn Script
 	SpawnSystemScriptFiles();
+	//
+	FUnLuaDelegates::LoadLuaContext.BindRaw(this, &FScriptHelperModule::OnLoadScriptAsset);
 }
 
 bool FScriptHelperModule::SpawnSystemScriptFiles()
@@ -67,6 +75,24 @@ void FScriptHelperModule::AddGraphicsSwitcher(FToolBarBuilder& ToolBarBuilder)
 void FScriptHelperModule::ShutdownModule()
 {
 
+}
+
+bool FScriptHelperModule::OnLoadScriptAsset(const FString& InModuleName, FCodeContext& InCodeContext)
+{
+	FString ContextPath(InModuleName);
+	FString ContextName = FPaths::GetCleanFilename(ContextPath);
+	ContextPath = FString("/Game/") + ContextPath.Replace(TEXT("."), TEXT("/")) + "." + ContextName;
+	UObject* TmpObject = LoadObject<UObject>(nullptr, *ContextPath);
+	UScriptDataAsset* ContextAsset = Cast<UScriptDataAsset>(TmpObject);
+	if (ContextAsset)
+	{
+		InCodeContext.Path = ContextAsset->GetPath();
+		InCodeContext.SourceCode = ContextAsset->GetSourceCode();
+		InCodeContext.ByteCode = ContextAsset->GetByteCode();
+
+		return true;
+	}
+	return false;
 }
 
 #undef LOCTEXT_NAMESPACE

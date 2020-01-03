@@ -194,6 +194,8 @@ void FLuaContext::CreateState()
 
         lua_register(L, "UEPrint", Global_Print);
 		lua_register(L, "LoadContext", Global_LoadContext);
+		lua_register(L, "LoadContextAsset", Global_LoadContextAsset);
+		lua_register(L, "CheckModule", Global_CheckModule);
         if (FPlatformProperties::RequiresCookedData())
         {
             lua_register(L, "require", Global_Require);             // override 'require' when running with cooked data
@@ -639,8 +641,9 @@ void FLuaContext::OnAsyncLoadingFlushUpdate()
                 {
                     ModuleName = Class->GetName();
                 }
+
 				Candidates.RemoveAt(i);
-				Manager->Bind(Object, Class, *ModuleName);
+                Manager->Bind(Object, Class, *ModuleName);           
             }
         }
     }

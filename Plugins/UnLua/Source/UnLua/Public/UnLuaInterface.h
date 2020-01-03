@@ -28,6 +28,13 @@ UNLUA_API struct FCodeContext
 	FString SourceCode;
 
 	TArray<uint8> ByteCode;
+
+	void Empty()
+	{
+		Path.Empty();
+		SourceCode.Empty();
+		ByteCode.Empty();
+	};
 };
 
 UNLUA_API extern FCodeContext GCodeContext;
@@ -35,23 +42,23 @@ UNLUA_API extern FCodeContext GCodeContext;
 UINTERFACE()
 class UNLUA_API UUnLuaInterface : public UInterface
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 };
 
 class UNLUA_API IUnLuaInterface
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
 public:
-    /**
-     * return a Lua file path which is relative to project's 'Content/Script', for example 'Weapon.BP_DefaultProjectile_C'
-     */
-    UFUNCTION(BlueprintNativeEvent)
-    FString GetModuleName() const;
+	/**
+	 * return a Lua file path which is relative to project's 'Content/Script', for example 'Weapon.BP_DefaultProjectile_C'
+	 */
+	UFUNCTION(BlueprintNativeEvent)
+		FString GetModuleName() const;
 	/**
 	 * return  code context
 	 */
 	UFUNCTION(BlueprintNativeEvent)
-	void GetModuleContext(FString& Path,FString& SourceCode,TArray<uint8>& ByteCode) const;
+		void GetModuleContext(FString& Path, FString& SourceCode, TArray<uint8>& ByteCode) const;
 };
 

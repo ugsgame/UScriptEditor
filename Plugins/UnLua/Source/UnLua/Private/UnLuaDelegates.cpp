@@ -1,4 +1,4 @@
-// Tencent is pleased to support the open source community by making UnLua available.
+﻿// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -25,3 +25,4 @@ FUnLuaDelegates::FGenericLuaDelegate FUnLuaDelegates::HotfixLua;
 FUnLuaDelegates::FGenericLuaDelegate FUnLuaDelegates::ReportLuaCallError;
 FUnLuaDelegates::FGenericLuaDelegate FUnLuaDelegates::ConfigureLuaGC;
 FUnLuaDelegates::FLuaFileLoader FUnLuaDelegates::LoadLuaFile;
+FUnLuaDelegates::FLuaContextLoader FUnLuaDelegates::LoadLuaContext;
