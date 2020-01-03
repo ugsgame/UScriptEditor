@@ -68,7 +68,7 @@ uint32 FReceiveListenerWorker::Run()
 {
 	while (StopTaskCounter.GetValue() == 0)
 	{
-		FPlatformProcess::Sleep(0.3f);
+		//FPlatformProcess::Sleep(0.01f);
 		if (UScriptRemoteDebuggerSetting::Get()->TCPReceiveListener())
 			StopTaskCounter.Increment();
 	}
@@ -257,7 +257,8 @@ bool UScriptRemoteDebuggerSetting::TCPReceiveListener()
 	uint32 Size;
 	while (ClientSocket->HasPendingData(Size))
 	{
-		ReceivedData.Init(0, FMath::Min(Size, 65507u));
+		//ReceivedData.Init(0, FMath::Min(Size, 65507u));
+		ReceivedData.Init(0, Size);
 
 		int32 BytesRead = 0;
 		ClientSocket->Recv(ReceivedData.GetData(), ReceivedData.Num(), BytesRead);
@@ -286,7 +287,7 @@ bool UScriptRemoteDebuggerSetting::TCPReceiveListener()
 			ReceEnterDebug(HookDeal->DealData()->Data(), HookDeal->DealData()->size());
 			break;
 		case EDealOrder::O_StackVars:
-			ReceChildVars(HookDeal->DealData()->Data(), HookDeal->DealData()->size());
+			ReceStackVars(HookDeal->DealData()->Data(), HookDeal->DealData()->size());
 			break;
 		case EDealOrder::O_ChildVars:
 			ReceChildVars(HookDeal->DealData()->Data(), HookDeal->DealData()->size());
@@ -636,6 +637,8 @@ void UScriptRemoteDebuggerSetting::ReceEnterDebug(const uint8* BinaryPointer, ui
 	);
 
 #else
+
+	UE_LOG(LogTemp, Log, TEXT("Remote EnterDebug [%d]  [%s]"), LuaCodeLine, *LuaFilePath);
 
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
 	{

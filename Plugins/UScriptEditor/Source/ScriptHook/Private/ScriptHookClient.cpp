@@ -75,7 +75,8 @@ void UScriptHookClient::BindDebugState()
 		RegLuaHandle = FUnLuaDelegates::OnLuaStateCreated.AddUObject(this, &UScriptHookClient::RegisterLuaState);
 
 	if (!UnRegLuaHandle.IsValid())
-		UnRegLuaHandle = FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(this, &UScriptHookClient::UnRegisterLuaState);
+		UnRegLuaHandle = FUnLuaDelegates::OnPreLuaContextCleanup.AddUObject(this, &UScriptHookClient::UnRegisterLuaState);
+
 }
 
 void UScriptHookClient::UnBindDebugState()
@@ -88,7 +89,7 @@ void UScriptHookClient::UnBindDebugState()
 
 	if (UnRegLuaHandle.IsValid())
 	{
-		FUnLuaDelegates::OnPostLuaContextCleanup.Remove(UnRegLuaHandle);
+		FUnLuaDelegates::OnPreLuaContextCleanup.Remove(UnRegLuaHandle);
 		UnRegLuaHandle.Reset();
 	}
 
@@ -152,11 +153,6 @@ void UScriptHookClient::UnRegisterLuaState(bool bFullCleanup)
 	if (bFullCleanup)
 		L = nullptr;
 
-	//destroy TickDelete
-	if (TickerHandle.IsValid())
-	{
-		FTicker::GetCoreTicker().RemoveTicker(TickerHandle);
-	}
 	//destroy receive thread
 	if (HookReceiveThread)
 	{
@@ -188,7 +184,8 @@ bool UScriptHookClient::HookReceiveListener()
 	uint32 Size;
 	while (HostSocket->HasPendingData(Size))
 	{
-		ReceivedData.Init(0, FMath::Min(Size, 65507u));
+		//ReceivedData.Init(0, FMath::Min(Size, 65507u));
+		ReceivedData.Init(0, Size);
 
 		int32 BytesRead = 0;
 		HostSocket->Recv(ReceivedData.GetData(), ReceivedData.Num(), BytesRead);
@@ -333,8 +330,8 @@ void UScriptHookClient::ReceBreakPoints(const uint8* BinaryPointer, uint32_t Bin
 			for (auto Line : It->Value)
 			{
 				UE_LOG(LogTemp, Log, TEXT("Remote SyncBreakPoints Line[%d] FilePath[%s]"), Line, *It->Key);
-	}
-}
+			}
+		}
 #endif
 	}
 	else
@@ -359,7 +356,9 @@ void UScriptHookClient::ReceContinue()
 
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
 	{
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_Continue Start"));
 		FSlateApplication::Get().LeaveDebuggingMode();
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_Continue Ended"));
 	}, TStatId(), NULL, ENamedThreads::GameThread);
 }
 
@@ -370,10 +369,23 @@ void UScriptHookClient::ReceStepOver()
 
 	u_over.Reset();
 	hook_mode = EHookMode::H_StepOver;
+
+#if 0
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
 	{
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Start"));
 		FSlateApplication::Get().LeaveDebuggingMode();
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Ended"));
 	}, TStatId(), NULL, ENamedThreads::GameThread);
+#endif
+
+	AsyncTask(ENamedThreads::GameThread, [&]()
+	{
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Start"));
+		FSlateApplication::Get().LeaveDebuggingMode();
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Ended"));
+	}
+	);
 }
 
 void UScriptHookClient::ReceStepIn()
@@ -384,7 +396,9 @@ void UScriptHookClient::ReceStepIn()
 	hook_mode = EHookMode::H_StepIn;
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
 	{
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepIn Start"));
 		FSlateApplication::Get().LeaveDebuggingMode();
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepIn Ended"));
 	}, TStatId(), NULL, ENamedThreads::GameThread);
 }
 
@@ -397,7 +411,9 @@ void UScriptHookClient::ReceStepOut()
 	hook_mode = EHookMode::H_StepOut;
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
 	{
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOut Start"));
 		FSlateApplication::Get().LeaveDebuggingMode();
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOut Ended"));
 	}, TStatId(), NULL, ENamedThreads::GameThread);
 }
 
@@ -1665,6 +1681,11 @@ void UScriptHookClient::SendEnterDebug(FString FilePath, int32 Line)
 	HostFilePath = FPaths::Combine(HostScriptPath, LocalFileName);
 	//UE_LOG(LogTemp, Log, TEXT("Remote HostFilePath %s"), *HostFilePath);
 
+	DebugCount++;
+	UE_LOG(LogTemp, Log, TEXT("Remote EnterDebug {%d} [%d] [%s]"), DebugCount, Line, *HostFilePath);
+	//  PIE: Play in editor start time for /Game/Core/Maps/UEDPIE_0_MainMap 219.574
+	//LogBlueprintUserMessages: Late PlayInEditor Detection : Level '/Game/Core/Maps/MainMap.MainMap:PersistentLevel' has LevelScriptBlueprint '/Game/Core/Maps/MainMap.MainMap:PersistentLevel.MainMap' with GeneratedClass '/Game/Core/Maps/MainMap.MainMap_C' with ClassGeneratedBy '/Game/Core/Maps/MainMap.MainMap:PersistentLevel.MainMap'
+
 	auto DebugInfo = NScriptHook::CreateFDebugInfo(DebugInfoBuilder, DebugInfoBuilder.CreateString(TCHAR_TO_UTF8(*HostFilePath)), Line, DebugInfoBuilder.CreateVector(StackNodeList), DebugInfoBuilder.CreateVector(VarParentList));
 	DebugInfoBuilder.Finish(DebugInfo);
 
@@ -1819,7 +1840,7 @@ static void debugger_hook_c(lua_State *L, lua_Debug *ar)
 			UScriptHookClient::Get()->hook_line_option();
 			break;
 		}
-}
+	}
 }
 
 

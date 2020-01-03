@@ -131,8 +131,6 @@ protected:
 
 	FRunnableThread* HookReceiveThread;
 
-	FDelegateHandle TickerHandle;
-
 	bool IsRunning;
 
 	TMap<FString, TSet<int32>> BreakPoints;
@@ -146,4 +144,6 @@ protected:
 	FString HostScriptPath;
 
 	const static FString ScriptMask;
+
+	int32 DebugCount;
 };

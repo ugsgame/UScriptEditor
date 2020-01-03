@@ -2,7 +2,7 @@
 
 
 #include "ScriptHookReceive.h"
-#include "WindowsPlatformProcess.h"
+//#include "WindowsPlatformProcess.h"
 #include "ScriptHookClient.h"
 
 
@@ -10,7 +10,7 @@ uint32 FHookReceiveThread::Run()
 {
 	while (StopTaskCounter.GetValue() == 0)
 	{
-		FPlatformProcess::Sleep(0.05f);
+		//FPlatformProcess::Sleep(0.01f);
 		if (UScriptHookClient::Get()->HookReceiveListener())
 			StopTaskCounter.Increment();
 	}

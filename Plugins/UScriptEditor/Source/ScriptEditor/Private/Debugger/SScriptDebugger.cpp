@@ -284,8 +284,6 @@ void SScriptDebugger::UpdateDebugState()
 	{
 		if (IsDebugRemote)
 		{
-			
-
 			UScriptRemoteDebuggerSetting::Get()->CreateHookServer();
 			UScriptDebuggerSetting::Get()->UnBindDebugState();
 		}
@@ -293,6 +291,8 @@ void SScriptDebugger::UpdateDebugState()
 		{
 			UScriptRemoteDebuggerSetting::Get()->DestroyHookServer();
 			UScriptDebuggerSetting::Get()->BindDebugState();
+
+			CleanDebugInfo();
 		}
 	}
 	else

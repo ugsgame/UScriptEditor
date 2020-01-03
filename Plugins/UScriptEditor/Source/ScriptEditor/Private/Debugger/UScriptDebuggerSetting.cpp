@@ -1164,7 +1164,7 @@ void UScriptDebuggerSetting::BindDebugState()
 		RegLuaHandle = FUnLuaDelegates::OnLuaStateCreated.AddUObject(this, &UScriptDebuggerSetting::RegisterLuaState);
 
 	if (!UnRegLuaHandle.IsValid())
-		UnRegLuaHandle = FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(this, &UScriptDebuggerSetting::UnRegisterLuaState);
+		UnRegLuaHandle = FUnLuaDelegates::OnPreLuaContextCleanup.AddUObject(this, &UScriptDebuggerSetting::UnRegisterLuaState);
 }
 
 void UScriptDebuggerSetting::UnBindDebugState()
@@ -1177,7 +1177,7 @@ void UScriptDebuggerSetting::UnBindDebugState()
 
 	if (UnRegLuaHandle.IsValid())
 	{
-		FUnLuaDelegates::OnPostLuaContextCleanup.Remove(UnRegLuaHandle);
+		FUnLuaDelegates::OnPreLuaContextCleanup.Remove(UnRegLuaHandle);
 		UnRegLuaHandle.Reset();
 	}
 

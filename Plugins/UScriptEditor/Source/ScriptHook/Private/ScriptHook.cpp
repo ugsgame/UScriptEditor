@@ -11,5 +11,5 @@ void FScriptHookModule::StartupModule()
 
 void FScriptHookModule::ShutdownModule()
 {
-
+	//UScriptHookClient::Get()->UnBindDebugState();
 }
