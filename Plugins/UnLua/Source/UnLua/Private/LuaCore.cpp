@@ -2088,7 +2088,18 @@ UNLUA_API int32 Global_LoadContext(lua_State *L)
     {
         UE_LOG(LogUnLua, Log, TEXT("%s: use ori require to load file %s!"), ANSI_TO_TCHAR(__FUNCTION__), ANSI_TO_TCHAR(ModuleName));
 
-		lua_toboolean(L, 0);
+        const char * name = ModuleName;
+        FindLuaLoader(L, name);
+        lua_pushstring(L, name);  /* pass name as argument to module loader */
+        lua_insert(L, -2);  /* name is 1st argument (before search data) */
+        lua_call(L, 2, 1);  /* run loader to load module */
+        if (!lua_isnil(L, -1))  /* non-nil return? */
+            lua_setfield(L, 2, name);  /* LOADED[name] = returned value */
+        if (lua_getfield(L, 2, name) == LUA_TNIL) {   /* module set no value? */
+            lua_pushboolean(L, 1);  /* use true as result */
+            lua_pushvalue(L, -1);  /* extra copy to be returned */
+            lua_setfield(L, 2, name);  /* LOADED[name] = true */
+        }
         return 1;
     }
 	
