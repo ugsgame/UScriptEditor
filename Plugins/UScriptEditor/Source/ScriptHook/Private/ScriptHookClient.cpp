@@ -18,6 +18,7 @@
 #include "GameFramework/Actor.h"
 #include "LuaContext.h"
 #include "UEReflectionUtils.h"
+#include "ScriptHook.h"
 
 static void debugger_hook_c(lua_State *L, lua_Debug *ar);
 
@@ -77,6 +78,13 @@ void UScriptHookClient::BindDebugState()
 	if (!UnRegLuaHandle.IsValid())
 		UnRegLuaHandle = FUnLuaDelegates::OnPreLuaContextCleanup.AddUObject(this, &UScriptHookClient::UnRegisterLuaState);
 
+	//HookTickHandle = FTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UScriptHookClient::HookTickRT), 0);
+
+	//HookTickHandle = FSlateApplication::Get().OnPreTick().Add(FOnFloatValueChanged::CreateUObject(this, &UScriptHookClient::HookTick));
+
+	//HookTickHandle = FSlateApplication::Get().GetOnModalLoopTickEvent().Add(FOnFloatValueChanged::CreateUObject(this, &UScriptHookClient::HookTick));
+
+	//FCoreDelegates::OnEndFrameRT.Add(FSimpleDelegate::CreateUObject(this, &UScriptHookClient::HookEndFrame));
 }
 
 void UScriptHookClient::UnBindDebugState()
@@ -93,6 +101,14 @@ void UScriptHookClient::UnBindDebugState()
 		UnRegLuaHandle.Reset();
 	}
 
+#if 0
+	if (HookTickHandle.IsValid())
+	{
+		FSlateApplication::Get().OnPostTick().Remove(HookTickHandle);
+		HookTickHandle.Reset();
+	}
+#endif
+
 	if (L)
 	{
 		lua_sethook(L, nullptr, 0, 0);
@@ -107,14 +123,14 @@ void UScriptHookClient::RegisterLuaState(lua_State* State)
 
 	hook_mode = EHookMode::H_Continue;
 
-	const FString IPStr("127.0.0.1");
-	if (FIPv4Address::Parse(IPStr, ServerIp))
+	//const FString IPStr("127.0.0.1");
+	if (FIPv4Address::Parse(HookIP, ServerIp))
 	{
 
 		//craete client
 		ServerAddr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
 		ServerAddr->SetIp(ServerIp.Value);
-		ServerAddr->SetPort(8890);
+		ServerAddr->SetPort(HookPort);
 
 		HostSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, TEXT("HostSocket"), false);
 
@@ -136,7 +152,7 @@ void UScriptHookClient::RegisterLuaState(lua_State* State)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Log, TEXT("Remote Parse IPStr Error %s"), *IPStr);
+		UE_LOG(LogTemp, Log, TEXT("Remote Parse IPStr Error %s"), *HookIP);
 	}
 }
 
@@ -170,6 +186,43 @@ void UScriptHookClient::UnRegisterLuaState(bool bFullCleanup)
 
 }
 
+
+bool UScriptHookClient::HookTickRT(float DeltaTimes)
+{
+	if (IsLeaveDebug)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Start"));
+		FSlateApplication::Get().LeaveDebuggingMode();
+		IsLeaveDebug = false;
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Ended"));
+	}
+
+	return true;
+}
+
+void UScriptHookClient::HookTick(float DeltaTimes)
+{
+	//UE_LOG(LogTemp, Log, TEXT("Remote IsLeaveDebug : %d"), IsLeaveDebug);
+
+	if (IsLeaveDebug)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Start"));
+		FSlateApplication::Get().LeaveDebuggingMode();
+		IsLeaveDebug = false;
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Ended"));
+	}
+}
+
+void UScriptHookClient::HookEndFrame()
+{
+	if (IsLeaveDebug)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Start"));
+		FSlateApplication::Get().LeaveDebuggingMode();
+		IsLeaveDebug = false;
+		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Ended"));
+	}
+}
 
 bool UScriptHookClient::HookReceiveListener()
 {
@@ -353,13 +406,16 @@ void UScriptHookClient::ReceContinue()
 		return;
 
 	hook_mode = EHookMode::H_Continue;
+	IsLeaveDebug = true;
 
+#if 0
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
 	{
 		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_Continue Start"));
 		FSlateApplication::Get().LeaveDebuggingMode();
 		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_Continue Ended"));
 	}, TStatId(), NULL, ENamedThreads::GameThread);
+#endif
 }
 
 void UScriptHookClient::ReceStepOver()
@@ -370,6 +426,8 @@ void UScriptHookClient::ReceStepOver()
 	u_over.Reset();
 	hook_mode = EHookMode::H_StepOver;
 
+	IsLeaveDebug = true;
+
 #if 0
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
 	{
@@ -377,15 +435,16 @@ void UScriptHookClient::ReceStepOver()
 		FSlateApplication::Get().LeaveDebuggingMode();
 		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Ended"));
 	}, TStatId(), NULL, ENamedThreads::GameThread);
-#endif
+
 
 	AsyncTask(ENamedThreads::GameThread, [&]()
 	{
 		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Start"));
-		FSlateApplication::Get().LeaveDebuggingMode();
+		//FSlateApplication::Get().LeaveDebuggingMode();
 		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Ended"));
 	}
 	);
+#endif
 }
 
 void UScriptHookClient::ReceStepIn()
@@ -394,12 +453,16 @@ void UScriptHookClient::ReceStepIn()
 		return;
 
 	hook_mode = EHookMode::H_StepIn;
+	IsLeaveDebug = true;
+
+#if 0
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
 	{
 		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepIn Start"));
-		FSlateApplication::Get().LeaveDebuggingMode();
+		//FSlateApplication::Get().LeaveDebuggingMode();
 		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepIn Ended"));
 	}, TStatId(), NULL, ENamedThreads::GameThread);
+#endif
 }
 
 void UScriptHookClient::ReceStepOut()
@@ -409,12 +472,16 @@ void UScriptHookClient::ReceStepOut()
 
 	u_out.Reset();
 	hook_mode = EHookMode::H_StepOut;
+	IsLeaveDebug = true;
+
+#if 0
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&]()
 	{
 		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOut Start"));
 		FSlateApplication::Get().LeaveDebuggingMode();
 		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOut Ended"));
 	}, TStatId(), NULL, ENamedThreads::GameThread);
+#endif
 }
 
 void UScriptHookClient::ReceReqStack(const uint8* BinaryPointer, uint32_t BinarySize)
@@ -1681,8 +1748,8 @@ void UScriptHookClient::SendEnterDebug(FString FilePath, int32 Line)
 	HostFilePath = FPaths::Combine(HostScriptPath, LocalFileName);
 	//UE_LOG(LogTemp, Log, TEXT("Remote HostFilePath %s"), *HostFilePath);
 
-	DebugCount++;
-	UE_LOG(LogTemp, Log, TEXT("Remote EnterDebug {%d} [%d] [%s]"), DebugCount, Line, *HostFilePath);
+	//DebugCount++;
+	//UE_LOG(LogTemp, Log, TEXT("Remote EnterDebug {%d} [%d] [%s]"), DebugCount, Line, *HostFilePath);
 	//  PIE: Play in editor start time for /Game/Core/Maps/UEDPIE_0_MainMap 219.574
 	//LogBlueprintUserMessages: Late PlayInEditor Detection : Level '/Game/Core/Maps/MainMap.MainMap:PersistentLevel' has LevelScriptBlueprint '/Game/Core/Maps/MainMap.MainMap:PersistentLevel.MainMap' with GeneratedClass '/Game/Core/Maps/MainMap.MainMap_C' with ClassGeneratedBy '/Game/Core/Maps/MainMap.MainMap:PersistentLevel.MainMap'
 
@@ -1699,7 +1766,13 @@ void UScriptHookClient::SendEnterDebug(FString FilePath, int32 Line)
 	UE_LOG(LogTemp, Log, TEXT("Remote SendEnterDebug SendData [%d]"), HookDealBuilder.GetSize());
 
 	//main thread
-	FSlateApplication::Get().EnterDebuggingMode();
+	//FSlateApplication::Get().EnterDebuggingMode();
+
+	IsLeaveDebug = false;
+	while (!IsLeaveDebug)
+	{
+		FPlatformProcess::Sleep(1.f);
+	}
 }
 
 void UScriptHookClient::SendClientExit()

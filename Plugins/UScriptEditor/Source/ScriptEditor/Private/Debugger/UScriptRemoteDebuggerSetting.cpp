@@ -68,7 +68,7 @@ uint32 FReceiveListenerWorker::Run()
 {
 	while (StopTaskCounter.GetValue() == 0)
 	{
-		//FPlatformProcess::Sleep(0.01f);
+		FPlatformProcess::Sleep(0.01f);
 		if (UScriptRemoteDebuggerSetting::Get()->TCPReceiveListener())
 			StopTaskCounter.Increment();
 	}
@@ -254,25 +254,34 @@ bool UScriptRemoteDebuggerSetting::TCPReceiveListener()
 	//Binary Array!
 	TArray<uint8> ReceivedData;
 
-	uint32 Size;
-	while (ClientSocket->HasPendingData(Size))
+	uint32 TotalSize = 0;
+	uint32 PendingSize;
+	while (ClientSocket->HasPendingData(PendingSize))
 	{
-		//ReceivedData.Init(0, FMath::Min(Size, 65507u));
-		ReceivedData.Init(0, Size);
+		TArray<uint8> TempData;
+		TempData.Init(0, PendingSize);
 
 		int32 BytesRead = 0;
-		ClientSocket->Recv(ReceivedData.GetData(), ReceivedData.Num(), BytesRead);
+		ClientSocket->Recv(TempData.GetData(), TempData.Num(), BytesRead);
+
+		ReceivedData.Append(TempData);
+		TotalSize += PendingSize;
+
+		continue;
+	}
+
+	if (ReceivedData.Num() > 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Remote ReceiveData [%d]"), TotalSize);
 
 		flatbuffers::FlatBufferBuilder HookDealBuilder;
-		HookDealBuilder.PushBytes(ReceivedData.GetData(), BytesRead);
+		HookDealBuilder.PushBytes(ReceivedData.GetData(), TotalSize);
 		flatbuffers::Verifier HookDealVerifier(HookDealBuilder.GetCurrentBufferPointer(), HookDealBuilder.GetSize());
 		if (!NScriptHook::VerifyFHookDealBuffer(HookDealVerifier))
 		{
 			UE_LOG(LogTemp, Log, TEXT("Remote HookDealVerifier failed"));
-			continue;
+			return false;
 		}
-
-		UE_LOG(LogTemp, Log, TEXT("Remote ReceiveData [%d]"), BytesRead);
 
 		auto HookDeal = NScriptHook::GetFHookDeal(HookDealBuilder.GetCurrentBufferPointer());
 
@@ -294,6 +303,49 @@ bool UScriptRemoteDebuggerSetting::TCPReceiveListener()
 			break;
 		}
 	}
+
+#if 0
+	uint32 Size;
+	while (ClientSocket->HasPendingData(Size))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Remote ReceiveData [%d]"), Size);
+
+		//ReceivedData.Init(0, FMath::Min(Size, 65507u));
+		ReceivedData.Init(0, Size);
+
+		int32 BytesRead = 0;
+		ClientSocket->Recv(ReceivedData.GetData(), ReceivedData.Num(), BytesRead);
+
+		flatbuffers::FlatBufferBuilder HookDealBuilder;
+		HookDealBuilder.PushBytes(ReceivedData.GetData(), BytesRead);
+		flatbuffers::Verifier HookDealVerifier(HookDealBuilder.GetCurrentBufferPointer(), HookDealBuilder.GetSize());
+		if (!NScriptHook::VerifyFHookDealBuffer(HookDealVerifier))
+		{
+			UE_LOG(LogTemp, Log, TEXT("Remote HookDealVerifier failed"));
+			continue;
+		}
+
+		auto HookDeal = NScriptHook::GetFHookDeal(HookDealBuilder.GetCurrentBufferPointer());
+
+		switch (HookDeal->DealOrder())
+		{
+		case EDealOrder::O_Default:
+			break;
+		case EDealOrder::O_ClientExit:
+			ReceClientExit();
+			break;
+		case EDealOrder::O_EnterDebug:
+			ReceEnterDebug(HookDeal->DealData()->Data(), HookDeal->DealData()->size());
+			break;
+		case EDealOrder::O_StackVars:
+			ReceStackVars(HookDeal->DealData()->Data(), HookDeal->DealData()->size());
+			break;
+		case EDealOrder::O_ChildVars:
+			ReceChildVars(HookDeal->DealData()->Data(), HookDeal->DealData()->size());
+			break;
+		}
+	}
+#endif
 
 	return false;
 
@@ -452,6 +504,9 @@ void UScriptRemoteDebuggerSetting::GetVarsChildren(FScriptDebuggerVarNode& InNod
 	if (ReqChildHistory.Contains(NodeMask))
 		return;
 
+	//not allow to step
+	SScriptDebugger::Get()->IsEnterDebugMode = false;
+
 	//if ReqChildQuene is empty, can send ReqChild in here
 	if (ReqChildQueue.Num() == 0)
 	{
@@ -479,9 +534,6 @@ void UScriptRemoteDebuggerSetting::GetVarsChildren(FScriptDebuggerVarNode& InNod
 
 	ReqChildHistory.Add(NodeMask);
 	ReqChildQueue.Add(NodeMask);
-
-	//not allow to step
-	SScriptDebugger::Get()->IsEnterDebugMode = false;
 
 	delete QueueLock;
 }
@@ -714,7 +766,7 @@ void UScriptRemoteDebuggerSetting::ReceStackVars(const uint8* BinaryPointer, uin
 
 void UScriptRemoteDebuggerSetting::ReceChildVars(const uint8* BinaryPointer, uint32_t BinarySize)
 {
-	UE_LOG(LogTemp, Log, TEXT("Remote ReceStackVars"));
+	UE_LOG(LogTemp, Log, TEXT("Remote ReceChildVars"));
 
 	//lock VarInfos
 	FScopeLock* QueueLock = new FScopeLock(&QueueCritical);
