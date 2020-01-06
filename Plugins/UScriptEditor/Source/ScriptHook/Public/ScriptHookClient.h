@@ -14,7 +14,7 @@ class FSocket;
 /**
  *
  */
-UCLASS()
+UCLASS(Config = Game)
 class SCRIPTHOOK_API UScriptHookClient : public UObject
 {
 	GENERATED_BODY()
@@ -39,11 +39,25 @@ public:
 
 	void hook_line_option();
 
+public:
+
+	UPROPERTY(Config)
+		FString HookIP;
+
+	UPROPERTY(Config)
+		int32 HookPort;
+
 protected:
 
 	void RegisterLuaState(lua_State* State);
 
 	void UnRegisterLuaState(bool bFullCleanup);
+
+	bool HookTickRT(float DeltaTimes);
+
+	void HookTick(float DeltaTimes);
+
+	void HookEndFrame();
 
 	//Rama's StringFromBinaryArray
 	FString StringFromBinaryArray(TArray<uint8>& BinaryArray);
@@ -145,5 +159,9 @@ protected:
 
 	const static FString ScriptMask;
 
-	int32 DebugCount;
+	//int32 DebugCount;
+
+	FDelegateHandle HookTickHandle;
+
+	volatile bool IsLeaveDebug;
 };
