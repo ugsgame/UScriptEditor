@@ -67,6 +67,7 @@ void FScriptEditorStyle::Initialize()
 		StyleSet->Set("ScriptEditor.DebugStepover", new IMAGE_BRUSH("UI/Debug/icon_debug_step_over", Icon40x40));
 		StyleSet->Set("ScriptEditor.DebugStepin", new IMAGE_BRUSH("UI/Debug/icon_debug_step_into", Icon40x40));
 		StyleSet->Set("ScriptEditor.DebugStepout", new IMAGE_BRUSH("UI/Debug/icon_debug_step_out", Icon40x40));
+		StyleSet->Set("ScriptEditor.DebugAbort", new IMAGE_BRUSH("UI/Debug/icon_debug_step_out", Icon40x40));		//Abort
 
 		//Tab Icons
 		StyleSet->Set("ScriptEditor.Project", new IMAGE_BRUSH("UI/Widgets/icon_tab_members_16x", Icon16x16));

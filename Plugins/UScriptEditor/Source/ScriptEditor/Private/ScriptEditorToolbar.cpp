@@ -92,6 +92,7 @@ void FScriptEditorToolbar::FillEditorToolbar(FToolBarBuilder& ToolbarBuilder)
 		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().DebugStepover);
 		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().DebugStepin);
 		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().DebugStepout);
+		ToolbarBuilder.AddToolBarButton(FScriptEditorCommands::Get().DebugAbort);
 	}
 	ToolbarBuilder.EndSection();
 }

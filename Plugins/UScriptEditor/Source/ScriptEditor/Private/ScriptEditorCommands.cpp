@@ -32,6 +32,7 @@ void FScriptEditorCommands::RegisterCommands()
 	UI_COMMAND(DebugStepover, "Step Over", "Step Over", EUserInterfaceActionType::Button, FInputChord(EKeys::F10));
 	UI_COMMAND(DebugStepin, "Step In", "Step In", EUserInterfaceActionType::Button, FInputChord(EKeys::F11));
 	UI_COMMAND(DebugStepout, "Step Out", "Step Out", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Shift, EKeys::F11));
+	UI_COMMAND(DebugAbort, "Abort", "Abort", EUserInterfaceActionType::Button, FInputChord(EKeys::F12));
 
 	UI_COMMAND(APIBroswer, "API Broswe", "API Broswe", EUserInterfaceActionType::Button, FInputGesture(EModifierKey::Control,EKeys::G));
 }

@@ -22,6 +22,7 @@
 #include "SGraphActionMenu.h"
 #include "Private/SBlueprintActionMenu.h"
 #include "SScriptActionMenu.h"
+#include "SlateApplication.h"
 
 
 #define LOCTEXT_NAMESPACE "ScriptEditor"
@@ -318,6 +319,8 @@ FBasicScriptEditorMode::FBasicScriptEditorMode(TSharedPtr<class FScriptEditor> I
 					->SetSizeCoefficient(0.2f)
 					->SetHideTabWell(true)
 					->AddTab(ScriptEditorTabs::ProjectViewID, ETabState::OpenedTab)
+					->AddTab(ScriptEditorTabs::VarWathcerViewID, ETabState::ClosedTab)
+					->AddTab(ScriptEditorTabs::APIBrowserViewID, ETabState::ClosedTab)
 				)
 				->Split
 				(
@@ -473,6 +476,11 @@ void FScriptEditor::BindCommands()
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugStepout,
 		FExecuteAction::CreateSP(this, &FScriptEditor::DebugStepout),
 		FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugStepout)
+	);
+
+	ToolkitCommands->MapAction(FScriptEditorCommands::Get().DebugAbort,
+		FExecuteAction::CreateSP(this, &FScriptEditor::DebugAbort),
+		FCanExecuteAction::CreateSP(this, &FScriptEditor::CanDebugAbort)
 	);
 }
 
@@ -738,6 +746,18 @@ void FScriptEditor::DebugStepout()
 	}
 }
 
+void FScriptEditor::DebugAbort()
+{
+	//TODO:
+	//Always leave debugging mode
+	FSlateApplication::Get().LeaveDebuggingMode();
+	//DebugStepout if enter debug mode
+	if (SScriptDebugger::Get())
+	{
+		return SScriptDebugger::Get()->DebugStepout();
+	}
+}
+
 bool FScriptEditor::CanDebugContinue()const
 {
 	if (SScriptDebugger::Get())
@@ -772,6 +792,11 @@ bool FScriptEditor::CanDebugStepout() const
 		return SScriptDebugger::Get()->IsEnterDebugMode;
 	}
 	return false;
+}
+
+bool FScriptEditor::CanDebugAbort() const
+{
+	return true;
 }
 
 bool FScriptEditor::CanSaveAsset()const

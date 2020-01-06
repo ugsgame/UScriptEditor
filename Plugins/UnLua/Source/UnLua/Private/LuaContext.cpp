@@ -28,7 +28,7 @@
 #include "DefaultParamCollection.h"
 #include "Interfaces/IPluginManager.h"
 
-#include "UnLuaExternd.h"
+#include "UnLuaExtend.h"
 
 #if WITH_EDITOR
 #include "Editor.h"

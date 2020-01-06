@@ -27,6 +27,7 @@ public:
 	TSharedPtr<FUICommandInfo> DebugStepover;
 	TSharedPtr<FUICommandInfo> DebugStepin;
 	TSharedPtr<FUICommandInfo> DebugStepout;
+	TSharedPtr<FUICommandInfo> DebugAbort;
 	//////////////////////////////////////////////////////////////////////////
 
 	TSharedPtr<FUICommandInfo> APIBroswer;

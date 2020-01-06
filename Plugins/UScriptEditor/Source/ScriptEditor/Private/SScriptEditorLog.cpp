@@ -174,7 +174,7 @@ void SScriptEditorConsoleInputBox::Construct(const FArguments& InArgs)
 
 			SAssignNew(InputText, SScriptConsoleEditableTextBox)
 			.OnTextCommitted(this, &SScriptEditorConsoleInputBox::OnTextCommitted)
-		.HintText(NSLOCTEXT("PythonConsole", "TypeInConsoleHint", "Enter python command"))
+		.HintText(NSLOCTEXT("ScriptConsole", "TypeInConsoleHint", "Enter script command"))
 
 		];
 

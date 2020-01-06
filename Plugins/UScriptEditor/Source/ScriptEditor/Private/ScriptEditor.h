@@ -97,11 +97,13 @@ private:
 	void DebugStepover();
 	void DebugStepin();
 	void DebugStepout();
+	void DebugAbort();
 
 	bool CanDebugContinue() const;
 	bool CanDebugStepover() const;
 	bool CanDebugStepin() const;
 	bool CanDebugStepout() const;
+	bool CanDebugAbort()const;
 	//
 protected:
 	//Overried Asset Editing
