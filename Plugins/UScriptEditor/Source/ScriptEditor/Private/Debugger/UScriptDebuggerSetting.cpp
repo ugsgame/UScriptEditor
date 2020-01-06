@@ -4,8 +4,8 @@
 #include "UnLuaDelegates.h"
 #include "UnLua.h"
 #include "SScriptDebugger.h"
-#include "UEReflectionUtils.h"
-#include "LuaContext.h"
+#include "UnLua/Private/UEReflectionUtils.h"
+#include "UnLua/Private/LuaContext.h"
 #include "GameFramework/Actor.h"
 #include "ScriptEditor.h"
 

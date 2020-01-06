@@ -1,4 +1,4 @@
-﻿// Tencent is pleased to support the open source community by making UnLua available.
+// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -42,12 +42,12 @@ UNLUA_API extern FModuleContext GModuleContext;
 UINTERFACE()
 class UNLUA_API UUnLuaInterface : public UInterface
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 };
 
 class UNLUA_API IUnLuaInterface
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
 	/**
@@ -61,4 +61,3 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 		void GetModuleContext(FString& Path, FString& SourceCode, TArray<uint8>& ByteCode) const;
 };
-

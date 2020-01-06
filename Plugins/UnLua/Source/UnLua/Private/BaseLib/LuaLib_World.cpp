@@ -1,4 +1,4 @@
-﻿// Tencent is pleased to support the open source community by making UnLua available.
+// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -79,7 +79,7 @@ static int32 UWorld_SpawnActor(lua_State *L)
             APawn *Instigator = Cast<APawn>(Actor);
             if (!Instigator)
             {
-                Instigator = Actor->Instigator;
+                Instigator = Actor->GetInstigator();
             }
             SpawnParameters.Instigator = Instigator;
         }

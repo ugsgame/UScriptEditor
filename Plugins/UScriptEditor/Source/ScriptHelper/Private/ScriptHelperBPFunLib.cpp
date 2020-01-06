@@ -6,9 +6,9 @@
 #include "Algo/Count.h"
 #include "AssetRegistryModule.h"
 
-#include "LuaContext.h"
-#include "LuaDynamicBinding.h"
-#include "UnLuaManager.h"
+#include "UnLua/Private/LuaContext.h"
+#include "UnLua/Private/LuaDynamicBinding.h"
+#include "UnLua/Private/UnLuaManager.h"
 #include "UnLuaInterface.h"
 
 #include "ScriptDataAsset.h"

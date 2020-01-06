@@ -1,4 +1,4 @@
-﻿// Tencent is pleased to support the open source community by making UnLua available.
+// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -37,15 +37,19 @@ public:
     UnLua::IExportedClass* FindExportedClass(FName Name);
     UnLua::IExportedClass* FindExportedReflectedClass(FName Name);
 
-    bool AddTypeInterface(FName Name, UnLua::ITypeInterface *TypeInterface);
-    UnLua::ITypeInterface* FindTypeInterface(FName Name);
+    bool AddTypeInterface(FName Name, TSharedPtr<UnLua::ITypeInterface> TypeInterface);
+    TSharedPtr<UnLua::ITypeInterface> FindTypeInterface(FName Name);
 
     bool TryToBindLua(UObjectBaseUtility *Object);
 
     void AddLibraryName(const TCHAR *LibraryName) { LibraryNames.Add(LibraryName); }
     void AddModuleName(const TCHAR *ModuleName) { ModuleNames.AddUnique(ModuleName); }
 
+#if ENGINE_MINOR_VERSION > 23	
+    void OnWorldTickStart(UWorld *World, ELevelTick TickType, float DeltaTime);
+#else
     void OnWorldTickStart(ELevelTick TickType, float DeltaTime);
+#endif
     void OnWorldCleanup(UWorld *World, bool bSessionEnded, bool bCleanupResources);
     void OnPostWorldCleanup(UWorld *World, bool bSessionEnded, bool bCleanupResources);
     void OnPreWorldInitialization(UWorld *World, const UWorld::InitializationValues);
@@ -120,7 +124,7 @@ private:
     TMap<FName, UnLua::IExportedClass*> ExportedReflectedClasses;       // statically exported reflected classes
     TMap<FName, UnLua::IExportedClass*> ExportedNonReflectedClasses;    // statically exported non-reflected classes
 
-    TMap<FName, UnLua::ITypeInterface*> TypeInterfaces;                 // registered type interfaces
+    TMap<FName, TSharedPtr<UnLua::ITypeInterface>> TypeInterfaces;      // registered type interfaces
 
     TMap<lua_State*, int32> ThreadToRef;                                // coroutine -> ref
     TMap<int32, lua_State*> RefToThread;                                // ref -> coroutine

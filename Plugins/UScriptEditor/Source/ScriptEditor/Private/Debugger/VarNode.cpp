@@ -5,7 +5,7 @@
 #include "UnLuaDelegates.h"
 #include "lua.hpp"
 #include "UnLua.h"
-#include "UEReflectionUtils.h"
+#include "UnLua/Private/UEReflectionUtils.h"
 #include "GameFramework/Actor.h"
 
 void FVarWatcherNode::GetChildren(TArray<TSharedRef<FVarWatcherNode>>& OutChildren)

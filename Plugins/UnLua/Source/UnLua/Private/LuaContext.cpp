@@ -1,4 +1,4 @@
-﻿// Tencent is pleased to support the open source community by making UnLua available.
+// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -350,14 +350,14 @@ UnLua::IExportedClass* FLuaContext::FindExportedReflectedClass(FName Name)
 /**
  * Add a type interface
  */
-bool FLuaContext::AddTypeInterface(FName Name, UnLua::ITypeInterface *TypeInterface)
+bool FLuaContext::AddTypeInterface(FName Name, TSharedPtr<UnLua::ITypeInterface> TypeInterface)
 {
     if (Name == NAME_None || !TypeInterface)
     {
         return false;
     }
 
-    UnLua::ITypeInterface **TypeInterfacePtr = TypeInterfaces.Find(Name);
+    TSharedPtr<UnLua::ITypeInterface> *TypeInterfacePtr = TypeInterfaces.Find(Name);
     if (!TypeInterfacePtr)
     {
         TypeInterfaces.Add(Name, TypeInterface);
@@ -368,10 +368,10 @@ bool FLuaContext::AddTypeInterface(FName Name, UnLua::ITypeInterface *TypeInterf
 /**
  * Find a type interface
  */
-UnLua::ITypeInterface* FLuaContext::FindTypeInterface(FName Name)
+TSharedPtr<UnLua::ITypeInterface> FLuaContext::FindTypeInterface(FName Name)
 {
-    UnLua::ITypeInterface **TypeInterfacePtr = TypeInterfaces.Find(Name);
-    return TypeInterfacePtr ? *TypeInterfacePtr : nullptr;
+    TSharedPtr<UnLua::ITypeInterface> *TypeInterfacePtr = TypeInterfaces.Find(Name);
+    return TypeInterfacePtr ? *TypeInterfacePtr : TSharedPtr<UnLua::ITypeInterface>();
 }
 
 /**
@@ -383,6 +383,7 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
     {
         return false;
     }
+
 #if WITH_EDITOR
     if (GIsEditor && !bIsPIE)
     {
@@ -424,7 +425,7 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
                     {
                         ModuleName = Class->GetName();
                     }
-					return Manager->Bind(Object, Class, *ModuleName, GLuaDynamicBinding.InitializerTableRef);
+                    return Manager->Bind(Object, Class, *ModuleName, GLuaDynamicBinding.InitializerTableRef);   // bind!!!
                 }
                 else
                 {
@@ -437,7 +438,7 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
                 }
             }
         }
-        else if (GLuaDynamicBinding.IsValid(Class))                                 // dynamic binding(TODO:Bind code)
+        else if (GLuaDynamicBinding.IsValid(Class))                                 // dynamic binding
         {
             return Manager->Bind(Object, Class, *GLuaDynamicBinding.ModuleName, GLuaDynamicBinding.InitializerTableRef);
         }
@@ -448,7 +449,11 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
 /**
  * Callback for FWorldDelegates::OnWorldTickStart
  */
+#if ENGINE_MINOR_VERSION > 23	
+void FLuaContext::OnWorldTickStart(UWorld *World, ELevelTick TickType, float DeltaTime)
+#else
 void FLuaContext::OnWorldTickStart(ELevelTick TickType, float DeltaTime)
+#endif
 {
     if (!Manager)
     {
@@ -486,7 +491,11 @@ void FLuaContext::OnWorldCleanup(UWorld *World, bool bSessionEnded, bool bCleanu
     {
         bIsInSeamlessTravel = World->IsInSeamlessTravel();
     }
+#if ENGINE_MINOR_VERSION > 23	
+    Cleanup(IsEngineExitRequested(), World);                    // clean up	
+#else	
     Cleanup(GIsRequestingExit, World);                          // clean up
+#endif
 
 #if WITH_EDITOR
     int32 Index = LoadedWorlds.Find(World);
@@ -889,7 +898,7 @@ void FLuaContext::NotifyUObjectCreated(const UObjectBase *InObject, int32 Index)
         {
             Actor = Cast<APawn>(Object->GetOuter());
         }
-        if (Actor && Actor->Role >= ROLE_AutonomousProxy)
+        if (Actor && Actor->GetLocalRole() >= ROLE_AutonomousProxy)
         {
             CandidateInputComponents.AddUnique((UInputComponent*)InObject);
             if (!FWorldDelegates::OnWorldTickStart.IsBoundToObject(this))

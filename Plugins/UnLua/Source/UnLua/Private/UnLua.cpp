@@ -1,4 +1,4 @@
-﻿// Tencent is pleased to support the open source community by making UnLua available.
+// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -27,7 +27,7 @@ DEFINE_STAT(STAT_UnLua_OutParmRec_Memory);
 namespace UnLua
 {
 
-    bool AddTypeInterface(FName Name, ITypeInterface *TypeInterface)
+    bool AddTypeInterface(FName Name, TSharedPtr<ITypeInterface> TypeInterface)
     {
         FLuaContext::Create();
         return GLuaCxt->AddTypeInterface(Name, TypeInterface);

@@ -16,8 +16,8 @@
 #include "ScriptChildVars.h"
 #include "SlateApplication.h"
 #include "GameFramework/Actor.h"
-#include "LuaContext.h"
-#include "UEReflectionUtils.h"
+#include "UnLua/Private/LuaContext.h"
+#include "UnLua/Private/UEReflectionUtils.h"
 #include "ScriptHook.h"
 
 static void debugger_hook_c(lua_State *L, lua_Debug *ar);

@@ -1,4 +1,4 @@
-﻿// Tencent is pleased to support the open source community by making UnLua available.
+// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -180,4 +180,4 @@ int32 ScriptStruct_Compare(lua_State *L);
 /**
  * Create a type interface
  */
-UnLua::ITypeInterface* CreateTypeInterface(lua_State *L, int32 Index);
+TSharedPtr<UnLua::ITypeInterface> CreateTypeInterface(lua_State *L, int32 Index);
