@@ -123,6 +123,12 @@ void UScriptHookClient::RegisterLuaState(lua_State* State)
 
 	hook_mode = EHookMode::H_Continue;
 
+	if (HookIP.IsEmpty())
+	{
+		HookIP = FString("127.0.0.1");
+		HookPort = 8890;
+	}
+
 	//const FString IPStr("127.0.0.1");
 	if (FIPv4Address::Parse(HookIP, ServerIp))
 	{
