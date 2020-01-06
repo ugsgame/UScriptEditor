@@ -574,6 +574,9 @@ bool FScriptEditor::OnRequestClose()
 	//
 	FScriptEditorModule::GetInstance()->SaveConfig();
 
+	//remove unlua bind in UScriptDebuggerSetting
+	UScriptDebuggerSetting::Get()->SetTabIsOpen(false);
+
 	return	FWorkflowCentricApplication::OnRequestClose();
 }
 
@@ -754,7 +757,7 @@ void FScriptEditor::DebugAbort()
 	//DebugStepout if enter debug mode
 	if (SScriptDebugger::Get())
 	{
-		return SScriptDebugger::Get()->DebugStepout();
+		return SScriptDebugger::Get()->DebugContinue();
 	}
 }
 
