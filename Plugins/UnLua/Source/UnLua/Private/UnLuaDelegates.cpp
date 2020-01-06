@@ -25,4 +25,4 @@ FUnLuaDelegates::FGenericLuaDelegate FUnLuaDelegates::HotfixLua;
 FUnLuaDelegates::FGenericLuaDelegate FUnLuaDelegates::ReportLuaCallError;
 FUnLuaDelegates::FGenericLuaDelegate FUnLuaDelegates::ConfigureLuaGC;
 FUnLuaDelegates::FLuaFileLoader FUnLuaDelegates::LoadLuaFile;
-FUnLuaDelegates::FLuaContextLoader FUnLuaDelegates::LoadLuaContext;
+FUnLuaDelegates::FModuleContextLoader FUnLuaDelegates::LoadModuleContext;

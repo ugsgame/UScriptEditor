@@ -36,7 +36,7 @@ function _G.Class(super_name)
 		if CheckModule(super_name) then
 			super_class = require(super_name)
 		else 
-			super_class = LoadContextAsset(super_name)	
+			super_class = RequireModule(super_name)	
 		end	
 	end
 

@@ -17,7 +17,6 @@
 #include "InputCoreTypes.h"
 #include "Engine/EngineBaseTypes.h"
 #include "UnLuaCompatibility.h"
-#include "UnLuaInterface.h"
 #include "UnLuaManager.generated.h"
 
 UCLASS()

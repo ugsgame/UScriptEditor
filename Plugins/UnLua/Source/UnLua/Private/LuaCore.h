@@ -152,9 +152,6 @@ int32 Global_LoadClass(lua_State *L);
 int32 Global_NewObject(lua_State *L);
 UNLUA_API int32 Global_Print(lua_State *L);
 UNLUA_API int32 Global_Require(lua_State *L);
-UNLUA_API int32 Global_LoadContext(lua_State *L);
-UNLUA_API int32 Global_LoadContextAsset(lua_State *L);
-UNLUA_API int32 Global_CheckModule(lua_State *L);
 
 /**
  * Functions to handle UEnum

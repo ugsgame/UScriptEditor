@@ -28,6 +28,8 @@
 #include "DefaultParamCollection.h"
 #include "Interfaces/IPluginManager.h"
 
+#include "UnLuaExternd.h"
+
 #if WITH_EDITOR
 #include "Editor.h"
 #endif
@@ -193,13 +195,16 @@ void FLuaContext::CreateState()
         lua_register(L, "NewObject", Global_NewObject);
 
         lua_register(L, "UEPrint", Global_Print);
-		lua_register(L, "LoadContext", Global_LoadContext);
-		lua_register(L, "LoadContextAsset", Global_LoadContextAsset);
-		lua_register(L, "CheckModule", Global_CheckModule);
         if (FPlatformProperties::RequiresCookedData())
         {
             lua_register(L, "require", Global_Require);             // override 'require' when running with cooked data
         }
+
+		//UnLuaExtern Functions
+		lua_register(L, "CheckModule", Global_CheckModule);
+		lua_register(L, "RequireModule", Global_RequireModule);
+		lua_register(L, "LoadContext", Global_LoadContext);
+		//
 
         // register collision related enums
         RegisterECollisionChannel(L);
@@ -404,14 +409,14 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
                 if (GetNameFunc->GetNativeFunc() && GetContextFunc->GetNativeFunc()  && IsInGameThread())
                 {
                     FString ModuleName;
-					FCodeContext ModuleContext;
+					FModuleContext ModuleContext;
 
                     UObject *DefaultObject = Class->GetDefaultObject();						// get CDO
                     DefaultObject->UObject::ProcessEvent(GetNameFunc, &ModuleName);			// force to invoke UObject::ProcessEvent(...)
 					DefaultObject->UObject::ProcessEvent(GetContextFunc, &ModuleContext);
 
 					//Set Global Context
-					GCodeContext = ModuleContext;
+					GModuleContext = ModuleContext;
 
                     UClass *OuterClass = GetNameFunc->GetOuterUClass();                    // get UFunction's outer class
                     Class = OuterClass == InterfaceClass ? Class : OuterClass;      // select the target UClass to bind Lua module
@@ -627,13 +632,13 @@ void FLuaContext::OnAsyncLoadingFlushUpdate()
 				}
 
                 FString ModuleName;
-				FCodeContext ModuleContext;
+				FModuleContext ModuleContext;
 
                 Object->UObject::ProcessEvent(GetNameFunc, &ModuleName);    // force to invoke UObject::ProcessEvent(...)
 				Object->UObject::ProcessEvent(GetContextFunc, &ModuleContext);    // force to invoke UObject::ProcessEvent(...)
 
 				//Set Global Context
-				GCodeContext = ModuleContext;
+				GModuleContext = ModuleContext;
 
                 UClass *Class = GetNameFunc->GetOuterUClass();
                 Class = Class == InterfaceClass ? Object->GetClass() : Class;

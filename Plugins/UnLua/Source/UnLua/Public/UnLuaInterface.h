@@ -21,7 +21,7 @@
  * Interface for binding UCLASS and Lua module
  */
 
-UNLUA_API struct FCodeContext
+UNLUA_API struct FModuleContext
 {
 	FString Path;
 
@@ -37,7 +37,7 @@ UNLUA_API struct FCodeContext
 	};
 };
 
-UNLUA_API extern FCodeContext GCodeContext;
+UNLUA_API extern FModuleContext GModuleContext;
 
 UINTERFACE()
 class UNLUA_API UUnLuaInterface : public UInterface

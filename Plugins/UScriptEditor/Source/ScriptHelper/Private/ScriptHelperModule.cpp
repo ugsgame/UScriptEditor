@@ -23,7 +23,7 @@ public:
 	virtual void ShutdownModule() override;
 
 protected:
-	bool OnLoadScriptAsset(const FString& InModuleName,FCodeContext& InCodeContext);
+	bool OnLoadModuleContext(const FString& InModuleName,FModuleContext& InCodeContext);
 private:
 	bool SpawnSystemScriptFiles();
 	void Initialize(TSharedPtr<SWindow> InRootWindow, bool bIsNewProjectWindow);
@@ -40,7 +40,7 @@ void FScriptHelperModule::StartupModule()
 	//Spawn Script
 	SpawnSystemScriptFiles();
 	//
-	FUnLuaDelegates::LoadLuaContext.BindRaw(this, &FScriptHelperModule::OnLoadScriptAsset);
+	FUnLuaDelegates::LoadModuleContext.BindRaw(this, &FScriptHelperModule::OnLoadModuleContext);
 }
 
 bool FScriptHelperModule::SpawnSystemScriptFiles()
@@ -54,7 +54,7 @@ bool FScriptHelperModule::SpawnSystemScriptFiles()
 
 	ScriptCode = FString(RawUnlua);
 
-	if (!FPaths::FileExists(ScriptPath))
+	//if (!FPaths::FileExists(ScriptPath))
 	{
 		FFileHelper::SaveStringToFile(ScriptCode, *ScriptPath);
 	}
@@ -77,7 +77,7 @@ void FScriptHelperModule::ShutdownModule()
 
 }
 
-bool FScriptHelperModule::OnLoadScriptAsset(const FString& InModuleName, FCodeContext& InCodeContext)
+bool FScriptHelperModule::OnLoadModuleContext(const FString& InModuleName, FModuleContext& InCodeContext)
 {
 	FString ContextPath(InModuleName);
 	FString ContextName = FPaths::GetCleanFilename(ContextPath);

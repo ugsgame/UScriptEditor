@@ -4,12 +4,15 @@
 #include "Misc/Paths.h"
 #include "Misc/FileHelper.h"
 #include "Algo/Count.h"
+#include "AssetRegistryModule.h"
+
 #include "LuaContext.h"
-#include "UnLuaManager.h"
 #include "LuaDynamicBinding.h"
+#include "UnLuaManager.h"
+#include "UnLuaInterface.h"
+
 #include "ScriptDataAsset.h"
 
-#include "AssetRegistryModule.h"
 
 
 bool UScriptHelperBPFunLib::GetFloatByName(UObject* Target, FName VarName, float &outFloat)
@@ -87,9 +90,9 @@ bool UScriptHelperBPFunLib::TryToRegisterScriptAsset(FString ModuleName)
 
 	if (UScriptDataAsset* UScript = Cast<UScriptDataAsset>(AssetData.FastGetAsset(true)))
 	{
-		GCodeContext.Path = UScript->Path;
-		GCodeContext.SourceCode = UScript->SourceCode;
-		GCodeContext.ByteCode = UScript->ByteCode;
+		GModuleContext.Path = UScript->Path;
+		GModuleContext.SourceCode = UScript->SourceCode;
+		GModuleContext.ByteCode = UScript->ByteCode;
 
 		UE_LOG(LogTemp, Log, TEXT("Registered (%s) Success"), *ScriptAssetPath);
 		return true;
@@ -106,7 +109,7 @@ bool UScriptHelperBPFunLib::TryToBindingScript(UObject* InObject, UScriptDataAss
 	{
 		UClass *Class = InObject->GetClass();
 		FString ModuleName;
-		FCodeContext CodeContext;
+		FModuleContext CodeContext;
 
 		if (InScriptData)
 		{
@@ -122,7 +125,7 @@ bool UScriptHelperBPFunLib::TryToBindingScript(UObject* InObject, UScriptDataAss
 		}
 
 		//Set Global context
-		GCodeContext = CodeContext;
+		GModuleContext = CodeContext;
 		return Context->GetManager()->Bind(InObject, Class, *ModuleName, GLuaDynamicBinding.InitializerTableRef);
 	}
 	return false;
