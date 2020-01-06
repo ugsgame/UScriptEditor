@@ -1,4 +1,4 @@
-// Tencent is pleased to support the open source community by making UnLua available.
+﻿// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -51,6 +51,8 @@ namespace UnLua
      */
     struct ITypeInterface : public ITypeOps
     {
+		virtual ~ITypeInterface() {}
+
         virtual bool IsPODType() const = 0;
         virtual bool IsTriviallyDestructible() const = 0;
         virtual int32 GetSize() const = 0;
