@@ -20,7 +20,11 @@ public:
 #endif // WITH_EDITORONLY_DATA
 
 	UFUNCTION(BlueprintCallable, Category = Script)
-	FString GetDotPath() const;
+	FString GetModuleName() const;
+
+	UFUNCTION(BlueprintCallable, Category = Script)
+	void GetModuleContext(FString& OutPath,FString& OutSourceCode, TArray<uint8>& OutByteCode) const;
+
 	UFUNCTION(BlueprintCallable,Category = Script)
 	FString GetPath() const;
 

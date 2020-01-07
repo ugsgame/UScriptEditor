@@ -1,4 +1,4 @@
-// Tencent is pleased to support the open source community by making UnLua available.
+ï»¿// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -80,12 +80,12 @@ bool UUnLuaManager::Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR 
 		if (!bSuccess)
 		{
 			//load Code context
-			//TODO£ºCodeContext should be a param for the LoadContext
+			//TODOï¼šCodeContext should be a param for the LoadContext
 			bool LoadString = false;
 #if WITH_EDITOR
 			LoadString = true;
 #endif
-			UnLua::FLuaRetValues LoadContextValues = UnLua::Call(L, "LoadContext", TCHAR_TO_ANSI(InModuleName),false/*true LoadString ,false Loadbuffer,default is true*/);
+			UnLua::FLuaRetValues LoadContextValues = UnLua::Call(L, "LoadContext", TCHAR_TO_ANSI(InModuleName), LoadString/*true LoadString ,false Loadbuffer,default is true*/);
 			bSuccess = LoadContextValues.IsValid();
 		}
 

@@ -113,7 +113,7 @@ bool UScriptHelperBPFunLib::TryToBindingScript(UObject* InObject, UScriptDataAss
 
 		if (InScriptData)
 		{
-			ModuleName = InScriptData->GetDotPath();
+			ModuleName = InScriptData->GetModuleName();
 			CodeContext.SourceCode = InScriptData->GetSourceCode();
 			CodeContext.ByteCode = InScriptData->GetByteCode();
 			CodeContext.Path = InScriptData->GetPath();
