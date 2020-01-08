@@ -434,7 +434,11 @@ void SCodeLineItem::OnClickBreakPoint(const ECheckBoxState NewCheckedState)
 	}
 
 	FScriptEditor::Get()->ToggleBreakPoint(CodeLine->FilePath, CodeLine->Line);
-	SScriptDebugger::Get()->SaveDebuggerConfig();
+
+	if (SScriptDebugger::Get())
+	{
+		SScriptDebugger::Get()->SaveDebuggerConfig();
+	}
 }
 
 void SCodeLineItem::OnBreakConditionCommit(const FText& ConditionText, ETextCommit::Type CommitType)

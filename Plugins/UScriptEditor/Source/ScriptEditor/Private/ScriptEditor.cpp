@@ -317,10 +317,10 @@ FBasicScriptEditorMode::FBasicScriptEditorMode(TSharedPtr<class FScriptEditor> I
 				(
 					FTabManager::NewStack()
 					->SetSizeCoefficient(0.2f)
-					->SetHideTabWell(true)
+					->SetHideTabWell(false)
+					->AddTab(ScriptEditorTabs::VarWathcerViewID, ETabState::OpenedTab)
+					->AddTab(ScriptEditorTabs::APIBrowserViewID, ETabState::OpenedTab)
 					->AddTab(ScriptEditorTabs::ProjectViewID, ETabState::OpenedTab)
-					->AddTab(ScriptEditorTabs::VarWathcerViewID, ETabState::ClosedTab)
-					->AddTab(ScriptEditorTabs::APIBrowserViewID, ETabState::ClosedTab)
 				)
 				->Split
 				(
@@ -339,7 +339,7 @@ FBasicScriptEditorMode::FBasicScriptEditorMode(TSharedPtr<class FScriptEditor> I
 						FTabManager::NewStack()
 						->SetSizeCoefficient(0.3f)
 						->SetHideTabWell(false)
-						->AddTab(ScriptEditorTabs::DebuggerViewID, ETabState::ClosedTab)
+						->AddTab(ScriptEditorTabs::DebuggerViewID, ETabState::OpenedTab)
 						->AddTab(ScriptEditorTabs::LogViewID, ETabState::OpenedTab)
 					)
 				)
