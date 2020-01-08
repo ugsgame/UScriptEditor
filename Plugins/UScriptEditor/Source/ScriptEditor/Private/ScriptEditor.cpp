@@ -378,7 +378,7 @@ void FScriptEditor::RegisterToolbarTab(const TSharedRef<class FTabManager>& InTa
 
 void FScriptEditor::InitScriptEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, class UCodeProjectItem* CodeProject, class UCodeProjectItem* ScriptProject)
 {
-#if ENGINE_MINOR_VERSION < 23
+#if ENGINE_MINOR_VERSION < 24
 	FAssetEditorManager::Get().CloseOtherEditors(ScriptProject, this);
 #else
 	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseOtherEditors(ScriptProject, this);
@@ -437,9 +437,9 @@ void FScriptEditor::BindCommands()
 {
 
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().TestAction,
-			FExecuteAction::CreateSP(this, &FScriptEditor::TestAction),
-			FCanExecuteAction::CreateSP(this, &FScriptEditor::CanTestAction)
-			);
+		FExecuteAction::CreateSP(this, &FScriptEditor::TestAction),
+		FCanExecuteAction::CreateSP(this, &FScriptEditor::CanTestAction)
+	);
 
 	ToolkitCommands->MapAction(FScriptEditorCommands::Get().Save,
 		FExecuteAction::CreateSP(this, &FScriptEditor::Save_Internal),
