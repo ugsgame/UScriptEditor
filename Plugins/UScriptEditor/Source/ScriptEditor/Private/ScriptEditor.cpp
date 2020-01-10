@@ -579,6 +579,8 @@ bool FScriptEditor::OnRequestClose()
 
 	//remove unlua bind in UScriptDebuggerSetting
 	UScriptDebuggerSetting::Get()->SetTabIsOpen(false);
+	
+	UVarWatcherSetting::Get()->SetTapIsOpen(false);
 
 	return	FWorkflowCentricApplication::OnRequestClose();
 }

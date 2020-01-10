@@ -61,29 +61,38 @@ void UVarWatcherSetting::SetTapIsOpen(bool IsOpen)
 
 	if (IsTapOpen)
 	{
-		RegLuaHandle = FUnLuaDelegates::OnLuaStateCreated.AddUObject(this, &UVarWatcherSetting::RegisterLuaState);
+		if (!RegLuaHandle.IsValid())
+			RegLuaHandle = FUnLuaDelegates::OnLuaStateCreated.AddUObject(this, &UVarWatcherSetting::RegisterLuaState);
 
-		UnRegLuaHandle = FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(this, &UVarWatcherSetting::UnRegisterLuaState);
+		if (!UnRegLuaHandle.IsValid())
+			UnRegLuaHandle = FUnLuaDelegates::OnPostLuaContextCleanup.AddUObject(this, &UVarWatcherSetting::UnRegisterLuaState);
 
-		BindObjectHandle = FUnLuaDelegates::OnObjectBinded.AddUObject(this, &UVarWatcherSetting::OnObjectBinded);
+		if (!BindObjectHandle.IsValid())
+			BindObjectHandle = FUnLuaDelegates::OnObjectBinded.AddUObject(this, &UVarWatcherSetting::OnObjectBinded);
 
-		UnBindObjectHandle = FUnLuaDelegates::OnObjectUnbinded.AddUObject(this, &UVarWatcherSetting::OnObjectUnbinded);
+		if (!UnBindObjectHandle.IsValid())
+			UnBindObjectHandle = FUnLuaDelegates::OnObjectUnbinded.AddUObject(this, &UVarWatcherSetting::OnObjectUnbinded);
 
 		//UE_LOG(LogTemp, Log, TEXT("UVarWatcherSetting::SetTapIsOpen open"));
 	}
 	else
 	{
-		FUnLuaDelegates::OnLuaStateCreated.Remove(RegLuaHandle);
+		if (RegLuaHandle.IsValid())
+			FUnLuaDelegates::OnLuaStateCreated.Remove(RegLuaHandle);
 
-		FUnLuaDelegates::OnPostLuaContextCleanup.Remove(UnRegLuaHandle);
+		if (UnRegLuaHandle.IsValid())
+			FUnLuaDelegates::OnPostLuaContextCleanup.Remove(UnRegLuaHandle);
 
-		FUnLuaDelegates::OnObjectBinded.Remove(BindObjectHandle);
+		if (BindObjectHandle.IsValid())
+			FUnLuaDelegates::OnObjectBinded.Remove(BindObjectHandle);
 
-		FUnLuaDelegates::OnObjectUnbinded.Remove(UnBindObjectHandle);
+		if (UnBindObjectHandle.IsValid())
+			FUnLuaDelegates::OnObjectUnbinded.Remove(UnBindObjectHandle);
 
 		VarTreeRoot.Reset();
 
-		SVarWatcher::Get()->RefreshVarTree();
+		if(SVarWatcher::Get())
+			SVarWatcher::Get()->RefreshVarTree();
 
 		//UE_LOG(LogTemp, Log, TEXT("UVarWatcherSetting::SetTapIsOpen close"));
 	}
@@ -130,7 +139,7 @@ void UVarWatcherSetting::OnObjectBinded(UObjectBaseUtility* InObject)
 
 void UVarWatcherSetting::OnObjectUnbinded(UObjectBaseUtility* InObject)
 {
-	
+
 	ObjectGroup.Remove(InObject);
 
 	for (auto Node : VarTreeRoot)

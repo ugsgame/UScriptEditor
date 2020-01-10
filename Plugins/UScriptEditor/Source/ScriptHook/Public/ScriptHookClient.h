@@ -53,11 +53,7 @@ protected:
 
 	void UnRegisterLuaState(bool bFullCleanup);
 
-	bool HookTickRT(float DeltaTimes);
-
-	void HookTick(float DeltaTimes);
-
-	void HookEndFrame();
+	//void HookTick(float DeltaTimes);
 
 	//Rama's StringFromBinaryArray
 	FString StringFromBinaryArray(TArray<uint8>& BinaryArray);
@@ -161,7 +157,11 @@ protected:
 
 	//int32 DebugCount;
 
-	FDelegateHandle HookTickHandle;
+	//FDelegateHandle HookTickHandle;
 
 	volatile bool IsLeaveDebug;
+
+	TArray<uint8> ReceivedData;
+
+	uint32 TotalSize = 0;
 };

@@ -138,4 +138,8 @@ protected:
 	TArray<FString> ReqChildHistory;
 
 	TArray<FString> ReqChildQueue;
+
+	TArray<uint8> ReceivedData;
+
+	uint32 TotalSize = 0;
 };

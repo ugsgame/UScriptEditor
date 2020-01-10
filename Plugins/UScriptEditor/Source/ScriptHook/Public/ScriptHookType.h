@@ -78,6 +78,26 @@ T_UFunction_Arg,
 #endif
 
 
+struct unlua_Remote
+{
+	FString source;
+	FString name;
+	int32 currentline;
+
+	void Init(lua_Debug* ar)
+	{
+		FString sourcePath = UTF8_TO_TCHAR(ar->source);
+		source = sourcePath.Replace(*FString("\\"), *FString("/"));
+		name = UTF8_TO_TCHAR(ar->name);
+		currentline = ar->currentline;
+	}
+
+	FString ToString(bool IsShort = true)
+	{
+		return FString::Printf(TEXT("unlua_Debug currentline[%d] ; source[%s]"), currentline, *source);
+	}
+};
+
 struct unlua_State
 {
 	FString source;

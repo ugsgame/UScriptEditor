@@ -158,6 +158,9 @@ void UScriptDebuggerSetting::UnRegisterLuaState(bool bFullCleanup)
 		UE_LOG(LogTemp, Log, TEXT("unlua_Debug UnRegisterLuaState Not FullCleanup"));
 #endif
 
+	if (!bFullCleanup)
+		return;
+
 	if (L == NULL)
 		return;
 
