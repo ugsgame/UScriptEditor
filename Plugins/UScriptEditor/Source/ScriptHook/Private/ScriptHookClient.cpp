@@ -125,9 +125,10 @@ void UScriptHookClient::RegisterLuaState(lua_State* State)
 
 	if (HookIP.IsEmpty())
 	{
-		HookIP = FString("127.0.0.1");
+		HookIP = FString("192.168.131.106");
 		HookPort = 8890;
 	}
+
 
 	//const FString IPStr("127.0.0.1");
 	if (FIPv4Address::Parse(HookIP, ServerIp))
@@ -142,7 +143,7 @@ void UScriptHookClient::RegisterLuaState(lua_State* State)
 
 		if (HostSocket->Connect(*ServerAddr))
 		{
-			UE_LOG(LogTemp, Log, TEXT("Remote HostSocket Connect Succeed"));
+			UE_LOG(LogTemp, Log, TEXT("Remote HostSocket Connect Succeed ip[%s] port[%d]"), *HookIP, HookPort);
 
 			//open receive thread
 			HookReceiveThread = FRunnableThread::Create(new FHookReceiveThread(), TEXT("HookReceiveThread"));
@@ -153,17 +154,19 @@ void UScriptHookClient::RegisterLuaState(lua_State* State)
 		}
 		else
 		{
-			UE_LOG(LogTemp, Log, TEXT("Remote HostSocket Connect Failed"));
+			UE_LOG(LogTemp, Log, TEXT("Remote HostSocket Connect Failed ip[%s] port[%d]"), *HookIP, HookPort);
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Log, TEXT("Remote Parse IPStr Error %s"), *HookIP);
+		UE_LOG(LogTemp, Log, TEXT("Remote Parse IPStr Error ip[%s] port[%d]"), *HookIP, HookPort);
 	}
 }
 
 void UScriptHookClient::UnRegisterLuaState(bool bFullCleanup)
 {
+	if (!bFullCleanup)
+		return;
 	//tell hook server to exit client
 	SendClientExit();
 
@@ -193,19 +196,7 @@ void UScriptHookClient::UnRegisterLuaState(bool bFullCleanup)
 }
 
 
-bool UScriptHookClient::HookTickRT(float DeltaTimes)
-{
-	if (IsLeaveDebug)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Start"));
-		FSlateApplication::Get().LeaveDebuggingMode();
-		IsLeaveDebug = false;
-		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Ended"));
-	}
-
-	return true;
-}
-
+#if 0
 void UScriptHookClient::HookTick(float DeltaTimes)
 {
 	//UE_LOG(LogTemp, Log, TEXT("Remote IsLeaveDebug : %d"), IsLeaveDebug);
@@ -218,17 +209,8 @@ void UScriptHookClient::HookTick(float DeltaTimes)
 		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Ended"));
 	}
 }
+#endif
 
-void UScriptHookClient::HookEndFrame()
-{
-	if (IsLeaveDebug)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Start"));
-		FSlateApplication::Get().LeaveDebuggingMode();
-		IsLeaveDebug = false;
-		UE_LOG(LogTemp, Log, TEXT("Remote LeaveDebuggingMode H_StepOver Ended"));
-	}
-}
 
 bool UScriptHookClient::HookReceiveListener()
 {
@@ -237,28 +219,40 @@ bool UScriptHookClient::HookReceiveListener()
 	if (!HostSocket)
 		return true;
 
-	//Binary Array!
-	TArray<uint8> ReceivedData;
-
-	uint32 Size;
-	while (HostSocket->HasPendingData(Size))
+	uint32 PendingSize;
+	while (HostSocket->HasPendingData(PendingSize))
 	{
-		//ReceivedData.Init(0, FMath::Min(Size, 65507u));
-		ReceivedData.Init(0, Size);
+		TArray<uint8> TempData;
+		TempData.Init(0, PendingSize);
 
 		int32 BytesRead = 0;
-		HostSocket->Recv(ReceivedData.GetData(), ReceivedData.Num(), BytesRead);
+		HostSocket->Recv(TempData.GetData(), TempData.Num(), BytesRead);
+
+		ReceivedData.Append(TempData);
+		TotalSize += PendingSize;
+
+		continue;
+	}
+
+	if (ReceivedData.Num() > 0)
+	{
 
 		flatbuffers::FlatBufferBuilder HookDealBuilder;
-		HookDealBuilder.PushBytes(ReceivedData.GetData(), BytesRead);
+		HookDealBuilder.PushBytes(ReceivedData.GetData(), TotalSize);
 		flatbuffers::Verifier HookDealVerifier(HookDealBuilder.GetCurrentBufferPointer(), HookDealBuilder.GetSize());
 		if (!NScriptHook::VerifyFHookDealBuffer(HookDealVerifier))
 		{
-			UE_LOG(LogTemp, Log, TEXT("Remote HookDealVerifier failed"));
-			continue;
+			// wait next data
+			UE_LOG(LogTemp, Log, TEXT("Remote HookDealVerifier failed [%d]"), TotalSize);
+			return false;
 		}
-
-		UE_LOG(LogTemp, Log, TEXT("Remote ReceiveData [%d]"), BytesRead);
+		else
+		{
+			UE_LOG(LogTemp, Log, TEXT("Remote ReceiveData [%d]"), TotalSize);
+			// clear receive data
+			ReceivedData.Reset();
+			TotalSize = 0;
+		}
 
 		auto HookDeal = NScriptHook::GetFHookDeal(HookDealBuilder.GetCurrentBufferPointer());
 
@@ -291,8 +285,6 @@ bool UScriptHookClient::HookReceiveListener()
 			ReceStepOut();
 			break;
 		}
-
-		//delete HookDeal;
 	}
 
 	return false;
@@ -382,7 +374,11 @@ void UScriptHookClient::ReceBreakPoints(const uint8* BinaryPointer, uint32_t Bin
 
 		//check Lua Hook Exit and bind hook
 		if (L && lua_gethook(L) == nullptr)
+		{
 			lua_sethook(L, debugger_hook_c, LUA_MASKCALL | LUA_MASKRET | LUA_MASKLINE, 0);
+
+			UE_LOG(LogTemp, Log, TEXT("Remote Bind debugger_hook_c"));
+		}
 #if 0
 		for (TMap<FString, TSet<int32>>::TIterator It(EnableBreakPoint); It; ++It)
 		{
@@ -397,7 +393,11 @@ void UScriptHookClient::ReceBreakPoints(const uint8* BinaryPointer, uint32_t Bin
 	{
 		//check Lua Hook Exit and unbind hook
 		if (L && lua_gethook(L))
+		{
 			lua_sethook(L, nullptr, 0, 0);
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("Remote UnBind debugger_hook_c"));
 	}
 	//unlock BreakPoints and L
 	delete QueueLock;
@@ -1748,11 +1748,12 @@ void UScriptHookClient::SendEnterDebug(FString FilePath, int32 Line)
 		i++;
 	}
 
-	FString HostFilePath;
-	FString LocalFileName;
-	FilePath.Split(ScriptMask, &HostFilePath, &LocalFileName);
-	HostFilePath = FPaths::Combine(HostScriptPath, LocalFileName);
-	//UE_LOG(LogTemp, Log, TEXT("Remote HostFilePath %s"), *HostFilePath);
+	//FString HostFilePath;
+	//FString LocalFileName;
+	//FilePath.Split(ScriptMask, &HostFilePath, &LocalFileName);
+	//HostFilePath = FPaths::Combine(HostScriptPath, LocalFileName);
+	FString HostFilePath = FPaths::Combine(HostScriptPath, FilePath);
+	UE_LOG(LogTemp, Log, TEXT("Remote HostFilePath %s"), *HostFilePath);
 
 	//DebugCount++;
 	//UE_LOG(LogTemp, Log, TEXT("Remote EnterDebug {%d} [%d] [%s]"), DebugCount, Line, *HostFilePath);
@@ -1793,18 +1794,13 @@ void UScriptHookClient::SendClientExit()
 	int32 ByteSent = 0;
 	HostSocket->Send(HookDealBuilder.GetBufferPointer(), HookDealBuilder.GetSize(), ByteSent);
 
-	UE_LOG(LogTemp, Log, TEXT("Remote SendBreakPoints SendData [%d]"), HookDealBuilder.GetSize());
+	UE_LOG(LogTemp, Log, TEXT("Remote SendClientExit SendData [%d]"), HookDealBuilder.GetSize());
 }
 
 
 /********Hook Debug Statement********/
 
-//#define UNLUA_DEBUG
-#ifdef UNLUA_DEBUG
-static unlua_Debug ur;
-#else
-static unlua_State ur;
-#endif // UNLUA_DEBUG
+static unlua_Remote ur;
 
 //#define UNFOLD_FUNCTION
 
@@ -1889,23 +1885,21 @@ void UScriptHookClient::hook_line_option()
 	}
 }
 
+
 static void debugger_hook_c(lua_State *L, lua_Debug *ar)
 {
 
 	if (lua_getinfo(L, "Snl", ar) != 0)
 	{
 
-#ifdef UNLUA_DEBUG
-		ur.Init(ar);
-		UE_LOG(LogTemp, Log, TEXT("Remote %s"), *ur.ToString());
-		if (ar->currentline < 0)
-			return;
-#else
 		if (ar->currentline < 0)
 			return;
 
 		ur.Init(ar);
-#endif // UNLUA_DEBUG
+
+#if 1
+		UE_LOG(LogTemp, Log, TEXT("Remote %s"), *ur.ToString());
+#endif
 
 		switch (ar->event)
 		{
@@ -1923,5 +1917,4 @@ static void debugger_hook_c(lua_State *L, lua_Debug *ar)
 }
 
 
-#undef UNLUA_DEBUG
 #undef UNFOLD_FUNCTION

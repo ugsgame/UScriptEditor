@@ -109,7 +109,8 @@ void UScriptRemoteDebuggerSetting::SetTabIsOpen(bool IsOpen)
 void UScriptRemoteDebuggerSetting::CreateHookServer()
 {
 	//start listener tcp
-	if (StartTCPReceiver("HookListener", "127.0.0.1", 8890))
+	if (StartTCPReceiver("HookListener", "192.168.131.106", 8890))
+	//if (StartTCPReceiver("HookListener", "127.0.0.1", 8890))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Remote StartTCPReceiver HookListener Succeed"));
 	}
@@ -251,10 +252,7 @@ bool UScriptRemoteDebuggerSetting::TCPReceiveListener()
 	if (!ClientSocket)
 		return true;
 
-	//Binary Array!
-	TArray<uint8> ReceivedData;
 
-	uint32 TotalSize = 0;
 	uint32 PendingSize;
 	while (ClientSocket->HasPendingData(PendingSize))
 	{
@@ -272,15 +270,22 @@ bool UScriptRemoteDebuggerSetting::TCPReceiveListener()
 
 	if (ReceivedData.Num() > 0)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Remote ReceiveData [%d]"), TotalSize);
 
 		flatbuffers::FlatBufferBuilder HookDealBuilder;
 		HookDealBuilder.PushBytes(ReceivedData.GetData(), TotalSize);
 		flatbuffers::Verifier HookDealVerifier(HookDealBuilder.GetCurrentBufferPointer(), HookDealBuilder.GetSize());
 		if (!NScriptHook::VerifyFHookDealBuffer(HookDealVerifier))
 		{
-			UE_LOG(LogTemp, Log, TEXT("Remote HookDealVerifier failed"));
+			// wait next data
+			UE_LOG(LogTemp, Log, TEXT("Remote HookDealVerifier failed [%d]"), TotalSize);
 			return false;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Log, TEXT("Remote ReceiveData [%d]"), TotalSize);
+			// clear receive data
+			ReceivedData.Reset();
+			TotalSize = 0;
 		}
 
 		auto HookDeal = NScriptHook::GetFHookDeal(HookDealBuilder.GetCurrentBufferPointer());
