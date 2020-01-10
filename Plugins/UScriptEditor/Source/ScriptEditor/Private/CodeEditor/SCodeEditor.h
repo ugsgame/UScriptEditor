@@ -76,9 +76,13 @@ public:
 	virtual void OnClose();
 
 protected:
+	void OnInvokedSearch();
+	void OnAdvanceAutoComplete(const FString &Search);
+	void OnAutoComplete(const TArray<FString>&Results);
 	void OnTextChanged(const FText& NewText);
 	void OnTextCommitted(const FText &NewText, ETextCommit::Type CommitInfo);
 	void OnVerticalScroll(float Offset);
+	bool IsCodeEditable()const;
 	void SetLineCountList(const int32 Count);
 	void OnSelectedLineCounterItem(FCodeLineNode_Ptr Item, ESelectInfo::Type SelectInfo);
 	void OnDoubleClickLineCounterItem(FCodeLineNode_Ptr Item);

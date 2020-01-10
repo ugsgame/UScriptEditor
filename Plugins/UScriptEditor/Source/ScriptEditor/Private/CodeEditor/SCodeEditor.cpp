@@ -148,13 +148,15 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 									SAssignNew(CodeEditableText, SCodeEditableText)
 									.OnTextChanged(this, &SCodeEditor::OnTextChanged)
 									.OnTextCommitted(this, &SCodeEditor::OnTextCommitted)
-									//.IsEnabled(this,&SCodeEditor::IsCodeEditable)
+									.IsEnabled(this,&SCodeEditor::IsCodeEditable)			//TODO:Can not edit if debugging
+									.OnInvokeSearch(this, &SCodeEditor::OnInvokedSearch)
+									.OnAutoComplete(this, &SCodeEditor::OnAutoComplete)
 									.Text(FText::FromString(FileText))
 									.VScrollBar(VerticalScrollbar)
 									.HScrollBar(HorizontalScrollbar)
 									.Marshaller(RichTextMarshaller)
 									.CanKeyboardFocus(true)
-									.IsReadOnly(false)
+									.IsReadOnly(false)				//TODO:ReadOnly if debugging
 								]
 							]
 						]
@@ -165,6 +167,21 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 
 	//Add Line Number
 	SetLineCountList(GetLineCount());
+}
+
+void SCodeEditor::OnInvokedSearch()
+{
+
+}
+
+void SCodeEditor::OnAdvanceAutoComplete(const FString &Search)
+{
+
+}
+
+void SCodeEditor::OnAutoComplete(const TArray<FString>&Results)
+{
+
 }
 
 void SCodeEditor::OnTextChanged(const FText& NewText)
@@ -198,6 +215,11 @@ void SCodeEditor::OnTextCommitted(const FText &NewText, ETextCommit::Type ComtIn
 void SCodeEditor::OnVerticalScroll(float Offset) 
 {
 	VerticalScrollbar->SetState(VS_SCROLL_BOX->GetScrollOffset(), VS_SCROLL_BOX->GetViewOffsetFraction());
+}
+
+bool SCodeEditor::IsCodeEditable() const
+{
+	return true;
 }
 
 bool SCodeEditor::Save() const

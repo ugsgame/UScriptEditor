@@ -33,8 +33,7 @@ public:
 	SLATE_BEGIN_ARGS(SScriptActionMenu)
 		: _CodeEditableObj(static_cast<SCodeEditableText*>(NULL))
 		, _NewNodePosition(FVector2D::ZeroVector)
-		, _AutoExpandActionMenu(false)
-	{}
+		, _AutoExpandActionMenu(false){}
 
 		SLATE_ARGUMENT(SCodeEditableText*, CodeEditableObj)
 		SLATE_ARGUMENT(FVector2D, NewNodePosition)

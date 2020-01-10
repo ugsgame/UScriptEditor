@@ -12,12 +12,19 @@
 #include "SScriptActionMenu.h"
 #include "GraphEditor.h"
 #include "SlateApplication.h"
+#include "SAutoCompleteMenu.h"
 
 #define  LOCTEXT_NAMESPACE "CodeEditableText"
 
 
 void SCodeEditableText::Construct(const FArguments& InArgs)
 {
+	//
+	OnAutoCompleted = InArgs._OnAutoComplete;
+	OnInvokedSearch = InArgs._OnInvokeSearch;
+	KeyboardFocus = InArgs._CanKeyboardFocus.Get();
+	//
+
 	SMultiLineEditableText::Construct(
 		SMultiLineEditableText::FArguments()
 		.Font(FScriptEditorStyle::Get().GetWidgetStyle<FTextBlockStyle>("TextEditor.NormalText").Font)
@@ -38,9 +45,10 @@ void SCodeEditableText::Construct(const FArguments& InArgs)
 		ExtenderCommands->MapAction(
 			FScriptEditorCommands::Get().APIBroswer,
 			FExecuteAction::CreateSP(this, &SCodeEditableText::OpenAPIBrowser),
-			FCanExecuteAction::CreateSP(this,&SCodeEditableText::CanOpenAPIBrowser));
+			FCanExecuteAction::CreateSP(this, &SCodeEditableText::CanOpenAPIBrowser));
 	}
 
+	bIsSoftwareCursor = true;
 }
 
 void SCodeEditableText::GoToLineColumn(int32 Line, int32 Column)
@@ -58,6 +66,50 @@ void SCodeEditableText::GetLineAndColumn(int32 & Line, int32 & Column)
 {
 	Line = CurrentLine;
 	Column = CurrentColumn;
+}
+
+const FTextLocation & SCodeEditableText::GetCursorLocation() const
+{
+	return CursorLocation;
+}
+
+const FString SCodeEditableText::ParseAutoCompleteWord()
+{
+	if (CursorLocation.GetOffset() <= INDEX_NONE + 1) { return FString(); }
+	//
+	FTextLocation Offset(CursorLocation.GetLineIndex(), CursorLocation.GetOffset());
+	TCHAR IT = EditableTextLayout->GetCharacterAt(Offset);
+	int32 I = Offset.GetOffset();
+	//
+	FString Subject;
+	FString Raw;
+	//
+	while ((I > INDEX_NONE) && (!TChar<WIDECHAR>::IsWhitespace(IT)) && (!TChar<WIDECHAR>::IsLinebreak(IT)) && (TChar<WIDECHAR>::IsAlpha(IT) || TChar<WIDECHAR>::IsDigit(IT)
+		|| IT == TEXT('.') || IT == TEXT(':') || IT == TEXT('-') || IT == TEXT('_') || IT == TEXT('<') || IT == TEXT('>') || IT == TEXT('{') || IT == TEXT('}') || IT == TEXT('[') || IT == TEXT(']') || IT == TEXT('(') || IT == TEXT(')')
+		)) {
+		Offset = FTextLocation(CursorLocation.GetLineIndex(), I);
+		IT = EditableTextLayout->GetCharacterAt(Offset);
+		Raw.AppendChar(IT);
+		--I;
+	}
+	//
+	Subject = Raw.TrimStartAndEnd();
+	Subject.ReverseString();
+	//
+	if (Subject.Contains(TEXT("::"))) { Subject.Split(TEXT("::"), nullptr, &Subject, ESearchCase::IgnoreCase, ESearchDir::FromEnd); }
+	if (Subject.Contains(TEXT("."))) { Subject.Split(TEXT("."), nullptr, &Subject, ESearchCase::IgnoreCase, ESearchDir::FromEnd); }
+	//
+	Subject.Split(TEXT("{"), &Subject, nullptr); Subject.Split(TEXT("("), &Subject, nullptr);
+	Subject.Split(TEXT("["), &Subject, nullptr); Subject.Split(TEXT("<"), &Subject, nullptr);
+	//
+	AutoCleanup(Subject);
+	//
+	return Subject;
+}
+
+const FString SCodeEditableText::GetUnderCursor() const
+{
+	return UnderCursor;
 }
 
 void SCodeEditableText::ContextMenuExtender(FMenuBuilder& MenuBuilder)
@@ -118,6 +170,74 @@ void SCodeEditableText::OpenAPIBrowser()
 	}
 }
 
+void SCodeEditableText::OpenAutoCompleteMenu(FString InCursor)
+{
+	US_Log("OpenAutoCompleteMenu");
+
+	TSharedRef<SAutoCompleteMenu> AutoMenu =
+		SNew(SAutoCompleteMenu, FScriptEditor::Get())
+		.CodeEditableObj(this)
+		.NewNodePosition(CurrentMouseLeftUpSSPosition)
+		.AutoExpandActionMenu(true);
+
+
+	FActionMenuContent FocusedContent = FActionMenuContent(AutoMenu, AutoMenu->GetFilterTextBox());
+
+	TSharedRef<SWidget> MenuContent = FocusedContent.Content;
+
+	AutoMenu->SetFilterText(FText::FromString(InCursor));
+	if (AutoMenu->IsMatchingAny())
+	{
+		TSharedPtr<IMenu> Menu = FSlateApplication::Get().PushMenu(
+			AsShared(),
+			FWidgetPath(),
+			MenuContent,
+			CurrentMouseLeftUpSSPosition,
+			FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu),
+			false
+		);
+
+
+// 		if (Menu.IsValid())
+// 		{
+// 			Menu->GetOnMenuDismissed().AddLambda([DelegateList = FocusedContent.OnMenuDismissed](TSharedRef<IMenu>) { DelegateList.Broadcast(); });
+// 		}
+// 		else
+// 		{
+// 			FocusedContent.OnMenuDismissed.Broadcast();
+// 		}
+	}
+
+}
+
+bool SCodeEditableText::PushCursor(FString InCursor)
+{
+	TSharedPtr<SWindow> MenuWindow = FSlateApplication::Get().GetVisibleMenuWindow();
+	
+	if (MenuWindow.IsValid())
+	{	
+		const auto& MenuWidget = StaticCastSharedPtr<SWidget>(MenuWindow);
+		const auto& Menu = StaticCastSharedPtr<SAutoCompleteMenu>(MenuWidget);
+		if (Menu.IsValid())
+		{
+ 			Menu->SetFilterText(FText::FromString(InCursor));
+ 			if (!Menu->IsMatchingAny())
+ 			{
+ 				FSlateApplication::Get().DismissAllMenus();
+ 			}		
+		}
+		else
+		{
+			FSlateApplication::Get().DismissAllMenus();
+		}
+	}
+	else
+	{
+		OpenAutoCompleteMenu(InCursor);
+	}
+	return true;
+}
+
 bool SCodeEditableText::CanOpenAPIBrowser() const
 {
 	return true;
@@ -132,9 +252,66 @@ void SCodeEditableText::DeleteSelectedText() {
 	EditableTextLayout->DeleteSelectedText();
 }
 
+void SCodeEditableText::AutoCleanup(FString &Keyword)
+{
+	FString Clean;
+	//
+	for (const TCHAR &CH : Keyword) {
+		if ((TChar<WIDECHAR>::IsAlpha(CH) || TChar<WIDECHAR>::IsDigit(CH) || CH == TEXT('_'))) { Clean.AppendChar(CH); }
+	}///
+	//
+	Keyword.Empty();
+	Keyword.Append(Clean);
+}
+
+void SCodeEditableText::AutoCompleteWord(const int32 X)
+{
+	if (CursorLocation.GetOffset() - X <= INDEX_NONE) { return; }
+	//
+	FTextLocation Offset(CursorLocation.GetLineIndex(), CursorLocation.GetOffset() - X);
+	TCHAR IT = EditableTextLayout->GetCharacterAt(Offset);
+	int32 I = Offset.GetOffset();
+	AutoCompleteResults.Empty();
+	//
+	FString Subject;
+	FString Parent;
+	FString Raw;
+	//
+	while ((I > INDEX_NONE) && (!TChar<WIDECHAR>::IsWhitespace(IT)) && (!TChar<WIDECHAR>::IsLinebreak(IT)) && (TChar<WIDECHAR>::IsAlpha(IT) || TChar<WIDECHAR>::IsDigit(IT)
+		|| IT == TEXT('.') || IT == TEXT(':') || IT == TEXT('-') || IT == TEXT('_') || IT == TEXT('<') || IT == TEXT('>') || IT == TEXT('{') || IT == TEXT('}') || IT == TEXT('[') || IT == TEXT(']') || IT == TEXT('(') || IT == TEXT(')')
+		)) {
+		Offset = FTextLocation(CursorLocation.GetLineIndex(), I);
+		IT = EditableTextLayout->GetCharacterAt(Offset);
+		Raw.AppendChar(IT);
+		--I;
+	}
+	//
+	Subject = Raw.TrimStartAndEnd();
+	Subject.ReverseString();
+	//
+	if (Subject.Contains(TEXT("::"))) { Subject.Split(TEXT("::"), &Parent, &Subject, ESearchCase::IgnoreCase, ESearchDir::FromEnd); }
+	if (Subject.Contains(TEXT("."))) { Subject.Split(TEXT("."), &Parent, &Subject, ESearchCase::IgnoreCase, ESearchDir::FromEnd); }
+	//
+	if (Parent.Contains(TEXT("::"))) { Parent.Split(TEXT("::"), nullptr, &Parent, ESearchCase::IgnoreCase, ESearchDir::FromEnd); }
+	if (Parent.Contains(TEXT("."))) { Parent.Split(TEXT("."), nullptr, &Parent, ESearchCase::IgnoreCase, ESearchDir::FromEnd); }
+	//
+	Parent.Split(TEXT("{"), &Parent, nullptr); Parent.Split(TEXT("("), &Parent, nullptr);
+	Parent.Split(TEXT("["), &Parent, nullptr); Parent.Split(TEXT("<"), &Parent, nullptr);
+	//
+	Subject.Split(TEXT("{"), &Subject, nullptr); Subject.Split(TEXT("("), &Subject, nullptr);
+	Subject.Split(TEXT("["), &Subject, nullptr); Subject.Split(TEXT("<"), &Subject, nullptr);
+	//
+	AutoCleanup(Parent);
+	AutoCleanup(Subject);
+	//
+	//IKMGC_ScriptParser::AutoComplete(Parent, Subject, AutoCompleteResults);
+	OnAutoCompleted.ExecuteIfBound(AutoCompleteResults);
+}
+
 FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacterEvent& InCharacterEvent)
 {
 	FReply Reply = FReply::Unhandled();
+	bool PushCursorMenu = false;
 
 	const TCHAR Character = InCharacterEvent.GetCharacter();
 	if (Character == TEXT('\t'))
@@ -151,9 +328,75 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 			Reply = FReply::Unhandled();
 		}
 	}
+	else if (Character == TEXT('.'))
+	{
+		if (!IsTextReadOnly())
+		{
+			if (CursorLocation.GetOffset() - 1 > INDEX_NONE)
+			{
+				AutoCompleteWord(1);
+			}///
+			//
+			FString DOT;
+			DOT.AppendChar(Character);
+			InsertTextAtCursor(DOT);
+			//
+			Reply = FReply::Handled();
+		}
+		else
+		{
+			Reply = FReply::Unhandled();
+		}
+	}
+	else if (Character == TEXT(':'))
+	{
+		if (!IsTextReadOnly())
+		{
+			if (CursorLocation.GetOffset() - 2 > INDEX_NONE)
+			{
+				FTextLocation Offset(CursorLocation.GetLineIndex(), CursorLocation.GetOffset() - 1);
+				TCHAR AR = EditableTextLayout->GetCharacterAt(Offset);
+				if (AR == TEXT(':')) { AutoCompleteWord(2); }
+			}///
+			//
+			FString DOT;
+			DOT.AppendChar(Character);
+			InsertTextAtCursor(DOT);
+			//
+
+			Reply = FReply::Handled();
+		}
+		else
+		{
+			Reply = FReply::Unhandled();
+		}
+	}
 	else
 	{
 		Reply = SMultiLineEditableText::OnKeyChar(MyGeometry, InCharacterEvent);
+
+		if ((Character >= TEXT('a') && Character <= TEXT('z')) || (Character >= TEXT('A') && Character <= TEXT('Z')))
+		{
+			FString tCursor = UnderCursor;
+			tCursor.AppendChar(Character);
+			US_Log("AutoCompleteResults:%s", *tCursor);
+			PushCursor(tCursor);
+			PushCursorMenu = true;
+		}
+		else if (Character == TEXT('\b') && UnderCursor.Len() > 1)
+		{
+			FString tCursor = UnderCursor;
+			tCursor.RemoveAt(tCursor.Len() - 1);
+			US_Log("AutoCompleteResults:%s", *tCursor);
+			PushCursor(tCursor);
+			PushCursorMenu = true;
+		}
+
+	}
+
+	if (!PushCursorMenu)
+	{
+		FSlateApplication::Get().DismissAllMenus();
 	}
 
 	return Reply;
@@ -163,6 +406,19 @@ FReply SCodeEditableText::OnKeyDown(const FGeometry &Geometry, const FKeyEvent &
 {
 	if (IsTextReadOnly()) { return FReply::Unhandled(); }
 	FKey Key = KeyEvent.GetKey();
+
+	if ((Key == EKeys::F) && (KeyEvent.IsCommandDown() || KeyEvent.IsControlDown())) {
+		if (OnInvokedSearch.IsBound()) {
+			OnInvokedSearch.Execute();
+		} return FReply::Handled();
+	}///
+	if ((Key == EKeys::G) && (KeyEvent.IsCommandDown() || KeyEvent.IsControlDown())) {
+		//TODO:Show
+		CurrentMouseRightUpSSPosition = CurrentMouseLeftUpSSPosition;
+		OpenAPIBrowser();
+		return FReply::Handled();
+	}///
+
 
 	if (Key == EKeys::Tab) {
 		FString Selected;
@@ -178,6 +434,15 @@ FReply SCodeEditableText::OnKeyDown(const FGeometry &Geometry, const FKeyEvent &
 		//
 		return FReply::Handled();
 	}///
+
+	if ((KeyEvent.GetKey() == EKeys::Escape || KeyEvent.GetKey() == EKeys::BackSpace) && (AutoCompleteResults.Num() >= 1)) {
+		AutoCompleteResults.Empty();
+		OnAutoCompleted.ExecuteIfBound(AutoCompleteResults);
+		//
+		return FReply::Handled();
+	}///
+	//
+	//if (Key == EKeys::Enter) { return FReply::Handled(); }
 	return SMultiLineEditableText::OnKeyDown(Geometry, KeyEvent);
 }
 
@@ -193,6 +458,17 @@ FReply SCodeEditableText::OnMouseButtonUp(const FGeometry& MyGeometry, const FPo
 	}
 
 	return SMultiLineEditableText::OnMouseButtonUp(MyGeometry, MouseEvent);
+}
+
+void SCodeEditableText::Tick(const FGeometry &AllottedGeometry, const double CurrentTime, const float DeltaTime)
+{
+	EditableTextLayout->Tick(AllottedGeometry, CurrentTime, DeltaTime);
+	//
+	TSharedPtr<const IRun>Run = EditableTextLayout->GetRunUnderCursor();
+	if (Run.IsValid() && CursorLocation.IsValid() && GetSelectedText().IsEmpty()) {
+		FString Under; Run->AppendTextTo(Under);
+		if (!Under.Equals(UnderCursor)) { UnderCursor = Under; }
+	}///
 }
 
 #undef LOCTEXT_NAMESPACE

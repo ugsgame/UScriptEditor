@@ -9,6 +9,9 @@
 #include "Runtime/InputCore/Classes/InputCoreTypes.h"
 #include "Widgets/Text/SlateEditableTextLayout.h"
 
+DECLARE_DELEGATE(FOnInvokeSearchEvent);
+DECLARE_DELEGATE_OneParam(FOnAutoCompleteEvent, const TArray<FString>&);
+
 class ITextLayoutMarshaller;
 
 class SCodeEditableText : public SMultiLineEditableText
@@ -33,8 +36,8 @@ public:
 		SLATE_ATTRIBUTE(bool, IsReadOnly)
 
 		/** Called whenever the text is changed interactively by the user */
-		//SLATE_EVENT(FOnAutoCompleteEvent, OnAutoComplete)
-		//SLATE_EVENT(FOnInvokeSearchEvent, OnInvokeSearch)
+		SLATE_EVENT(FOnAutoCompleteEvent, OnAutoComplete)
+		SLATE_EVENT(FOnInvokeSearchEvent, OnInvokeSearch)
 		SLATE_EVENT(FOnTextChanged, OnTextChanged)
 		SLATE_EVENT(FOnTextCommitted, OnTextCommitted)
 		SLATE_EVENT(FMenuExtensionDelegate, ContextMenuExtender)
@@ -50,9 +53,15 @@ public:
 	void GoToLineColumn(int32 Line, int32 Column);
 	void GetLineAndColumn(int32 & Line, int32 & Column);
 
+	const FTextLocation &GetCursorLocation() const;
+	const FString ParseAutoCompleteWord();
+	const FString GetUnderCursor() const;
+
 	void OnCursorMoved(const FTextLocation & Location) {
 		CurrentLine = Location.GetLineIndex();
 		CurrentColumn = Location.GetOffset();
+
+		CursorLocation = Location;
 	}
 
 	void ContextMenuExtender(class FMenuBuilder& MenuBuilder);
@@ -63,11 +72,28 @@ protected:
 
 	void OpenAPIBrowser();
 
+	void OpenAutoCompleteMenu(FString InCursor);
+
+	bool PushCursor(FString InCursor);
+
 	bool CanOpenAPIBrowser()const;
+
+	FOnInvokeSearchEvent OnInvokedSearch;
+	FOnAutoCompleteEvent OnAutoCompleted;
+
+	TArray<FString>AutoCompleteResults;
+	FTextLocation CursorLocation;
+	FString UnderCursor;
+	bool KeyboardFocus;
+
 private:
+	void AutoCleanup(FString &Keyword);
+	void AutoCompleteWord(const int32 X);
+
 	virtual FReply OnKeyChar(const FGeometry& MyGeometry,const FCharacterEvent& InCharacterEvent) override;
 	virtual FReply OnKeyDown(const FGeometry &Geometry, const FKeyEvent &KeyEvent) override;
 	virtual FReply OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	virtual void Tick(const FGeometry &AllottedGeometry, const double CurrentTime, const float DeltaTime) override;
 
 	int32 CurrentLine;
 	int32 CurrentColumn;
