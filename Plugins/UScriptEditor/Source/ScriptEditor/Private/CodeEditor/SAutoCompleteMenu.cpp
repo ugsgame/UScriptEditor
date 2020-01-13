@@ -59,8 +59,8 @@ void SAutoCompleteMenu::Construct(const FArguments& InArgs, TSharedPtr<FScriptEd
 		[
 			// Achieving fixed width by nesting items within a fixed width box.
 			SNew(SBox)
-			.WidthOverride(300)
-			.HeightOverride(300)
+			.WidthOverride(180)
+			.HeightOverride(200)
 			[
 				SNew(SVerticalBox)
 				// TYPE OF SEARCH INDICATOR
@@ -84,6 +84,16 @@ TSharedRef<SEditableTextBox> SAutoCompleteMenu::GetFilterTextBox()
 void SAutoCompleteMenu::SetFilterText(FText InFilterText)
 {
 	FilterText = InFilterText;
+	if (GraphActionMenu.IsValid())
+	{
+		TSharedPtr<SEditableTextBox> TextBox = GraphActionMenu->GetFilterTextBox();
+		if (TextBox.IsValid())
+		{
+			US_Log("InFilterText:%s", *(InFilterText.ToString()));
+			TextBox->SetText(InFilterText);
+		}
+	}
+
 }
 
 bool SAutoCompleteMenu::IsMatchingAny()

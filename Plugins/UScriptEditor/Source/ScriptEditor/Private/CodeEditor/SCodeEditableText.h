@@ -72,9 +72,9 @@ protected:
 
 	void OpenAPIBrowser();
 
-	void OpenAutoCompleteMenu(FString InCursor);
+	void OpenAutoCompleteMenu(FString InKeywork);
 
-	bool PushCursor(FString InCursor);
+	bool PushKeyword(FString InKeywork);
 
 	bool CanOpenAPIBrowser()const;
 
@@ -82,7 +82,10 @@ protected:
 	FOnAutoCompleteEvent OnAutoCompleted;
 
 	TArray<FString>AutoCompleteResults;
+
 	FTextLocation CursorLocation;
+	FVector2D CursorScreenLocation;
+
 	FString UnderCursor;
 	bool KeyboardFocus;
 
@@ -93,6 +96,7 @@ private:
 	virtual FReply OnKeyChar(const FGeometry& MyGeometry,const FCharacterEvent& InCharacterEvent) override;
 	virtual FReply OnKeyDown(const FGeometry &Geometry, const FKeyEvent &KeyEvent) override;
 	virtual FReply OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	FCursorReply OnCursorQuery(const FGeometry& MyGeometry, const FPointerEvent& CursorEvent) const override;
 	virtual void Tick(const FGeometry &AllottedGeometry, const double CurrentTime, const float DeltaTime) override;
 
 	int32 CurrentLine;
@@ -100,6 +104,8 @@ private:
 
 	FVector2D CurrentMouseRightUpSSPosition;
 	FVector2D CurrentMouseLeftUpSSPosition;
+
+
 
 	TSharedPtr<class FUICommandList> ExtenderCommands;
 };

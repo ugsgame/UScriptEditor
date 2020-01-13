@@ -47,8 +47,6 @@ void SCodeEditableText::Construct(const FArguments& InArgs)
 			FExecuteAction::CreateSP(this, &SCodeEditableText::OpenAPIBrowser),
 			FCanExecuteAction::CreateSP(this, &SCodeEditableText::CanOpenAPIBrowser));
 	}
-
-	bIsSoftwareCursor = true;
 }
 
 void SCodeEditableText::GoToLineColumn(int32 Line, int32 Column)
@@ -170,14 +168,14 @@ void SCodeEditableText::OpenAPIBrowser()
 	}
 }
 
-void SCodeEditableText::OpenAutoCompleteMenu(FString InCursor)
+void SCodeEditableText::OpenAutoCompleteMenu(FString InKeywork)
 {
 	US_Log("OpenAutoCompleteMenu");
 
 	TSharedRef<SAutoCompleteMenu> AutoMenu =
 		SNew(SAutoCompleteMenu, FScriptEditor::Get())
 		.CodeEditableObj(this)
-		.NewNodePosition(CurrentMouseLeftUpSSPosition)
+		.NewNodePosition(CursorScreenLocation)
 		.AutoExpandActionMenu(true);
 
 
@@ -185,14 +183,14 @@ void SCodeEditableText::OpenAutoCompleteMenu(FString InCursor)
 
 	TSharedRef<SWidget> MenuContent = FocusedContent.Content;
 
-	AutoMenu->SetFilterText(FText::FromString(InCursor));
+	AutoMenu->SetFilterText(FText::FromString(InKeywork));
 	if (AutoMenu->IsMatchingAny())
 	{
 		TSharedPtr<IMenu> Menu = FSlateApplication::Get().PushMenu(
 			AsShared(),
 			FWidgetPath(),
 			MenuContent,
-			CurrentMouseLeftUpSSPosition,
+			CursorScreenLocation,
 			FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu),
 			false
 		);
@@ -210,7 +208,7 @@ void SCodeEditableText::OpenAutoCompleteMenu(FString InCursor)
 
 }
 
-bool SCodeEditableText::PushCursor(FString InCursor)
+bool SCodeEditableText::PushKeyword(FString InKeywork)
 {
 	TSharedPtr<SWindow> MenuWindow = FSlateApplication::Get().GetVisibleMenuWindow();
 	
@@ -220,7 +218,8 @@ bool SCodeEditableText::PushCursor(FString InCursor)
 		const auto& Menu = StaticCastSharedPtr<SAutoCompleteMenu>(MenuWidget);
 		if (Menu.IsValid())
 		{
- 			Menu->SetFilterText(FText::FromString(InCursor));
+ 			Menu->SetFilterText(FText::FromString(InKeywork));
+			//Menu->SetRenderTransformPivot();
  			if (!Menu->IsMatchingAny())
  			{
  				FSlateApplication::Get().DismissAllMenus();
@@ -233,7 +232,7 @@ bool SCodeEditableText::PushCursor(FString InCursor)
 	}
 	else
 	{
-		OpenAutoCompleteMenu(InCursor);
+		OpenAutoCompleteMenu(InKeywork);
 	}
 	return true;
 }
@@ -312,6 +311,11 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 {
 	FReply Reply = FReply::Unhandled();
 	bool PushCursorMenu = false;
+	//////////////////////////////////////////////////////////////////////////
+	//TODO:
+	int32 FontHigh = 17,FontWide = 9;
+	CursorScreenLocation = FVector2D(MyGeometry.GetAbsolutePosition().X + GetCursorLocation().GetOffset()* FontWide, MyGeometry.GetAbsolutePosition().Y + (GetCursorLocation().GetLineIndex() + 1)*FontHigh);
+	//////////////////////////////////////////////////////////////////////////
 
 	const TCHAR Character = InCharacterEvent.GetCharacter();
 	if (Character == TEXT('\t'))
@@ -374,25 +378,24 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 	else
 	{
 		Reply = SMultiLineEditableText::OnKeyChar(MyGeometry, InCharacterEvent);
-
+		FString tCursor = UnderCursor;
 		if ((Character >= TEXT('a') && Character <= TEXT('z')) || (Character >= TEXT('A') && Character <= TEXT('Z')))
-		{
-			FString tCursor = UnderCursor;
+		{		
 			tCursor.AppendChar(Character);
 			US_Log("AutoCompleteResults:%s", *tCursor);
-			PushCursor(tCursor);
+			PushKeyword(tCursor);
 			PushCursorMenu = true;
 		}
 		else if (Character == TEXT('\b') && UnderCursor.Len() > 1)
 		{
-			FString tCursor = UnderCursor;
 			tCursor.RemoveAt(tCursor.Len() - 1);
 			US_Log("AutoCompleteResults:%s", *tCursor);
-			PushCursor(tCursor);
+			PushKeyword(tCursor);
 			PushCursorMenu = true;
 		}
 
 	}
+
 
 	if (!PushCursorMenu)
 	{
@@ -458,6 +461,11 @@ FReply SCodeEditableText::OnMouseButtonUp(const FGeometry& MyGeometry, const FPo
 	}
 
 	return SMultiLineEditableText::OnMouseButtonUp(MyGeometry, MouseEvent);
+}
+
+FCursorReply SCodeEditableText::OnCursorQuery(const FGeometry& MyGeometry, const FPointerEvent& CursorEvent) const
+{
+	return SMultiLineEditableText::OnCursorQuery(MyGeometry, CursorEvent);
 }
 
 void SCodeEditableText::Tick(const FGeometry &AllottedGeometry, const double CurrentTime, const float DeltaTime)
