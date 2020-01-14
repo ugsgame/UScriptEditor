@@ -61,13 +61,13 @@ void SCodeEditableText::GoToLineColumn(int32 Line, int32 Column)
 }
 
 
-void SCodeEditableText::GetLineAndColumn(int32 & Line, int32 & Column)
+void SCodeEditableText::GetLineAndColumn(int32& Line, int32& Column)
 {
 	Line = CurrentLine;
 	Column = CurrentColumn;
 }
 
-const FTextLocation & SCodeEditableText::GetCursorLocation() const
+const FTextLocation& SCodeEditableText::GetCursorLocation() const
 {
 	return CursorLocation;
 }
@@ -187,10 +187,10 @@ bool SCodeEditableText::PushKeyword(FString InKeywork)
 {
 	//
 	CurrentKeyword = InKeywork;
+	FSlateApplication::Get().DismissAllMenus();
 	//
-	if (InKeywork.Len() > 30)
+	if (/*InKeywork.Len() < 2 ||*/ InKeywork.Len() > 30)
 	{
-		FSlateApplication::Get().DismissAllMenus();
 		return false;
 	}
 	//US_Log("InKeywork:%s", *InKeywork);
@@ -198,26 +198,31 @@ bool SCodeEditableText::PushKeyword(FString InKeywork)
 	if (IsAutoCompleteMenuOpen() && AutoCompleteMenu.IsValid())
 	{
 		AutoCompleteMenu->SetFilterText(FText::FromString(InKeywork));
-		//TODO:Update AutoCompleteMenu position
-		//AutoCompleteMenu->SetRenderTransform(CursorScreenLocation);
-
 		TArray< TSharedPtr<FEdGraphSchemaAction> >SelectedActions;
 		AutoCompleteMenu->GetSelectedActions(SelectedActions);
 
-		if (SelectedActions.Num() < 1)
+		if (SelectedActions.Num() > 0)
 		{
-			FSlateApplication::Get().DismissAllMenus();
+			//Update AutoCompleteMenu position
+			TSharedPtr<IMenu> Menu = FSlateApplication::Get().PushMenu(
+				AsShared(),
+				FWidgetPath(),
+				AutoCompleteMenu.ToSharedRef(),
+				CursorScreenLocation,
+				FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu),
+				false
+			);
+		}
+		else
+		{
 			return false;
 		}
-
-		return true;
 	}
 	else
 	{
-		FSlateApplication::Get().DismissAllMenus();
 		OpenAutoCompleteMenu(InKeywork);
 	}
-	return false;
+	return true;
 }
 
 bool SCodeEditableText::InsertCompleteKeywork()
@@ -277,7 +282,7 @@ void SCodeEditableText::DeleteSelectedText() {
 	EditableTextLayout->DeleteSelectedText();
 }
 
-void SCodeEditableText::AutoCleanup(FString &Keyword)
+void SCodeEditableText::AutoCleanup(FString& Keyword)
 {
 	for (int32 i = 0; i < Keyword.Len(); i++)
 	{
@@ -294,7 +299,7 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 	//////////////////////////////////////////////////////////////////////////
 	//TODO:
 	int32 FontHigh = 17, FontWide = 9;
-	CursorScreenLocation = FVector2D(MyGeometry.GetAbsolutePosition().X + GetCursorLocation().GetOffset()* FontWide, MyGeometry.GetAbsolutePosition().Y + (GetCursorLocation().GetLineIndex() + 1)*FontHigh);
+	CursorScreenLocation = FVector2D(MyGeometry.GetAbsolutePosition().X + GetCursorLocation().GetOffset() * FontWide, MyGeometry.GetAbsolutePosition().Y + (GetCursorLocation().GetLineIndex() + 1) * FontHigh);
 	//////////////////////////////////////////////////////////////////////////
 
 	const TCHAR Character = InCharacterEvent.GetCharacter();
@@ -314,11 +319,19 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 	else if (Character == TEXT('.'))
 	{
 		//TODO:
+		FString DOT;
+		DOT.AppendChar(Character);
+		InsertTextAtCursor(DOT);
+
 		Reply = FReply::Handled();
 	}
 	else if (Character == TEXT(':'))
 	{
 		//TODO:
+		FString DOT;
+		DOT.AppendChar(Character);
+		InsertTextAtCursor(DOT);
+
 		Reply = FReply::Handled();
 	}
 	else
@@ -348,7 +361,7 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 	return Reply;
 }
 
-FReply SCodeEditableText::OnKeyDown(const FGeometry &Geometry, const FKeyEvent &KeyEvent)
+FReply SCodeEditableText::OnKeyDown(const FGeometry& Geometry, const FKeyEvent& KeyEvent)
 {
 	if (IsTextReadOnly()) { return FReply::Unhandled(); }
 	FKey Key = KeyEvent.GetKey();
@@ -424,7 +437,7 @@ FCursorReply SCodeEditableText::OnCursorQuery(const FGeometry& MyGeometry, const
 	return SMultiLineEditableText::OnCursorQuery(MyGeometry, CursorEvent);
 }
 
-void SCodeEditableText::Tick(const FGeometry &AllottedGeometry, const double CurrentTime, const float DeltaTime)
+void SCodeEditableText::Tick(const FGeometry& AllottedGeometry, const double CurrentTime, const float DeltaTime)
 {
 	EditableTextLayout->Tick(AllottedGeometry, CurrentTime, DeltaTime);
 	//
