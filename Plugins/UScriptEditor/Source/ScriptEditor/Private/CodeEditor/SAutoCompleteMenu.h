@@ -20,6 +20,8 @@ class SCodeEditableText;
 struct FBlueprintActionContext;
 struct FCustomExpanderData;
 
+DECLARE_DELEGATE_OneParam(FOnActionCodeSelectedEvent, const FString &);
+
 class SAutoCompleteMenu : public SBorder
 {
 public:
@@ -31,6 +33,9 @@ public:
 	SLATE_ARGUMENT(SCodeEditableText*, CodeEditableObj)
 		SLATE_ARGUMENT(FVector2D, NewNodePosition)
 		SLATE_ARGUMENT(bool, AutoExpandActionMenu)
+
+		SLATE_EVENT(FOnActionCodeSelectedEvent, OnActionCodeSelected)
+
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, TSharedPtr<FScriptEditor> InEditor);
@@ -39,7 +44,9 @@ public:
 
 	TSharedRef<SEditableTextBox> GetFilterTextBox();
 	void SetFilterText(FText InFilterText);
+	void GetSelectedActions(TArray< TSharedPtr<FEdGraphSchemaAction> >& OutSelectedActions) const;
 	bool IsMatchingAny();
+	void SetUserFoucs(class FReply& Reply);
 protected:
 	void OnActionSelected(const TArray< TSharedPtr<FEdGraphSchemaAction> >& SelectedAction, ESelectInfo::Type InSelectionType);
 	/** Callback used to populate all actions list in SGraphActionMenu */
@@ -50,9 +57,11 @@ private:
 	FVector2D NewNodePosition;
 	bool bAutoExpandActionMenu;
 
+	FOnActionCodeSelectedEvent OnActionCodeSelected;
+
 	TSharedPtr<SGraphActionMenu> GraphActionMenu;
 	TWeakPtr<FScriptEditor> EditorPtr;
 
 	bool bActionExecuted;
-	FText FilterText;
+	FText CurFilterText;
 };

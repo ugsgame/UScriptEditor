@@ -10,7 +10,7 @@
 #include "Widgets/Text/SlateEditableTextLayout.h"
 
 DECLARE_DELEGATE(FOnInvokeSearchEvent);
-DECLARE_DELEGATE_OneParam(FOnAutoCompleteEvent, const TArray<FString>&);
+DECLARE_DELEGATE_OneParam(FOnAutoCompleteEvent, const FString &);
 
 class ITextLayoutMarshaller;
 
@@ -54,7 +54,6 @@ public:
 	void GetLineAndColumn(int32 & Line, int32 & Column);
 
 	const FTextLocation &GetCursorLocation() const;
-	const FString ParseAutoCompleteWord();
 	const FString GetUnderCursor() const;
 
 	void OnCursorMoved(const FTextLocation & Location) {
@@ -70,18 +69,24 @@ protected:
 
 	void OnGraphActionMenuClosed(bool bActionExecuted, bool bContextSensitiveChecked, bool bGraphPinContext);
 
+	void OnAutoCompleteMenuSelectedCode(const FString& InCode);
+
 	void OpenAPIBrowser();
 
 	void OpenAutoCompleteMenu(FString InKeywork);
 
 	bool PushKeyword(FString InKeywork);
 
+	bool InsertCompleteKeywork();
+
 	bool CanOpenAPIBrowser()const;
+
+	bool IsAutoCompleteMenuOpen()const;
 
 	FOnInvokeSearchEvent OnInvokedSearch;
 	FOnAutoCompleteEvent OnAutoCompleted;
 
-	TArray<FString>AutoCompleteResults;
+	FString AutoCompleteResults;
 
 	FTextLocation CursorLocation;
 	FVector2D CursorScreenLocation;
@@ -91,7 +96,6 @@ protected:
 
 private:
 	void AutoCleanup(FString &Keyword);
-	void AutoCompleteWord(const int32 X);
 
 	virtual FReply OnKeyChar(const FGeometry& MyGeometry,const FCharacterEvent& InCharacterEvent) override;
 	virtual FReply OnKeyDown(const FGeometry &Geometry, const FKeyEvent &KeyEvent) override;
@@ -105,7 +109,8 @@ private:
 	FVector2D CurrentMouseRightUpSSPosition;
 	FVector2D CurrentMouseLeftUpSSPosition;
 
+	FString CurrentKeyword;
 
-
+	TSharedPtr<class SAutoCompleteMenu> AutoCompleteMenu;
 	TSharedPtr<class FUICommandList> ExtenderCommands;
 };

@@ -78,7 +78,7 @@ public:
 protected:
 	void OnInvokedSearch();
 	void OnAdvanceAutoComplete(const FString &Search);
-	void OnAutoComplete(const TArray<FString>&Results);
+	void OnAutoComplete(const FString &Results);
 	void OnTextChanged(const FText& NewText);
 	void OnTextCommitted(const FText &NewText, ETextCommit::Type CommitInfo);
 	void OnVerticalScroll(float Offset);

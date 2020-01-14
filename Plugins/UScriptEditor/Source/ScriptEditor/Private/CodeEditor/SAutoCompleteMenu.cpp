@@ -48,6 +48,7 @@ void SAutoCompleteMenu::Construct(const FArguments& InArgs, TSharedPtr<FScriptEd
 	this->CodeEditableObj = InArgs._CodeEditableObj;
 	this->NewNodePosition = InArgs._NewNodePosition;
 	this->bAutoExpandActionMenu = InArgs._AutoExpandActionMenu;
+	this->OnActionCodeSelected = InArgs._OnActionCodeSelected;
 	this->EditorPtr = InEditor;
 
 
@@ -70,10 +71,12 @@ void SAutoCompleteMenu::Construct(const FArguments& InArgs, TSharedPtr<FScriptEd
 					SAssignNew(GraphActionMenu, SGraphActionMenu)
 					.OnActionSelected(this, &SAutoCompleteMenu::OnActionSelected)
 					.OnCollectAllActions(this, &SAutoCompleteMenu::CollectAllActions)
+					.OnGetFilterText(this,&SAutoCompleteMenu::OnGetFilterText)
 				]
 			]
 		]
 	);
+
 }
 
 TSharedRef<SEditableTextBox> SAutoCompleteMenu::GetFilterTextBox()
@@ -83,17 +86,23 @@ TSharedRef<SEditableTextBox> SAutoCompleteMenu::GetFilterTextBox()
 
 void SAutoCompleteMenu::SetFilterText(FText InFilterText)
 {
-	FilterText = InFilterText;
+	CurFilterText = InFilterText;
+//	US_Log("InFilterText:%s", *(CurFilterText.ToString()));
 	if (GraphActionMenu.IsValid())
 	{
 		TSharedPtr<SEditableTextBox> TextBox = GraphActionMenu->GetFilterTextBox();
 		if (TextBox.IsValid())
 		{
-			US_Log("InFilterText:%s", *(InFilterText.ToString()));
 			TextBox->SetText(InFilterText);
 		}
 	}
 
+}
+
+
+void SAutoCompleteMenu::GetSelectedActions(TArray< TSharedPtr<FEdGraphSchemaAction> >& OutSelectedActions) const
+{
+	GraphActionMenu->GetSelectedActions(OutSelectedActions);
 }
 
 bool SAutoCompleteMenu::IsMatchingAny()
@@ -101,6 +110,11 @@ bool SAutoCompleteMenu::IsMatchingAny()
 	return true;
 }
 
+
+void SAutoCompleteMenu::SetUserFoucs(FReply& Reply)
+{
+	Reply.SetUserFocus(GraphActionMenu.ToSharedRef(), EFocusCause::SetDirectly);
+}
 
 void SAutoCompleteMenu::OnActionSelected(const TArray< TSharedPtr<FEdGraphSchemaAction> >& SelectedAction, ESelectInfo::Type InSelectionType)
 {
@@ -113,13 +127,13 @@ void SAutoCompleteMenu::OnActionSelected(const TArray< TSharedPtr<FEdGraphSchema
 				// Don't dismiss when clicking on dummy action
 				if (SelectedAction[ActionIndex]->GetTypeId() != FEdGraphSchemaAction_Dummy::StaticGetTypeId())
 				{
-					FSlateApplication::Get().DismissAllMenus();
 					FScriptSchemaAction* ScriptAction = static_cast<FScriptSchemaAction*>(SelectedAction[ActionIndex].Get());
 					//TODO:Add script code to the CodeEditor
 					if (this->CodeEditableObj && ScriptAction)
 					{
-						CodeEditableObj->InsertTextAtCursor(ScriptAction->CodeClip);
+						OnActionCodeSelected.ExecuteIfBound(ScriptAction->CodeClip);
 					}
+					FSlateApplication::Get().DismissAllMenus();
 				}
 			}
 		}
@@ -133,10 +147,10 @@ void SAutoCompleteMenu::CollectAllActions(FGraphActionListBuilderBase& OutAllAct
 	{
 		//UScriptActionCollecter::Get()->Reflash();
 
-// 		for (TSharedPtr<FEdGraphSchemaAction> Action : UScriptActionCollecter::Get()->GetScriptActions())
-// 		{
-// 			OutAllActions.AddAction(Action);
-// 		}
+		for (TSharedPtr<FEdGraphSchemaAction> Action : UScriptActionCollecter::Get()->GetScriptActions())
+		{
+			OutAllActions.AddAction(Action);
+		}
 
 		for (TSharedPtr<FEdGraphSchemaAction> Action : UScriptActionCollecter::Get()->GetLuaActions())
 		{
@@ -152,7 +166,8 @@ void SAutoCompleteMenu::CollectAllActions(FGraphActionListBuilderBase& OutAllAct
 
 FText SAutoCompleteMenu::OnGetFilterText()
 {
-	return FilterText;
+	//US_Log("FilterText:%s", *(CurFilterText.ToString()));
+	return CurFilterText;
 }
 
 #undef LOCTEXT_NAMESPACE

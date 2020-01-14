@@ -179,7 +179,7 @@ void SCodeEditor::OnAdvanceAutoComplete(const FString &Search)
 
 }
 
-void SCodeEditor::OnAutoComplete(const TArray<FString>&Results)
+void SCodeEditor::OnAutoComplete(const FString &Results)
 {
 
 }
