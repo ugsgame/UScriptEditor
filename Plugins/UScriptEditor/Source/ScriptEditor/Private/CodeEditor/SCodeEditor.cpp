@@ -26,6 +26,8 @@
 #include "ScriptEditorSetting.h"
 
 #include "Editor/EditorStyle/Public/EditorStyle.h"
+#include "AssetRegistryModule.h"
+#include "AssetRegistryInterface.h"
 
 #define LOCTEXT_NAMESPACE "CodeEditor"
 
@@ -43,8 +45,8 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 	TSharedPtr<FSyntaxHighlighterTextLayoutMarshaller> RichTextMarshaller = nullptr;
 
 	TSharedRef<FCPPRichTextSyntaxHighlighterTextLayoutMarshaller> CPPRichTextMarshaller = FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::Create(
-			FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::FSyntaxTextStyle()
-			);
+		FCPPRichTextSyntaxHighlighterTextLayoutMarshaller::FSyntaxTextStyle()
+	);
 
 	TSharedRef<FLUARichTextSyntaxHighlighterTextLayoutMarshaller> LUARichTextMarshaller = FLUARichTextSyntaxHighlighterTextLayoutMarshaller::Create(
 		FLUARichTextSyntaxHighlighterTextLayoutMarshaller::FSyntaxTextStyle()
@@ -60,12 +62,12 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 	}
 	//
 
-	HorizontalScrollbar = 
+	HorizontalScrollbar =
 		SNew(SScrollBar)
 		.Orientation(Orient_Horizontal)
 		.Thickness(FVector2D(14.0f, 14.0f));
 
-	VerticalScrollbar = 
+	VerticalScrollbar =
 		SNew(SScrollBar)
 		.Orientation(Orient_Vertical)
 		.Thickness(FVector2D(14.0f, 14.0f));
@@ -81,13 +83,13 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 			.FillRow(0, 1.0f)
 			+SGridPanel::Slot(0, 0)
 			[
- 				SAssignNew(CodeEditableText, SCodeEditableText)
- 				.OnTextChanged(this, &SCodeEditor::OnTextChanged)
- 				.OnTextCommitted(this, &SCodeEditor::OnTextCommitted)
- 				.Text(FText::FromString(FileText))
- 				.Marshaller(RichTextMarshaller)
- 				.HScrollBar(HorizontalScrollbar)
- 				.VScrollBar(VerticalScrollbar)
+				SAssignNew(CodeEditableText, SCodeEditableText)
+				.OnTextChanged(this, &SCodeEditor::OnTextChanged)
+				.OnTextCommitted(this, &SCodeEditor::OnTextCommitted)
+				.Text(FText::FromString(FileText))
+				.Marshaller(RichTextMarshaller)
+				.HScrollBar(HorizontalScrollbar)
+				.VScrollBar(VerticalScrollbar)
 			]
 			+SGridPanel::Slot(1, 0)
 			[
@@ -100,73 +102,186 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 		]
 	];
 	*/
-	
-	
+
+
 	TSharedPtr<SOverlay>OverlayWidget; this->ChildSlot
 		[
-// 			SAssignNew(OverlayWidget, SOverlay)
-// 			+ SOverlay::Slot()
-// 			[
-// 				SNew(SVerticalBox)
-// 				+ SVerticalBox::Slot()
-// 				[
-// 					SNew(SBox)
-// 					.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
-// 					.MinDesiredWidth(500.f).MinDesiredHeight(300.f)
-// 					[
-						SNew(SBorder)
-						.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
-						.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
-						[
-							SAssignNew(VS_SCROLL_BOX, SScrollBox)
-							.OnUserScrolled(this, &SCodeEditor::OnVerticalScroll)
-							.Orientation(EOrientation::Orient_Vertical)
-							.ScrollBarThickness(FVector2D(8.f, 8.f))
-							+ SScrollBox::Slot()
-							[
-								SNew(SHorizontalBox)
-								+ SHorizontalBox::Slot()
-								.VAlign(VAlign_Fill).HAlign(HAlign_Left).AutoWidth()
-								[
-									SNew(SBorder)
-									.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
-									//.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
-									.BorderImage(FEditorStyle::GetBrush("NoBorder"))
-									[
-										SAssignNew(LineCounter, SListView<FCodeLineNode_Ptr>)
-										.OnSelectionChanged(this, &SCodeEditor::OnSelectedLineCounterItem)
-										.OnMouseButtonDoubleClick(this, &SCodeEditor::OnDoubleClickLineCounterItem)
-										.OnGenerateRow(this, &SCodeEditor::OnGenerateLineCounter)
-										.ScrollbarVisibility(EVisibility::Collapsed)
-										.ListItemsSource(&LineCount).ItemHeight(14)
-										.SelectionMode(ESelectionMode::Single)
-									]
-								]
-								+ SHorizontalBox::Slot()
-								.VAlign(VAlign_Fill).HAlign(HAlign_Fill).AutoWidth()
-								[
-									SAssignNew(CodeEditableText, SCodeEditableText)
-									.OnTextChanged(this, &SCodeEditor::OnTextChanged)
-									.OnTextCommitted(this, &SCodeEditor::OnTextCommitted)
-									.IsEnabled(this,&SCodeEditor::IsCodeEditable)			//TODO:Can not edit if debugging
-									.OnInvokeSearch(this, &SCodeEditor::OnInvokedSearch)
-									.OnAutoComplete(this, &SCodeEditor::OnAutoComplete)
-									.Text(FText::FromString(FileText))
-									.VScrollBar(VerticalScrollbar)
-									.HScrollBar(HorizontalScrollbar)
-									.Marshaller(RichTextMarshaller)
-									.CanKeyboardFocus(true)
-									.IsReadOnly(false)				//TODO:ReadOnly if debugging
-								]
-							]
-						]
-// 					]
-// 				]
-// 			]
+			// 			SAssignNew(OverlayWidget, SOverlay)
+			// 			+ SOverlay::Slot()
+			// 			[
+			// 				SNew(SVerticalBox)
+			// 				+ SVerticalBox::Slot()
+			// 				[
+			// 					SNew(SBox)
+			// 					.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
+			// 					.MinDesiredWidth(500.f).MinDesiredHeight(300.f)
+			// 					[
+			SNew(SBorder)
+			.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
+		.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+		[
+			SAssignNew(VS_SCROLL_BOX, SScrollBox)
+			.OnUserScrolled(this, &SCodeEditor::OnVerticalScroll)
+		.Orientation(EOrientation::Orient_Vertical)
+		.ScrollBarThickness(FVector2D(8.f, 8.f))
+		+ SScrollBox::Slot()
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+		.VAlign(VAlign_Fill).HAlign(HAlign_Left).AutoWidth()
+		[
+			SNew(SBorder)
+			.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
+		//.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+		.BorderImage(FEditorStyle::GetBrush("NoBorder"))
+		[
+			SAssignNew(LineCounter, SListView<FCodeLineNode_Ptr>)
+			.OnSelectionChanged(this, &SCodeEditor::OnSelectedLineCounterItem)
+		.OnMouseButtonDoubleClick(this, &SCodeEditor::OnDoubleClickLineCounterItem)
+		.OnGenerateRow(this, &SCodeEditor::OnGenerateLineCounter)
+		.ScrollbarVisibility(EVisibility::Collapsed)
+		.ListItemsSource(&LineCount).ItemHeight(14)
+		.SelectionMode(ESelectionMode::Single)
+		]
+		]
+	+ SHorizontalBox::Slot()
+		.VAlign(VAlign_Fill).HAlign(HAlign_Fill).AutoWidth()
+		[
+			SAssignNew(CodeEditableText, SCodeEditableText)
+			.OnTextChanged(this, &SCodeEditor::OnTextChanged)
+		.OnTextCommitted(this, &SCodeEditor::OnTextCommitted)
+		.IsEnabled(this, &SCodeEditor::IsCodeEditable)			//TODO:Can not edit if debugging
+		.OnInvokeSearch(this, &SCodeEditor::OnInvokedSearch)
+		.OnAutoComplete(this, &SCodeEditor::OnAutoComplete)
+		.Text(FText::FromString(FileText))
+		.VScrollBar(VerticalScrollbar)
+		.HScrollBar(HorizontalScrollbar)
+		.Marshaller(RichTextMarshaller)
+		.CanKeyboardFocus(true)
+		.IsReadOnly(false)				//TODO:ReadOnly if debugging
+		]
+		]
+		]
+	// 					]
+	// 				]
+	// 			]
 		];
 
 	//Add Line Number
 	SetLineCountList(GetLineCount());
+}
+
+void SCodeEditor::CheckReferences()
+{
+	if (CodeProjectItem && CodeProjectItem->ScriptDataAsset)
+	{
+		TArray<FAssetIdentifier> Identifiers;
+		FName PackageName = CodeProjectItem->ScriptDataAsset->GetOutermost()->GetFName();
+		Identifiers.Add(FAssetIdentifier(PackageName));
+		US_Log("PackageName:%s", *PackageName.ToString());
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		TArray<FAssetIdentifier> ReferenceNames;
+
+		for (const FAssetIdentifier& AssetId : Identifiers)
+		{
+			AssetRegistryModule.Get().GetReferencers(AssetId, ReferenceNames, EAssetRegistryDependencyType::Packages);//true		
+		}
+
+		for (const FAssetIdentifier& reference : ReferenceNames)
+		{
+			US_Log("Reference:%s", *reference.PackageName.ToString());
+
+			TArray<FAssetData> AssetDatas;
+			AssetRegistryModule.Get().GetAssetsByPackageName(reference.PackageName, AssetDatas);
+			for (FAssetData Asset : AssetDatas)
+			{
+				//Blueprint Class
+				if (Asset.GetClass()->IsChildOf(UBlueprint::StaticClass()))
+				{				
+					UBlueprint* BlueprintAsset = Cast<UBlueprint>(Asset.FastGetAsset());
+					if (BlueprintAsset)
+					{
+						UClass* ParentClass = BlueprintAsset->ParentClass;						
+						TArray<UBlueprint*> OutBlueprintParents;
+
+						GetBlueprintClassParents(ParentClass, OutBlueprintParents);
+						OutBlueprintParents.Insert(BlueprintAsset, 0);
+
+						for (UBlueprint* bp:OutBlueprintParents)
+						{
+							US_Log("BlueprintClass:%s", *bp->GetName());
+						}
+
+						TArray<UClass*> OutNativeParents;
+						GetNativeClassParents(OutBlueprintParents[OutBlueprintParents.Num()-1]->ParentClass, OutNativeParents);
+
+						for (UClass* klass : OutNativeParents)
+						{
+							US_Log("NativeClass:%s", *klass->GetName());
+						}						
+					}
+				}
+				//Native Class
+				else
+				{
+					TArray<UClass*> OutNativeParents;
+					GetNativeClassParents(Asset.GetClass(), OutNativeParents);
+
+					for (UClass* klass : OutNativeParents)
+					{
+						US_Log("NativeClass:%s", *klass->GetName());
+					}
+				}
+			}
+		}
+	}
+}
+
+bool SCodeEditor::GetBlueprintClassParents(const UClass* InClass, TArray<UBlueprint*>& OutBlueprintParents)
+{
+	OutBlueprintParents.Empty();
+
+	bool bNoErrors = true;
+	const UClass* CurrentClass = InClass;
+	while (UBlueprint* BP = UBlueprint::GetBlueprintFromClass(CurrentClass))
+	{
+		OutBlueprintParents.Add(BP);
+
+#if WITH_EDITORONLY_DATA
+		bNoErrors &= (BP->Status != BS_Error);
+#endif // #if WITH_EDITORONLY_DATA
+
+		// If valid, use stored ParentClass rather than the actual UClass::GetSuperClass(); handles the case when the class has not been recompiled yet after a reparent operation.
+		if (const UClass* ParentClass = BP->ParentClass)
+		{
+			CurrentClass = ParentClass;
+		}
+		else
+		{
+			check(CurrentClass);
+			CurrentClass = CurrentClass->GetSuperClass();
+		}
+	}
+
+	return bNoErrors;
+}
+
+bool SCodeEditor::GetNativeClassParents(const UClass* InClass, TArray<UClass*>& OutNativeClassParents)
+{
+	OutNativeClassParents.Empty();
+
+	const UClass* CurrentClass = InClass;
+	while (CurrentClass)
+	{
+		UClass* NativeClass = CurrentClass->GetSuperClass();
+		if (NativeClass)
+		{
+			OutNativeClassParents.Add(NativeClass);
+		}
+		CurrentClass = NativeClass;
+	}
+
+	return true;
 }
 
 void SCodeEditor::OnInvokedSearch()
@@ -191,7 +306,7 @@ void SCodeEditor::OnTextChanged(const FText& NewText)
 	SetLineCountList(GetLineCount());
 
 	//Sync to the ScriptAsset?
-	
+
 	if (CodeProjectItem->ScriptDataAsset)
 	{
 		FString CodeText = CodeEditableText->GetText().ToString();
@@ -199,11 +314,11 @@ void SCodeEditor::OnTextChanged(const FText& NewText)
 		//TODO:Should be UTF-8 to bytes
 		ScriptEditorUtils::StringToByteArray(CodeText, CodeProjectItem->ScriptDataAsset->ByteCode);
 		//
-	
+
 		//Set Asset To Dirty
 		CodeProjectItem->ScriptDataAsset->MarkPackageDirty();
 	}
-	
+
 	//
 }
 
@@ -212,7 +327,7 @@ void SCodeEditor::OnTextCommitted(const FText &NewText, ETextCommit::Type ComtIn
 	SetLineCountList(GetLineCount());
 }
 
-void SCodeEditor::OnVerticalScroll(float Offset) 
+void SCodeEditor::OnVerticalScroll(float Offset)
 {
 	VerticalScrollbar->SetState(VS_SCROLL_BOX->GetScrollOffset(), VS_SCROLL_BOX->GetViewOffsetFraction());
 }
@@ -224,19 +339,19 @@ bool SCodeEditor::IsCodeEditable() const
 
 bool SCodeEditor::Save() const
 {
-	if(bDirty)
+	if (bDirty)
 	{
-		bool bResult = FFileHelper::SaveStringToFile(CodeEditableText->GetText().ToString(), *CodeProjectItem->Path,FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
-		if(bResult)
+		bool bResult = FFileHelper::SaveStringToFile(CodeEditableText->GetText().ToString(), *CodeProjectItem->Path, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
+		if (bResult)
 		{
 			bDirty = false;
 			//Save to asset
 			if (CodeProjectItem->ScriptDataAsset)
-			{		
+			{
 				CodeProjectItem->ScriptDataAsset->SourceCode = CodeEditableText->GetText().ToString();
 				FFileHelper::LoadFileToArray(CodeProjectItem->ScriptDataAsset->ByteCode, *CodeProjectItem->Path);
 				//ScriptEditorUtils::StringToByteArray(CodeProjectItem->ScriptDataAsset->SourceCode, CodeProjectItem->ScriptDataAsset->ByteCode);
-				
+
 				ScriptEditorUtils::SaveScriptAsset(CodeProjectItem->ScriptDataAsset);
 			}
 		}
@@ -251,12 +366,16 @@ bool SCodeEditor::CanSave() const
 	return bDirty;
 }
 
-bool SCodeEditor::Reload() const
+bool SCodeEditor::Reload()
 {
 	FString FileText = "File Loading, please wait";
+	//
+	CheckReferences();
+
 	if (FFileHelper::LoadFileToString(FileText, *CodeProjectItem->Path))
 	{
 		CodeEditableText->SetText(FText::FromString(FileText));
+
 		return true;
 	}
 	return false;
@@ -292,8 +411,8 @@ void SCodeEditor::GotoLineAndColumn(int32 LineNumber, int32 ColumnNumber)
 	CodeEditableText->GoToLineColumn(LineNumber, ColumnNumber);
 	CodeEditableText->SelectLine();
 
-	LineNumber = LineNumber > 1?LineNumber + 1 : LineNumber;
-	VS_SCROLL_BOX->SetScrollOffset((VS_SCROLL_BOX->GetScrollOffsetOfEnd()/GetLineCount ())* LineNumber);
+	LineNumber = LineNumber > 1 ? LineNumber + 1 : LineNumber;
+	VS_SCROLL_BOX->SetScrollOffset((VS_SCROLL_BOX->GetScrollOffsetOfEnd() / GetLineCount())* LineNumber);
 }
 
 FText SCodeEditor::GetLineAndColumn() const
@@ -314,7 +433,7 @@ void SCodeEditor::OnClose()
 	//UE_LOG(LogTemp, Log, TEXT("CodeProjectItems [%d]"), UScriptEdtiorSetting::Get()->EdittingFiles.Num());
 }
 
-void SCodeEditor::SetLineCountList(const int32 Count) 
+void SCodeEditor::SetLineCountList(const int32 Count)
 {
 	LineCount.Empty();
 	//
@@ -351,7 +470,7 @@ void SCodeEditor::OnDoubleClickLineCounterItem(FCodeLineNode_Ptr Item)
 	//
 }
 
-TSharedRef<ITableRow> SCodeEditor::OnGenerateLineCounter(FCodeLineNode_Ptr Item, const TSharedRef<STableViewBase>&OwnerTable) 
+TSharedRef<ITableRow> SCodeEditor::OnGenerateLineCounter(FCodeLineNode_Ptr Item, const TSharedRef<STableViewBase>&OwnerTable)
 {
 	Item->FilePath = CodeProjectItem->Path;
 
@@ -363,53 +482,53 @@ TSharedRef<ITableRow> SCodeEditor::OnGenerateLineCounter(FCodeLineNode_Ptr Item,
 void SCodeLineItem::Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, FCodeLineNode_Ptr Line)
 {
 	CodeLine = Line;
- 	CodeLine->HasBreakPoint = FScriptEditor::Get()->HasBreakPoint(CodeLine->FilePath, CodeLine->Line);
+	CodeLine->HasBreakPoint = FScriptEditor::Get()->HasBreakPoint(CodeLine->FilePath, CodeLine->Line);
 
 	STableRow<FCodeLineNode_Ptr>::Construct(STableRow<FCodeLineNode_Ptr>::FArguments(), InOwnerTableView);
 	ChildSlot
 		[
 			SNew(SBorder)
 			//.BorderImage(FEditorStyle::GetBrush("Graph.Node.Body"))
-			.BorderBackgroundColor(FLinearColor(1.f, 1.f, 1.f, 0.f))
-			.ForegroundColor(FSlateColor::UseForeground())
-			.Padding(FMargin(5.f, 0.f, 5.f, 0.f))
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.HAlign(HAlign_Left)
-				[
-					SNew(SBox)
-					[
-						SAssignNew(BreakPointCheckBox, SCheckBox)
-						//.IsChecked(CodeLine->HasBreakPoint ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
-						.IsChecked(this, &SCodeLineItem::BreakPointIsChecked)
-						.OnCheckStateChanged(this, &SCodeLineItem::OnClickBreakPoint)
-						.CheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
-						.CheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
-						.CheckedPressedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
-						.UncheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Null"))
-						.UncheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
-					]
-				]
+		.BorderBackgroundColor(FLinearColor(1.f, 1.f, 1.f, 0.f))
+		.ForegroundColor(FSlateColor::UseForeground())
+		.Padding(FMargin(5.f, 0.f, 5.f, 0.f))
+		[
+			SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot()
-			.AutoWidth()
+		.AutoWidth()
+		.HAlign(HAlign_Left)
+		[
+			SNew(SBox)
 			[
-				SNew(SBox)
-				[
-					SNew(STextBlock)
-					.Text(FText::FromString(FString::FormatAsNumber(CodeLine->Line)))
-					.ColorAndOpacity(FSlateColor(FLinearColor(FColor(75, 185, 245, 225))))
-					.Font(FScriptEditorStyle::Get().GetWidgetStyle<FTextBlockStyle>("TextEditor.NormalText").Font)
-				]
+				SAssignNew(BreakPointCheckBox, SCheckBox)
+				//.IsChecked(CodeLine->HasBreakPoint ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
+		.IsChecked(this, &SCodeLineItem::BreakPointIsChecked)
+		.OnCheckStateChanged(this, &SCodeLineItem::OnClickBreakPoint)
+		.CheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
+		.CheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
+		.CheckedPressedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
+		.UncheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Null"))
+		.UncheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
 			]
 		]
-	];
+	+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SBox)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(FString::FormatAsNumber(CodeLine->Line)))
+		.ColorAndOpacity(FSlateColor(FLinearColor(FColor(75, 185, 245, 225))))
+		.Font(FScriptEditorStyle::Get().GetWidgetStyle<FTextBlockStyle>("TextEditor.NormalText").Font)
+			]
+		]
+		]
+		];
 }
 
 ECheckBoxState SCodeLineItem::BreakPointIsChecked()const
 {
-	if ( !(FScriptEditor::Get().IsValid()) || !SScriptDebugger::Get())return ECheckBoxState::Unchecked;
+	if (!(FScriptEditor::Get().IsValid()) || !SScriptDebugger::Get())return ECheckBoxState::Unchecked;
 
 	CodeLine->HasBreakPoint = FScriptEditor::Get()->HasBreakPoint(CodeLine->FilePath, CodeLine->Line);
 

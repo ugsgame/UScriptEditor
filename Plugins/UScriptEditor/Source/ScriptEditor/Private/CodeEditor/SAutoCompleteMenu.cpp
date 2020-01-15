@@ -71,7 +71,7 @@ void SAutoCompleteMenu::Construct(const FArguments& InArgs, TSharedPtr<FScriptEd
 					SAssignNew(GraphActionMenu, SGraphActionMenu)
 					.OnActionSelected(this, &SAutoCompleteMenu::OnActionSelected)
 					.OnCollectAllActions(this, &SAutoCompleteMenu::CollectAllActions)
-					.OnGetFilterText(this,&SAutoCompleteMenu::OnGetFilterText)
+					//.OnGetFilterText(this,&SAutoCompleteMenu::OnGetFilterText)
 				]
 			]
 		]
@@ -107,7 +107,9 @@ void SAutoCompleteMenu::GetSelectedActions(TArray< TSharedPtr<FEdGraphSchemaActi
 
 bool SAutoCompleteMenu::IsMatchingAny()
 {
-	return true;
+	TArray < TSharedPtr<FEdGraphSchemaAction>> SelectedActions;
+	GraphActionMenu->GetSelectedActions(SelectedActions);
+	return SelectedActions.Num()>0;
 }
 
 

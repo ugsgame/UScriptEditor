@@ -157,10 +157,7 @@ void SCodeEditableText::OpenAutoCompleteMenu(FString InKeywork)
 
 	AutoCompleteMenu->SetFilterText(FText::FromString(InKeywork));
 
-	TArray< TSharedPtr<FEdGraphSchemaAction> >SelectedActions;
-	AutoCompleteMenu->GetSelectedActions(SelectedActions);
-
-	if (SelectedActions.Num() > 0)
+	if (AutoCompleteMenu->IsMatchingAny())
 	{
 		TSharedPtr<IMenu> Menu = FSlateApplication::Get().PushMenu(
 			AsShared(),
@@ -198,10 +195,8 @@ bool SCodeEditableText::PushKeyword(FString InKeywork)
 	if (IsAutoCompleteMenuOpen() && AutoCompleteMenu.IsValid())
 	{
 		AutoCompleteMenu->SetFilterText(FText::FromString(InKeywork));
-		TArray< TSharedPtr<FEdGraphSchemaAction> >SelectedActions;
-		AutoCompleteMenu->GetSelectedActions(SelectedActions);
 
-		if (SelectedActions.Num() > 0)
+		if (AutoCompleteMenu->IsMatchingAny())
 		{
 			//Update AutoCompleteMenu position
 			TSharedPtr<IMenu> Menu = FSlateApplication::Get().PushMenu(

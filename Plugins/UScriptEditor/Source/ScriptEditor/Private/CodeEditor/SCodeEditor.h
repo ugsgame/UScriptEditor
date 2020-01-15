@@ -31,6 +31,14 @@ struct FCodeLineNode
 	bool HasBreakPoint;
 };
 
+struct FScriptReferenceInfo
+{
+	UClass* ReferencedClass;			//Only Blueprint Object or Native Object
+
+	TArray<UClass> BlueprintClasses;
+	TArray<UClass> NativeClasses;
+};
+
 using FCodeLineNode_Ptr = TSharedPtr<FCodeLineNode>;
 
 class SCodeLineItem :public STableRow<FCodeLineNode_Ptr>
@@ -64,7 +72,7 @@ public:
 	//
 	bool Save() const;
 	bool CanSave() const;
-	bool Reload() const;
+	bool Reload();
 	void Browser() const;
 	//
 	//
@@ -76,6 +84,7 @@ public:
 	virtual void OnClose();
 
 protected:
+	void CheckReferences();
 	void OnInvokedSearch();
 	void OnAdvanceAutoComplete(const FString &Search);
 	void OnAutoComplete(const FString &Results);
@@ -88,6 +97,8 @@ protected:
 	void OnDoubleClickLineCounterItem(FCodeLineNode_Ptr Item);
 	TSharedRef<ITableRow>OnGenerateLineCounter(FCodeLineNode_Ptr Item, const TSharedRef<STableViewBase>&OwnerTable);
 
+	bool GetBlueprintClassParents(const UClass* InClass, TArray<UBlueprint*>& OutBlueprintParents);
+	bool GetNativeClassParents(const UClass* InClass, TArray<UClass*>& OutNativeClassParents);
 protected:
 	UCodeProjectItem* CodeProjectItem;
 
