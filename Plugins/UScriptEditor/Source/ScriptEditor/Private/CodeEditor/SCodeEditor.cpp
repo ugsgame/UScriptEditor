@@ -28,6 +28,7 @@
 #include "Editor/EditorStyle/Public/EditorStyle.h"
 #include "AssetRegistryModule.h"
 #include "AssetRegistryInterface.h"
+#include "SSearchBox.h"
 
 #define LOCTEXT_NAMESPACE "CodeEditor"
 
@@ -51,6 +52,10 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 	TSharedRef<FLUARichTextSyntaxHighlighterTextLayoutMarshaller> LUARichTextMarshaller = FLUARichTextSyntaxHighlighterTextLayoutMarshaller::Create(
 		FLUARichTextSyntaxHighlighterTextLayoutMarshaller::FSyntaxTextStyle()
 	);
+
+	//Check reference
+	CheckReferences();
+
 	//TODO:后面要不后缀名对比
 	if (CodeProjectItem->Extension == "lua")
 	{
@@ -106,50 +111,115 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 
 	TSharedPtr<SOverlay>OverlayWidget; this->ChildSlot
 		[
-
 			SNew(SBorder)
 			.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
 			.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
 			[
-				SAssignNew(VS_SCROLL_BOX, SScrollBox)
-				.OnUserScrolled(this, &SCodeEditor::OnVerticalScroll)
-				.Orientation(EOrientation::Orient_Vertical)
-				.ScrollBarThickness(FVector2D(8.f, 8.f))
-				+ SScrollBox::Slot()
+				SNew(SGridPanel)
+				.FillColumn(0, 1.0f)
+				.FillRow(0, 1.0f)
+				+ SGridPanel::Slot(0, 0)
 				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()
-					.VAlign(VAlign_Fill).HAlign(HAlign_Left).AutoWidth()
+					SAssignNew(VS_SCROLL_BOX, SScrollBox)
+					.OnUserScrolled(this, &SCodeEditor::OnVerticalScroll)
+					.Orientation(EOrientation::Orient_Vertical)
+					.ScrollBarThickness(FVector2D(8.f, 8.f))
+					+ SScrollBox::Slot()
 					[
-						SNew(SBorder)
-						.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
-						//.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
-						.BorderImage(FEditorStyle::GetBrush("NoBorder"))
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot()
+						.VAlign(VAlign_Fill).HAlign(HAlign_Left).AutoWidth()
 						[
-							SAssignNew(LineCounter, SListView<FCodeLineNode_Ptr>)
-							.OnSelectionChanged(this, &SCodeEditor::OnSelectedLineCounterItem)
-							.OnMouseButtonDoubleClick(this, &SCodeEditor::OnDoubleClickLineCounterItem)
-							.OnGenerateRow(this, &SCodeEditor::OnGenerateLineCounter)
-							.ScrollbarVisibility(EVisibility::Collapsed)
-							.ListItemsSource(&LineCount).ItemHeight(14)
-							.SelectionMode(ESelectionMode::Single)
+							SNew(SBorder)
+							.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
+							//.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+							.BorderImage(FEditorStyle::GetBrush("NoBorder"))
+							[
+								SAssignNew(LineCounter, SListView<FCodeLineNode_Ptr>)
+								.OnSelectionChanged(this, &SCodeEditor::OnSelectedLineCounterItem)
+								.OnMouseButtonDoubleClick(this, &SCodeEditor::OnDoubleClickLineCounterItem)
+								.OnGenerateRow(this, &SCodeEditor::OnGenerateLineCounter)
+								.ScrollbarVisibility(EVisibility::Collapsed)
+								.ListItemsSource(&LineCount).ItemHeight(14)
+								.SelectionMode(ESelectionMode::Single)
+							]
+						]
+						+ SHorizontalBox::Slot()
+						.VAlign(VAlign_Fill).HAlign(HAlign_Fill).AutoWidth()
+						[
+							SAssignNew(CodeEditableText, SCodeEditableText)
+							.OnTextChanged(this, &SCodeEditor::OnTextChanged)
+							.OnTextCommitted(this, &SCodeEditor::OnTextCommitted)
+							.IsEnabled(this, &SCodeEditor::IsCodeEditable)			//TODO:Can not edit if debugging
+							.OnInvokeSearch(this, &SCodeEditor::OnInvokedSearch)
+							.OnAutoComplete(this, &SCodeEditor::OnAutoComplete)
+							.Text(FText::FromString(FileText))
+							.VScrollBar(VerticalScrollbar)
+							.HScrollBar(HorizontalScrollbar)
+							.Marshaller(RichTextMarshaller)
+							.CanKeyboardFocus(true)
+							.IsReadOnly(false)				//TODO:ReadOnly if debugging
 						]
 					]
-					+ SHorizontalBox::Slot()
-					.VAlign(VAlign_Fill).HAlign(HAlign_Fill).AutoWidth()
+				]
+				+ SGridPanel::Slot(0, 1)
+				[
+					SNew(SBorder)
+					.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+					//.BorderImage(FEditorStyle::GetBrush("NoBorder"))
 					[
-						SAssignNew(CodeEditableText, SCodeEditableText)
-						.OnTextChanged(this, &SCodeEditor::OnTextChanged)
-						.OnTextCommitted(this, &SCodeEditor::OnTextCommitted)
-						.IsEnabled(this, &SCodeEditor::IsCodeEditable)			//TODO:Can not edit if debugging
-						.OnInvokeSearch(this, &SCodeEditor::OnInvokedSearch)
-						.OnAutoComplete(this, &SCodeEditor::OnAutoComplete)
-						.Text(FText::FromString(FileText))
-						.VScrollBar(VerticalScrollbar)
-						.HScrollBar(HorizontalScrollbar)
-						.Marshaller(RichTextMarshaller)
-						.CanKeyboardFocus(true)
-						.IsReadOnly(false)				//TODO:ReadOnly if debugging
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot()
+						.VAlign(VAlign_Fill).HAlign(HAlign_Left)
+						[
+							SNew(SHorizontalBox)
+							+ SHorizontalBox::Slot()
+							.VAlign(VAlign_Fill).AutoWidth()
+							[
+								SAssignNew(ReferenceComboBox, SComboBox<TSharedPtr<FName>>)
+								.OptionsSource(&ReferenceItems)
+								.OnGenerateWidget(this, &SCodeEditor::OnGenerateTagSourcesComboBox)
+								.OnSelectionChanged(this, &SCodeEditor::OnReferenceSelectionChanged)
+								.ContentPadding(1.5f)
+								.Content()
+								[
+									SNew(STextBlock)
+									.Text(this, &SCodeEditor::CreateTagSourcesComboBoxContent)
+								]
+							]
+							+ SHorizontalBox::Slot()
+							.VAlign(VAlign_Center)
+							[
+								SNew(STextBlock)
+								.Text(FText::FromString(FString::Printf(TEXT(" Referenced:%d"), ReferenceItems.Num()))) //@todo:make to function
+							]
+						]
+						+ SHorizontalBox::Slot()
+						.VAlign(VAlign_Center)
+						[
+							SNew(STextBlock)
+							.Text(FText::FromString(CodeProjectItem->Path))
+						]
+						+ SHorizontalBox::Slot()
+						.VAlign(VAlign_Fill).HAlign(HAlign_Right).AutoWidth()
+						[
+							SNew(SHorizontalBox)
+							+ SHorizontalBox::Slot()
+							.VAlign(VAlign_Fill).AutoWidth()
+							[
+								SAssignNew(SearchTextBox, SSearchBox)
+								.MinDesiredWidth(150.f)
+								.OnTextChanged(this, &SCodeEditor::OnSearchTextChanged)
+								.OnTextCommitted(this, &SCodeEditor::OnSearchTextCommitted)
+							]
+							+ SHorizontalBox::Slot()
+							.AutoWidth()
+							[
+								SNew(SButton)
+								.Text(LOCTEXT("SearchNextTip", "Next"))
+							]
+						]
+
 					]
 				]
 			]
@@ -157,6 +227,10 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 
 	//Add Line Number
 	SetLineCountList(GetLineCount());
+
+	//Selected default
+	if (ReferenceItems.Num()>0)ReferenceComboBox->SetSelectedItem(ReferenceItems[0]);
+
 }
 
 void SCodeEditor::CheckReferences()
@@ -181,7 +255,7 @@ void SCodeEditor::CheckReferences()
 
 		for (const FAssetIdentifier& reference : ReferenceNames)
 		{
-			US_Log("Reference:%s", *reference.PackageName.ToString());
+			//US_Log("Reference:%s", *reference.PackageName.ToString());
 
 			TArray<FAssetData> AssetDatas;
 			AssetRegistryModule.Get().GetAssetsByPackageName(reference.PackageName, AssetDatas);
@@ -202,19 +276,20 @@ void SCodeEditor::CheckReferences()
 						GetBlueprintClassParents(Class, OutBlueprintParents);
 						OutBlueprintParents.Insert(BlueprintAsset, 0);
 
+						/*
 						for (UBlueprint* bp:OutBlueprintParents)
 						{
 							US_Log("BlueprintClass:%s", *bp->GetName());
 						}
-
+						*/
 						TArray<UClass*> OutNativeParents;
 						GetNativeClassParents(OutBlueprintParents[OutBlueprintParents.Num()-1]->ParentClass, OutNativeParents);
-
+						/*
 						for (UClass* klass : OutNativeParents)
 						{
 							US_Log("NativeClass:%s", *klass->GetName());
 						}	
-
+						*/
 						ReferenceInfo.BlueprintClasses = OutBlueprintParents;
 						ReferenceInfo.NativeClasses = OutNativeParents;
 					}
@@ -224,18 +299,26 @@ void SCodeEditor::CheckReferences()
 				{
 					TArray<UClass*> OutNativeParents;
 					GetNativeClassParents(Asset.GetClass(), OutNativeParents);
-
+					/*
 					for (UClass* klass : OutNativeParents)
 					{
 						US_Log("NativeClass:%s", *klass->GetName());
 					}
-
+					*/
 					ReferenceInfo.NativeClasses = OutNativeParents;
 				}
 
 				ReferenceInfoes.Add(ReferenceInfo);
 			}
 		}
+
+		ReferenceItems.Empty();
+		for (FScriptReferenceInfo Info:ReferenceInfoes)
+		{
+			ReferenceItems.Add(MakeShareable(new FName(Info.ReferencedAsset)));
+		}
+
+		if (ReferenceComboBox.IsValid() && ReferenceItems.Num()>0)ReferenceComboBox->SetSelectedItem(ReferenceItems[0]);
 	}
 }
 
@@ -423,7 +506,7 @@ FText SCodeEditor::GetLineAndColumn() const
 	int32 Column;
 	CodeEditableText->GetLineAndColumn(Line, Column);
 
-	FString LineAndColumn = FString::Printf(TEXT("Line: %d Column: %d"), Line + 1, Column);
+	FString LineAndColumn = FString::Printf(TEXT("%s(Line: %d Column: %d)"), *CodeProjectItem->Path, Line + 1, Column);
 
 	return FText::FromString(LineAndColumn);
 }
@@ -477,6 +560,45 @@ TSharedRef<ITableRow> SCodeEditor::OnGenerateLineCounter(FCodeLineNode_Ptr Item,
 	Item->FilePath = CodeProjectItem->Path;
 
 	return SNew(SCodeLineItem, OwnerTable, Item);
+}
+
+TSharedRef<SWidget> SCodeEditor::OnGenerateTagSourcesComboBox(TSharedPtr<FName> InItem)
+{
+	return SNew(STextBlock)
+		.Text(FText::FromName(*InItem.Get()));
+}
+
+void SCodeEditor::OnReferenceSelectionChanged(TSharedPtr<FName> InItem, ESelectInfo::Type InSeletionInfo)
+{
+	for (TSharedPtr<FName> Item:ReferenceItems)
+	{
+		if (Item->ToString() == FString("None"))return;
+
+		if (Item == InItem)
+		{
+			//
+			US_Log("sssssssssssss");
+			//
+			break;
+		}
+	}
+}
+
+FText SCodeEditor::CreateTagSourcesComboBoxContent() const
+{
+	const bool bHasSelectedItem = ReferenceComboBox.IsValid() && ReferenceComboBox->GetSelectedItem().IsValid();
+
+	return bHasSelectedItem ? FText::FromName(*ReferenceComboBox->GetSelectedItem().Get()) : LOCTEXT("NewTagLocationNotSelected", "Not selected");
+}
+
+void SCodeEditor::OnSearchTextChanged(const FText& InFilterText)
+{
+
+}
+
+void SCodeEditor::OnSearchTextCommitted(const FText& InText, ETextCommit::Type CommitInfo)
+{
+
 }
 
 #undef LOCTEXT_NAMESPACE

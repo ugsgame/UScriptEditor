@@ -8,6 +8,7 @@
 #include "Widgets/Views/SListView.h"
 
 #include "UScriptDebuggerSetting.h"
+#include "SComboBox.h"
 
 class SCodeEditableText;
 class SScrollBar;
@@ -97,6 +98,13 @@ protected:
 	void OnDoubleClickLineCounterItem(FCodeLineNode_Ptr Item);
 	TSharedRef<ITableRow>OnGenerateLineCounter(FCodeLineNode_Ptr Item, const TSharedRef<STableViewBase>&OwnerTable);
 
+	TSharedRef<SWidget> OnGenerateTagSourcesComboBox(TSharedPtr<FName> InItem);
+	void OnReferenceSelectionChanged(TSharedPtr<FName> InItem, ESelectInfo::Type InSeletionInfo);
+	FText CreateTagSourcesComboBoxContent() const;
+
+	void OnSearchTextChanged(const FText& InFilterText);
+	void OnSearchTextCommitted(const FText& InText, ETextCommit::Type CommitInfo);
+
 	bool GetBlueprintClassParents(const UClass* InClass, TArray<UBlueprint*>& OutBlueprintParents);
 	bool GetNativeClassParents(const UClass* InClass, TArray<UClass*>& OutNativeClassParents);
 protected:
@@ -106,11 +114,15 @@ protected:
 
 	TSharedPtr<SScrollBar> HorizontalScrollbar;
 	TSharedPtr<SScrollBar> VerticalScrollbar;
+
 	TSharedPtr<SScrollBox> VS_SCROLL_BOX;
 
 	TSharedPtr<class SCodeEditableText> CodeEditableText;
-	TSharedPtr<SListView<FCodeLineNode_Ptr>>LineCounter;
+	TSharedPtr<class SSearchBox>SearchTextBox;
+	TSharedPtr<class SComboBox<TSharedPtr<FName>>> ReferenceComboBox;
+	TSharedPtr<class SListView<FCodeLineNode_Ptr>>LineCounter;
 
+	TArray<TSharedPtr<FName>> ReferenceItems;
 	TArray<FScriptReferenceInfo> ReferenceInfoes;
 
 	mutable bool bDirty;
