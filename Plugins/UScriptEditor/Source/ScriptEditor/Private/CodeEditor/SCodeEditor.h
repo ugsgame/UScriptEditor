@@ -33,10 +33,10 @@ struct FCodeLineNode
 
 struct FScriptReferenceInfo
 {
-	UClass* ReferencedClass;			//Only Blueprint Object or Native Object
+	FName ReferencedAsset;			//Only Blueprint or Native Object
 
-	TArray<UClass> BlueprintClasses;
-	TArray<UClass> NativeClasses;
+	TArray<UBlueprint*> BlueprintClasses;
+	TArray<UClass*> NativeClasses;
 };
 
 using FCodeLineNode_Ptr = TSharedPtr<FCodeLineNode>;
@@ -110,6 +110,8 @@ protected:
 
 	TSharedPtr<class SCodeEditableText> CodeEditableText;
 	TSharedPtr<SListView<FCodeLineNode_Ptr>>LineCounter;
+
+	TArray<FScriptReferenceInfo> ReferenceInfoes;
 
 	mutable bool bDirty;
 };

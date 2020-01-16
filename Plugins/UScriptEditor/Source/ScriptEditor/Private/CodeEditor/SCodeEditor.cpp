@@ -106,65 +106,53 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 
 	TSharedPtr<SOverlay>OverlayWidget; this->ChildSlot
 		[
-			// 			SAssignNew(OverlayWidget, SOverlay)
-			// 			+ SOverlay::Slot()
-			// 			[
-			// 				SNew(SVerticalBox)
-			// 				+ SVerticalBox::Slot()
-			// 				[
-			// 					SNew(SBox)
-			// 					.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
-			// 					.MinDesiredWidth(500.f).MinDesiredHeight(300.f)
-			// 					[
+
 			SNew(SBorder)
 			.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
-		.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
-		[
-			SAssignNew(VS_SCROLL_BOX, SScrollBox)
-			.OnUserScrolled(this, &SCodeEditor::OnVerticalScroll)
-		.Orientation(EOrientation::Orient_Vertical)
-		.ScrollBarThickness(FVector2D(8.f, 8.f))
-		+ SScrollBox::Slot()
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-		.VAlign(VAlign_Fill).HAlign(HAlign_Left).AutoWidth()
-		[
-			SNew(SBorder)
-			.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
-		//.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
-		.BorderImage(FEditorStyle::GetBrush("NoBorder"))
-		[
-			SAssignNew(LineCounter, SListView<FCodeLineNode_Ptr>)
-			.OnSelectionChanged(this, &SCodeEditor::OnSelectedLineCounterItem)
-		.OnMouseButtonDoubleClick(this, &SCodeEditor::OnDoubleClickLineCounterItem)
-		.OnGenerateRow(this, &SCodeEditor::OnGenerateLineCounter)
-		.ScrollbarVisibility(EVisibility::Collapsed)
-		.ListItemsSource(&LineCount).ItemHeight(14)
-		.SelectionMode(ESelectionMode::Single)
-		]
-		]
-	+ SHorizontalBox::Slot()
-		.VAlign(VAlign_Fill).HAlign(HAlign_Fill).AutoWidth()
-		[
-			SAssignNew(CodeEditableText, SCodeEditableText)
-			.OnTextChanged(this, &SCodeEditor::OnTextChanged)
-		.OnTextCommitted(this, &SCodeEditor::OnTextCommitted)
-		.IsEnabled(this, &SCodeEditor::IsCodeEditable)			//TODO:Can not edit if debugging
-		.OnInvokeSearch(this, &SCodeEditor::OnInvokedSearch)
-		.OnAutoComplete(this, &SCodeEditor::OnAutoComplete)
-		.Text(FText::FromString(FileText))
-		.VScrollBar(VerticalScrollbar)
-		.HScrollBar(HorizontalScrollbar)
-		.Marshaller(RichTextMarshaller)
-		.CanKeyboardFocus(true)
-		.IsReadOnly(false)				//TODO:ReadOnly if debugging
-		]
-		]
-		]
-	// 					]
-	// 				]
-	// 			]
+			.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+			[
+				SAssignNew(VS_SCROLL_BOX, SScrollBox)
+				.OnUserScrolled(this, &SCodeEditor::OnVerticalScroll)
+				.Orientation(EOrientation::Orient_Vertical)
+				.ScrollBarThickness(FVector2D(8.f, 8.f))
+				+ SScrollBox::Slot()
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.VAlign(VAlign_Fill).HAlign(HAlign_Left).AutoWidth()
+					[
+						SNew(SBorder)
+						.VAlign(VAlign_Fill).HAlign(HAlign_Fill)
+						//.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+						.BorderImage(FEditorStyle::GetBrush("NoBorder"))
+						[
+							SAssignNew(LineCounter, SListView<FCodeLineNode_Ptr>)
+							.OnSelectionChanged(this, &SCodeEditor::OnSelectedLineCounterItem)
+							.OnMouseButtonDoubleClick(this, &SCodeEditor::OnDoubleClickLineCounterItem)
+							.OnGenerateRow(this, &SCodeEditor::OnGenerateLineCounter)
+							.ScrollbarVisibility(EVisibility::Collapsed)
+							.ListItemsSource(&LineCount).ItemHeight(14)
+							.SelectionMode(ESelectionMode::Single)
+						]
+					]
+					+ SHorizontalBox::Slot()
+					.VAlign(VAlign_Fill).HAlign(HAlign_Fill).AutoWidth()
+					[
+						SAssignNew(CodeEditableText, SCodeEditableText)
+						.OnTextChanged(this, &SCodeEditor::OnTextChanged)
+						.OnTextCommitted(this, &SCodeEditor::OnTextCommitted)
+						.IsEnabled(this, &SCodeEditor::IsCodeEditable)			//TODO:Can not edit if debugging
+						.OnInvokeSearch(this, &SCodeEditor::OnInvokedSearch)
+						.OnAutoComplete(this, &SCodeEditor::OnAutoComplete)
+						.Text(FText::FromString(FileText))
+						.VScrollBar(VerticalScrollbar)
+						.HScrollBar(HorizontalScrollbar)
+						.Marshaller(RichTextMarshaller)
+						.CanKeyboardFocus(true)
+						.IsReadOnly(false)				//TODO:ReadOnly if debugging
+					]
+				]
+			]
 		];
 
 	//Add Line Number
@@ -178,9 +166,13 @@ void SCodeEditor::CheckReferences()
 		TArray<FAssetIdentifier> Identifiers;
 		FName PackageName = CodeProjectItem->ScriptDataAsset->GetOutermost()->GetFName();
 		Identifiers.Add(FAssetIdentifier(PackageName));
-		US_Log("PackageName:%s", *PackageName.ToString());
+
+		//US_Log("PackageName:%s", *PackageName.ToString());
+
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 		TArray<FAssetIdentifier> ReferenceNames;
+
+		ReferenceInfoes.Empty();
 
 		for (const FAssetIdentifier& AssetId : Identifiers)
 		{
@@ -193,18 +185,21 @@ void SCodeEditor::CheckReferences()
 
 			TArray<FAssetData> AssetDatas;
 			AssetRegistryModule.Get().GetAssetsByPackageName(reference.PackageName, AssetDatas);
+
 			for (FAssetData Asset : AssetDatas)
 			{
+				FScriptReferenceInfo ReferenceInfo;
+				ReferenceInfo.ReferencedAsset = Asset.AssetName;
 				//Blueprint Class
 				if (Asset.GetClass()->IsChildOf(UBlueprint::StaticClass()))
 				{				
 					UBlueprint* BlueprintAsset = Cast<UBlueprint>(Asset.FastGetAsset());
 					if (BlueprintAsset)
 					{
-						UClass* ParentClass = BlueprintAsset->ParentClass;						
+						UClass* Class = BlueprintAsset->ParentClass;						
 						TArray<UBlueprint*> OutBlueprintParents;
 
-						GetBlueprintClassParents(ParentClass, OutBlueprintParents);
+						GetBlueprintClassParents(Class, OutBlueprintParents);
 						OutBlueprintParents.Insert(BlueprintAsset, 0);
 
 						for (UBlueprint* bp:OutBlueprintParents)
@@ -218,7 +213,10 @@ void SCodeEditor::CheckReferences()
 						for (UClass* klass : OutNativeParents)
 						{
 							US_Log("NativeClass:%s", *klass->GetName());
-						}						
+						}	
+
+						ReferenceInfo.BlueprintClasses = OutBlueprintParents;
+						ReferenceInfo.NativeClasses = OutNativeParents;
 					}
 				}
 				//Native Class
@@ -231,7 +229,11 @@ void SCodeEditor::CheckReferences()
 					{
 						US_Log("NativeClass:%s", *klass->GetName());
 					}
+
+					ReferenceInfo.NativeClasses = OutNativeParents;
 				}
+
+				ReferenceInfoes.Add(ReferenceInfo);
 			}
 		}
 	}
