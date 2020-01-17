@@ -32,14 +32,6 @@ struct FCodeLineNode
 	bool HasBreakPoint;
 };
 
-struct FScriptReferenceInfo
-{
-	FName ReferencedAsset;			//Only Blueprint or Native Object
-
-	TArray<UBlueprint*> BlueprintClasses;
-	TArray<UClass*> NativeClasses;
-};
-
 using FCodeLineNode_Ptr = TSharedPtr<FCodeLineNode>;
 
 class SCodeLineItem :public STableRow<FCodeLineNode_Ptr>
@@ -81,6 +73,7 @@ public:
 	UCodeProjectItem* GetCodeProjectItem()const;
 	void GotoLineAndColumn(int32 LineNumber, int32 ColumnNumber);
 	FText GetLineAndColumn() const;
+	FText GetReferenceInfo() const;
 	//
 	virtual void OnClose();
 
@@ -118,9 +111,9 @@ protected:
 	TSharedPtr<SScrollBox> VS_SCROLL_BOX;
 
 	TSharedPtr<class SCodeEditableText> CodeEditableText;
-	TSharedPtr<class SSearchBox>SearchTextBox;
+	TSharedPtr<class SSearchBox> SearchTextBox;
 	TSharedPtr<class SComboBox<TSharedPtr<FName>>> ReferenceComboBox;
-	TSharedPtr<class SListView<FCodeLineNode_Ptr>>LineCounter;
+	TSharedPtr<class SListView<FCodeLineNode_Ptr>> LineCounter;
 
 	TArray<TSharedPtr<FName>> ReferenceItems;
 	TArray<FScriptReferenceInfo> ReferenceInfoes;

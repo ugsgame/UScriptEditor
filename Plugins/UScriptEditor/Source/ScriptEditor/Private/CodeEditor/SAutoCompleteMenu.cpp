@@ -49,6 +49,7 @@ void SAutoCompleteMenu::Construct(const FArguments& InArgs, TSharedPtr<FScriptEd
 	this->NewNodePosition = InArgs._NewNodePosition;
 	this->bAutoExpandActionMenu = InArgs._AutoExpandActionMenu;
 	this->OnActionCodeSelected = InArgs._OnActionCodeSelected;
+	this->ReferenceInfo = InArgs._ReferenceInfo;
 	this->EditorPtr = InEditor;
 
 

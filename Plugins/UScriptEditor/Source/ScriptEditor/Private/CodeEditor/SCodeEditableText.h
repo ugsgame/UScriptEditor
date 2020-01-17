@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ScriptEditorType.h"
 #include "Input/Reply.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/Text/SMultiLineEditableText.h"
@@ -53,6 +54,8 @@ public:
 	void GoToLineColumn(int32 Line, int32 Column);
 	void GetLineAndColumn(int32 & Line, int32 & Column);
 
+	void SetReferenceInfo(FScriptReferenceInfo& InInfo);
+
 	const FTextLocation &GetCursorLocation() const;
 	const FString GetUnderCursor() const;
 
@@ -75,7 +78,7 @@ protected:
 
 	void OpenAutoCompleteMenu(FString InKeywork);
 
-	bool PushKeyword(FString InKeywork);
+	bool PushKeyword(FString InKeywork,bool InContext = false);
 
 	bool InsertCompleteKeywork();
 
@@ -94,6 +97,7 @@ protected:
 	FString UnderCursor;
 	bool KeyboardFocus;
 
+	FScriptReferenceInfo ReferenceInfo;
 private:
 	void AutoCleanup(FString &Keyword);
 

@@ -108,6 +108,64 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 	];
 	*/
 
+	/*
+	TSharedPtr<SBorder> CodeInfoToolbar = SNew(SBorder)
+		.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+		//.BorderImage(FEditorStyle::GetBrush("NoBorder"))
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.VAlign(VAlign_Fill).HAlign(HAlign_Left)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.VAlign(VAlign_Fill).AutoWidth()
+				[
+					SAssignNew(ReferenceComboBox, SComboBox<TSharedPtr<FName>>)
+					.OptionsSource(&ReferenceItems)
+					.OnGenerateWidget(this, &SCodeEditor::OnGenerateTagSourcesComboBox)
+					.OnSelectionChanged(this, &SCodeEditor::OnReferenceSelectionChanged)
+					.ContentPadding(1.5f)
+					.Content()
+					[
+						SNew(STextBlock)
+						.Text(this, &SCodeEditor::CreateTagSourcesComboBoxContent)
+					]
+				]
+				+ SHorizontalBox::Slot()
+				.VAlign(VAlign_Center)
+				[
+					SNew(STextBlock)
+					.Text(this,&SCodeEditor::GetReferenceInfo)
+				]
+			]
+			+ SHorizontalBox::Slot()
+			.VAlign(VAlign_Center)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(CodeProjectItem->Path))
+			]
+			+ SHorizontalBox::Slot()
+			.VAlign(VAlign_Fill).HAlign(HAlign_Right).AutoWidth()
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.VAlign(VAlign_Fill).AutoWidth()
+				[
+					SAssignNew(SearchTextBox, SSearchBox)
+					.MinDesiredWidth(150.f)
+					.OnTextChanged(this, &SCodeEditor::OnSearchTextChanged)
+					.OnTextCommitted(this, &SCodeEditor::OnSearchTextCommitted)
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("SearchNextTip", "Next"))
+				]
+			]
+		];
+	*/
 
 	TSharedPtr<SOverlay>OverlayWidget; this->ChildSlot
 		[
@@ -191,7 +249,7 @@ void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodePr
 							.VAlign(VAlign_Center)
 							[
 								SNew(STextBlock)
-								.Text(FText::FromString(FString::Printf(TEXT(" Referenced:%d"), ReferenceItems.Num()))) //@todo:make to function
+								.Text(this,&SCodeEditor::GetReferenceInfo)
 							]
 						]
 						+ SHorizontalBox::Slot()
@@ -511,6 +569,11 @@ FText SCodeEditor::GetLineAndColumn() const
 	return FText::FromString(LineAndColumn);
 }
 
+FText SCodeEditor::GetReferenceInfo() const
+{
+	return FText::FromString(FString::Printf(TEXT(" Referenced:%d"), ReferenceItems.Num()));
+}
+
 void SCodeEditor::OnClose()
 {
 	//UScriptEdtiorSetting::Get()->EdittingFiles.Remove(CodeProjectItem->Path);
@@ -572,13 +635,16 @@ void SCodeEditor::OnReferenceSelectionChanged(TSharedPtr<FName> InItem, ESelectI
 {
 	for (TSharedPtr<FName> Item:ReferenceItems)
 	{
-		if (Item->ToString() == FString("None"))return;
-
 		if (Item == InItem)
 		{
-			//
-			US_Log("sssssssssssss");
-			//
+			for (FScriptReferenceInfo Info:ReferenceInfoes)
+			{
+				if (Info.ReferencedAsset == *Item)
+				{
+					CodeEditableText->SetReferenceInfo(Info);
+					break;
+				}
+			}
 			break;
 		}
 	}
@@ -613,40 +679,40 @@ void SCodeLineItem::Construct(const FArguments& InArgs, const TSharedRef<STableV
 		[
 			SNew(SBorder)
 			//.BorderImage(FEditorStyle::GetBrush("Graph.Node.Body"))
-		.BorderBackgroundColor(FLinearColor(1.f, 1.f, 1.f, 0.f))
-		.ForegroundColor(FSlateColor::UseForeground())
-		.Padding(FMargin(5.f, 0.f, 5.f, 0.f))
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.HAlign(HAlign_Left)
-		[
-			SNew(SBox)
+			.BorderBackgroundColor(FLinearColor(1.f, 1.f, 1.f, 0.f))
+			.ForegroundColor(FSlateColor::UseForeground())
+			.Padding(FMargin(5.f, 0.f, 5.f, 0.f))
 			[
-				SAssignNew(BreakPointCheckBox, SCheckBox)
-				//.IsChecked(CodeLine->HasBreakPoint ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
-		.IsChecked(this, &SCodeLineItem::BreakPointIsChecked)
-		.OnCheckStateChanged(this, &SCodeLineItem::OnClickBreakPoint)
-		.CheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
-		.CheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
-		.CheckedPressedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
-		.UncheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Null"))
-		.UncheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.HAlign(HAlign_Left)
+				[
+					SNew(SBox)
+					[
+						SAssignNew(BreakPointCheckBox, SCheckBox)
+						//.IsChecked(CodeLine->HasBreakPoint ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
+						.IsChecked(this, &SCodeLineItem::BreakPointIsChecked)
+						.OnCheckStateChanged(this, &SCodeLineItem::OnClickBreakPoint)
+						.CheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
+						.CheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
+						.CheckedPressedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
+						.UncheckedImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.Null"))
+						.UncheckedHoveredImage(FScriptEditorStyle::Get().GetBrush("Breakpoint.On"))
+					]
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SBox)
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString(FString::FormatAsNumber(CodeLine->Line)))
+						.ColorAndOpacity(FSlateColor(FLinearColor(FColor(75, 185, 245, 225))))
+						.Font(FScriptEditorStyle::Get().GetWidgetStyle<FTextBlockStyle>("TextEditor.NormalText").Font)
+					]
+				]
 			]
-		]
-	+ SHorizontalBox::Slot()
-		.AutoWidth()
-		[
-			SNew(SBox)
-			[
-				SNew(STextBlock)
-				.Text(FText::FromString(FString::FormatAsNumber(CodeLine->Line)))
-		.ColorAndOpacity(FSlateColor(FLinearColor(FColor(75, 185, 245, 225))))
-		.Font(FScriptEditorStyle::Get().GetWidgetStyle<FTextBlockStyle>("TextEditor.NormalText").Font)
-			]
-		]
-		]
 		];
 }
 

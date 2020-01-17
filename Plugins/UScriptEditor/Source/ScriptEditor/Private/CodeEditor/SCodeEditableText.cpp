@@ -67,6 +67,12 @@ void SCodeEditableText::GetLineAndColumn(int32& Line, int32& Column)
 	Column = CurrentColumn;
 }
 
+void SCodeEditableText::SetReferenceInfo(FScriptReferenceInfo& InInfo)
+{
+	ReferenceInfo = InInfo;
+	US_Log("Refrence:%s", *ReferenceInfo.ReferencedAsset.ToString());
+}
+
 const FTextLocation& SCodeEditableText::GetCursorLocation() const
 {
 	return CursorLocation;
@@ -112,6 +118,7 @@ void SCodeEditableText::OpenAPIBrowser()
 		.CodeEditableObj(this)
 		.NewNodePosition(CurrentMouseRightUpSSPosition)
 		.AutoExpandActionMenu(true)
+		.ReferenceInfo(ReferenceInfo)
 		.OnCloseReason(this, &SCodeEditableText::OnGraphActionMenuClosed);
 
 	FActionMenuContent FocusedContent = FActionMenuContent(ActionMenu, ActionMenu->GetFilterTextBox());
@@ -149,6 +156,7 @@ void SCodeEditableText::OpenAutoCompleteMenu(FString InKeywork)
 		.CodeEditableObj(this)
 		.NewNodePosition(CursorScreenLocation)
 		.AutoExpandActionMenu(true)
+		.ReferenceInfo(ReferenceInfo)
 		.OnActionCodeSelected(this, &SCodeEditableText::OnAutoCompleteMenuSelectedCode);
 
 	FActionMenuContent FocusedContent = FActionMenuContent(AutoCompleteMenu.ToSharedRef(), AutoCompleteMenu->GetFilterTextBox());
@@ -180,7 +188,7 @@ void SCodeEditableText::OpenAutoCompleteMenu(FString InKeywork)
 
 }
 
-bool SCodeEditableText::PushKeyword(FString InKeywork)
+bool SCodeEditableText::PushKeyword(FString InKeywork, bool InContext)
 {
 	//
 	CurrentKeyword = InKeywork;

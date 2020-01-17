@@ -33,6 +33,7 @@ public:
 	SLATE_ARGUMENT(SCodeEditableText*, CodeEditableObj)
 		SLATE_ARGUMENT(FVector2D, NewNodePosition)
 		SLATE_ARGUMENT(bool, AutoExpandActionMenu)
+		SLATE_ARGUMENT(FScriptReferenceInfo, ReferenceInfo)
 
 		SLATE_EVENT(FOnActionCodeSelectedEvent, OnActionCodeSelected)
 
@@ -64,4 +65,6 @@ private:
 
 	bool bActionExecuted;
 	FText CurFilterText;
+
+	FScriptReferenceInfo ReferenceInfo;
 };

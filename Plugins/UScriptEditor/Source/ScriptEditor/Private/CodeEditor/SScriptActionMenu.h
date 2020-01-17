@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "ScriptEditorType.h"
 #include "Layout/Margin.h"
 #include "Layout/Visibility.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
@@ -40,6 +41,8 @@ public:
 		//SLATE_ARGUMENT(TArray<UEdGraphPin*>, DraggedFromPins)
 		//SLATE_ARGUMENT(SCodeEditor::FActionMenuClosed, OnClosedCallback)
 		SLATE_ARGUMENT(bool, AutoExpandActionMenu)
+		SLATE_ARGUMENT(FScriptReferenceInfo, ReferenceInfo)
+
 		SLATE_EVENT(FClosedReason, OnCloseReason)
 	SLATE_END_ARGS()
 
@@ -82,6 +85,8 @@ private:
 	TSharedPtr<SGraphActionMenu> GraphActionMenu;
 	TWeakPtr<FScriptEditor> EditorPtr;
 	//TSharedPtr<SBlueprintContextTargetMenu> ContextTargetSubMenu;
+
+	FScriptReferenceInfo ReferenceInfo;
 
 	bool bActionExecuted;
 };

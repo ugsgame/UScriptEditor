@@ -224,6 +224,7 @@ void SScriptActionMenu::Construct(const FArguments& InArgs, TSharedPtr<FScriptEd
 	this->NewNodePosition = InArgs._NewNodePosition;
 	//this->OnClosedCallback = InArgs._OnClosedCallback;
 	this->bAutoExpandActionMenu = InArgs._AutoExpandActionMenu;
+	this->ReferenceInfo = InArgs._ReferenceInfo;
 	this->EditorPtr = InEditor;
 	this->OnCloseReasonCallback = InArgs._OnCloseReason;
 
