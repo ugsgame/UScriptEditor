@@ -34,6 +34,8 @@ public:
 		SLATE_ARGUMENT(FVector2D, NewNodePosition)
 		SLATE_ARGUMENT(bool, AutoExpandActionMenu)
 		SLATE_ARGUMENT(FScriptReferenceInfo, ReferenceInfo)
+		SLATE_ARGUMENT(ECompleteParseType, ParseType)
+		SLATE_ARGUMENT(bool,SelfContext);
 
 		SLATE_EVENT(FOnActionCodeSelectedEvent, OnActionCodeSelected)
 
@@ -67,4 +69,6 @@ private:
 	FText CurFilterText;
 
 	FScriptReferenceInfo ReferenceInfo;
+	ECompleteParseType ParseType;
+	bool SelfContext;
 };

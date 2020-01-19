@@ -333,21 +333,20 @@ void SCodeEditor::CheckReferences()
 
 						GetBlueprintClassParents(Class, OutBlueprintParents);
 						OutBlueprintParents.Insert(BlueprintAsset, 0);
-
-						/*
+					
 						for (UBlueprint* bp:OutBlueprintParents)
 						{
 							US_Log("BlueprintClass:%s", *bp->GetName());
 						}
-						*/
+						
 						TArray<UClass*> OutNativeParents;
 						GetNativeClassParents(OutBlueprintParents[OutBlueprintParents.Num()-1]->ParentClass, OutNativeParents);
-						/*
+						
 						for (UClass* klass : OutNativeParents)
 						{
 							US_Log("NativeClass:%s", *klass->GetName());
 						}	
-						*/
+						
 						ReferenceInfo.BlueprintClasses = OutBlueprintParents;
 						ReferenceInfo.NativeClasses = OutNativeParents;
 					}
@@ -412,7 +411,7 @@ bool SCodeEditor::GetBlueprintClassParents(const UClass* InClass, TArray<UBluepr
 bool SCodeEditor::GetNativeClassParents(const UClass* InClass, TArray<UClass*>& OutNativeClassParents)
 {
 	OutNativeClassParents.Empty();
-
+	if (InClass)OutNativeClassParents.Add((UClass*)InClass);
 	const UClass* CurrentClass = InClass;
 	while (CurrentClass)
 	{

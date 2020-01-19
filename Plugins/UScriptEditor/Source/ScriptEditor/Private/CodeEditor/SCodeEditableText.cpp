@@ -48,6 +48,9 @@ void SCodeEditableText::Construct(const FArguments& InArgs)
 			FExecuteAction::CreateSP(this, &SCodeEditableText::OpenAPIBrowser),
 			FCanExecuteAction::CreateSP(this, &SCodeEditableText::CanOpenAPIBrowser));
 	}
+
+	CurParseType = ECompleteParseType::None;
+	PerParseType = ECompleteParseType::None;
 }
 
 void SCodeEditableText::GoToLineColumn(int32 Line, int32 Column)
@@ -148,7 +151,7 @@ void SCodeEditableText::OpenAPIBrowser()
 	}
 }
 
-void SCodeEditableText::OpenAutoCompleteMenu(FString InKeywork)
+void SCodeEditableText::OpenAutoCompleteMenu(FString InKeywork,ECompleteParseType InParse,bool InContext)
 {
 	//US_Log("OpenAutoCompleteMenu");
 	AutoCompleteMenu =
@@ -157,6 +160,8 @@ void SCodeEditableText::OpenAutoCompleteMenu(FString InKeywork)
 		.NewNodePosition(CursorScreenLocation)
 		.AutoExpandActionMenu(true)
 		.ReferenceInfo(ReferenceInfo)
+		.ParseType(InParse)
+		.SelfContext(InContext)
 		.OnActionCodeSelected(this, &SCodeEditableText::OnAutoCompleteMenuSelectedCode);
 
 	FActionMenuContent FocusedContent = FActionMenuContent(AutoCompleteMenu.ToSharedRef(), AutoCompleteMenu->GetFilterTextBox());
@@ -188,8 +193,32 @@ void SCodeEditableText::OpenAutoCompleteMenu(FString InKeywork)
 
 }
 
-bool SCodeEditableText::PushKeyword(FString InKeywork, bool InContext)
+bool SCodeEditableText::PushKeyword(FString InKeywork, ECompleteParseType InParse)
 {
+	bool SelfContext = false;
+	bool ShowAll = false;
+
+	//Check Self 
+	if (InKeywork == FString("self") || InKeywork == FString("self:")|| InKeywork == FString("self."))
+	{
+		InKeywork = "";
+		SelfContext = true;
+	}
+	else if (InKeywork.Contains("self"))
+	{
+		SelfContext = InKeywork.RemoveFromStart("self:");
+		if (!SelfContext)
+		{
+			SelfContext = InKeywork.RemoveFromStart("self.");
+		}
+	}
+	//Check Dot
+	if (!SelfContext)
+	{
+		
+	}
+	//
+	US_Log("InKeywork:%s,%d", *InKeywork, InParse);
 	//
 	CurrentKeyword = InKeywork;
 	FSlateApplication::Get().DismissAllMenus();
@@ -198,34 +227,44 @@ bool SCodeEditableText::PushKeyword(FString InKeywork, bool InContext)
 	{
 		return false;
 	}
-	//US_Log("InKeywork:%s", *InKeywork);
 	//
-	if (IsAutoCompleteMenuOpen() && AutoCompleteMenu.IsValid())
+	if (PerParseType != InParse)
 	{
-		AutoCompleteMenu->SetFilterText(FText::FromString(InKeywork));
-
-		if (AutoCompleteMenu->IsMatchingAny())
-		{
-			//Update AutoCompleteMenu position
-			TSharedPtr<IMenu> Menu = FSlateApplication::Get().PushMenu(
-				AsShared(),
-				FWidgetPath(),
-				AutoCompleteMenu.ToSharedRef(),
-				CursorScreenLocation,
-				FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu),
-				false
-			);
-		}
-		else
-		{
-			return false;
-		}
+		PerParseType = InParse;
+		OpenAutoCompleteMenu(InKeywork, InParse, SelfContext);
+		return true;
 	}
 	else
 	{
-		OpenAutoCompleteMenu(InKeywork);
+		PerParseType = InParse;
+		//
+		if (IsAutoCompleteMenuOpen() && AutoCompleteMenu.IsValid())
+		{
+			AutoCompleteMenu->SetFilterText(FText::FromString(InKeywork));
+
+			if (AutoCompleteMenu->IsMatchingAny())
+			{
+				//Update AutoCompleteMenu position
+				TSharedPtr<IMenu> Menu = FSlateApplication::Get().PushMenu(
+					AsShared(),
+					FWidgetPath(),
+					AutoCompleteMenu.ToSharedRef(),
+					CursorScreenLocation,
+					FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu),
+					false
+				);
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			OpenAutoCompleteMenu(InKeywork, InParse, SelfContext);
+		}
+		return true;
 	}
-	return true;
 }
 
 bool SCodeEditableText::InsertCompleteKeywork()
@@ -317,7 +356,7 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 			InsertTextAtCursor(String);
 			Reply = FReply::Handled();
 		}
-
+		CurParseType = ECompleteParseType::None;
 	}
 	else if (Character == TEXT('.'))
 	{
@@ -326,6 +365,7 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 		DOT.AppendChar(Character);
 		InsertTextAtCursor(DOT);
 
+		CurParseType = ECompleteParseType::Dot;
 		Reply = FReply::Handled();
 	}
 	else if (Character == TEXT(':'))
@@ -335,6 +375,7 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 		DOT.AppendChar(Character);
 		InsertTextAtCursor(DOT);
 
+		CurParseType = ECompleteParseType::Colon;
 		Reply = FReply::Handled();
 	}
 	else
@@ -343,14 +384,18 @@ FReply SCodeEditableText::OnKeyChar(const FGeometry& MyGeometry, const FCharacte
 		if ((Character >= TEXT('a') && Character <= TEXT('z')) || (Character >= TEXT('A') && Character <= TEXT('Z')))
 		{
 			CursorString.AppendChar(Character);
-			PushKeyword(CursorString);
+			PushKeyword(CursorString, CurParseType);
 			PushCursorMenu = true;
 		}
 		else if (Character == TEXT('\b') && UnderCursor.Len() > 1)
 		{
 			CursorString.RemoveAt(CursorString.Len() - 1);
-			PushKeyword(CursorString);
+			PushKeyword(CursorString, CurParseType);
 			PushCursorMenu = true;
+		}
+		else
+		{
+			CurParseType = ECompleteParseType::None;
 		}
 
 		Reply = SMultiLineEditableText::OnKeyChar(MyGeometry, InCharacterEvent);

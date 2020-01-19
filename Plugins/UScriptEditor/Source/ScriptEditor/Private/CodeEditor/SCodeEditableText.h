@@ -76,9 +76,9 @@ protected:
 
 	void OpenAPIBrowser();
 
-	void OpenAutoCompleteMenu(FString InKeywork);
+	void OpenAutoCompleteMenu(FString InKeywork, ECompleteParseType InParse = ECompleteParseType::None,bool InContext = false);
 
-	bool PushKeyword(FString InKeywork,bool InContext = false);
+	bool PushKeyword(FString InKeywork, ECompleteParseType InParse = ECompleteParseType::None);
 
 	bool InsertCompleteKeywork();
 
@@ -98,6 +98,9 @@ protected:
 	bool KeyboardFocus;
 
 	FScriptReferenceInfo ReferenceInfo;
+
+	ECompleteParseType PerParseType;
+	ECompleteParseType CurParseType;
 private:
 	void AutoCleanup(FString &Keyword);
 

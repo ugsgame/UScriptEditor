@@ -72,73 +72,72 @@ void SVarWatcher::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 		[
 			SNew(SVerticalBox)
 			+ SVerticalBox::Slot()
-		.AutoHeight()
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-		.AutoWidth()
-		[
-			SNew(SCheckBox)
-			.Style(FCoreStyle::Get(), "ToggleButtonCheckbox")
-		.IsChecked_Lambda([&]() {return bNeedTickTreeView ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
-		.OnCheckStateChanged_Lambda([&](const ECheckBoxState NewState) { bNeedTickTreeView = (NewState == ECheckBoxState::Checked) ? true : false; })
-		[
-			SNew(SBox)
-			.VAlign(VAlign_Center)
-		.HAlign(HAlign_Center)
-		.Padding(FMargin(4.0, 2.0))
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("VarWatcherNeedTick", "NeedTick"))
-		]
-		]
-		]
-	+ SHorizontalBox::Slot()
-		.AutoWidth()
-		[
-			SNew(SCheckBox)
-			.Style(FCoreStyle::Get(), "ToggleButtonCheckbox")
-		.IsChecked_Lambda([&]() {return bShowFunction ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
-		.OnCheckStateChanged_Lambda([&](const ECheckBoxState NewState) { bShowFunction = (NewState == ECheckBoxState::Checked) ? true : false; })
-		[
-			SNew(SBox)
-			.VAlign(VAlign_Center)
-		.HAlign(HAlign_Center)
-		.Padding(FMargin(4.0, 2.0))
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("VarWatcherShowFunction", "ShowFunction"))
-		]
-		]
-		]
-		]
-	+ SVerticalBox::Slot()
-		.FillHeight(1.0f)
-		[
-			SNew(SBorder)
-			.Padding(0)
-		.BorderImage(FCoreStyle::Get().GetBrush("ToolPanel.GroupBorder"))
-		[
-			SAssignNew(VarTreePtr, SVarsTree)
-			.ItemHeight(24.0f)
-		.TreeItemsSource(&UVarWatcherSetting::Get()->VarTreeRoot)
-		.OnGenerateRow_Raw(this, &SVarWatcher::HandleVarTreeGenerateRow)
-		.OnGetChildren_Raw(this, &SVarWatcher::HandleVarTreeGetChildren)
-		.OnSelectionChanged_Raw(this, &SVarWatcher::HandleVarTreeSelectionChanged)
-		.OnExpansionChanged_Raw(this, &SVarWatcher::HandleNodeExpansion)
-		.HeaderRow
-		(
-			SNew(SHeaderRow)
-			+ SHeaderRow::Column(SVarTreeWidgetItem::Col_Name)
-			.DefaultLabel(LOCTEXT("VarName1", "Key"))
-			.FillWidth(20.0f)
-
-			+ SHeaderRow::Column(SVarTreeWidgetItem::Col_Value)
-			.DefaultLabel(LOCTEXT("VarValue1", "Value"))
-			.FillWidth(20.0f)
-		)
-		]
-		]
+			.AutoHeight()
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SCheckBox)
+					.Style(FCoreStyle::Get(), "ToggleButtonCheckbox")
+					.IsChecked_Lambda([&]() {return bNeedTickTreeView ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
+					.OnCheckStateChanged_Lambda([&](const ECheckBoxState NewState) { bNeedTickTreeView = (NewState == ECheckBoxState::Checked) ? true : false; })
+					[
+						SNew(SBox)
+						.VAlign(VAlign_Center)
+						.HAlign(HAlign_Center)
+						.Padding(FMargin(4.0, 2.0))
+						[
+							SNew(STextBlock)
+							.Text(LOCTEXT("VarWatcherNeedTick", "NeedTick"))
+						]
+					]
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SCheckBox)
+					.Style(FCoreStyle::Get(), "ToggleButtonCheckbox")
+					.IsChecked_Lambda([&]() {return bShowFunction ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
+					.OnCheckStateChanged_Lambda([&](const ECheckBoxState NewState) { bShowFunction = (NewState == ECheckBoxState::Checked) ? true : false; })
+					[
+						SNew(SBox)
+						.VAlign(VAlign_Center)
+						.HAlign(HAlign_Center)
+						.Padding(FMargin(4.0, 2.0))
+						[
+							SNew(STextBlock)
+							.Text(LOCTEXT("VarWatcherShowFunction", "ShowFunction"))
+						]
+					]
+				]
+			]
+			+ SVerticalBox::Slot()
+			.FillHeight(1.0f)
+			[
+				SNew(SBorder)
+				.Padding(0)
+				.BorderImage(FCoreStyle::Get().GetBrush("ToolPanel.GroupBorder"))
+				[
+					SAssignNew(VarTreePtr, SVarsTree)
+					.ItemHeight(24.0f)
+					.TreeItemsSource(&UVarWatcherSetting::Get()->VarTreeRoot)
+					.OnGenerateRow_Raw(this, &SVarWatcher::HandleVarTreeGenerateRow)
+					.OnGetChildren_Raw(this, &SVarWatcher::HandleVarTreeGetChildren)
+					.OnSelectionChanged_Raw(this, &SVarWatcher::HandleVarTreeSelectionChanged)
+					.OnExpansionChanged_Raw(this, &SVarWatcher::HandleNodeExpansion)
+					.HeaderRow
+					(
+						SNew(SHeaderRow)
+						+SHeaderRow::Column(SVarTreeWidgetItem::Col_Name)
+						.DefaultLabel(LOCTEXT("VarName1", "Key"))
+						.FillWidth(20.0f)
+						+ SHeaderRow::Column(SVarTreeWidgetItem::Col_Value)
+						.DefaultLabel(LOCTEXT("VarValue1", "Value"))
+						.FillWidth(20.0f)
+					)
+				]
+			]
 		];
 }
 

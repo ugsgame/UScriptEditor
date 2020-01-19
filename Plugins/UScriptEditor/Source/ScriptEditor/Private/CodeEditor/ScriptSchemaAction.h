@@ -14,17 +14,27 @@ struct  FScriptSchemaAction : public FEdGraphSchemaAction
 {
 	GENERATED_USTRUCT_BODY();
 
+	UPROPERTY()
+	UClass* Class;
 	/** Class of node we want to create */
 	UPROPERTY()
 	FString CodeClip;
+
+	UPROPERTY()
+	bool IsStatic;
+
+	UPROPERTY()
+	bool IsFunction;
 
 	FScriptSchemaAction()
 		: FEdGraphSchemaAction()
 	{}
 
-	FScriptSchemaAction(FText InNodeCategory, FText InMenuDesc, FText InToolTip,FString InCodeClip, const int32 InGrouping = 0)
+	FScriptSchemaAction(FText InNodeCategory, FText InMenuDesc, FText InToolTip,FString InCodeClip,bool InIsStatic,bool InIsFuncion, const int32 InGrouping = 0)
 		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping)
-		,CodeClip(InCodeClip)
+		, CodeClip(InCodeClip)
+		, IsStatic(InIsStatic)
+		, IsFunction(InIsFuncion)
 	{}
 
 };
@@ -38,8 +48,8 @@ public:
 
 	void Reflash();
 
-	TArray<TSharedPtr<FEdGraphSchemaAction>> GetScriptActions();
-	TArray<TSharedPtr<FEdGraphSchemaAction>> GetLuaActions();
+	TArray<TSharedPtr<FScriptSchemaAction>> GetScriptActions();
+	TArray<TSharedPtr<FScriptSchemaAction>> GetLuaActions();
 
 	FGraphActionListBuilderBase* GetScriptActionList();
 	FGraphActionListBuilderBase* GetLuaActionList();
@@ -47,16 +57,22 @@ protected:
 	void CreateScriptActions();
 	void CreateLuaActions();
 
-	void AddActionByClass(UClass* Class,bool CategoryByClass = false,UClass* ContextClass = nullptr);
+	void AddActionByClass(UClass* Class,bool CategoryByClass = false);
 
-	void AddScriptAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString CodeClip);
-	void AddLuaAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString CodeClip);
+	void AddScriptAction(UClass* Class,bool InIsStatic,bool InIsFunction,FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString InCodeClip);
+	void AddLuaAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString InCodeClip);
 	
 	FString GetAPICodeClip(UClass *Class, UFunction *Function,bool WithNote = false)const;
 private:
 
-	TArray<TSharedPtr<FEdGraphSchemaAction>> ScriptActions;
-	TArray<TSharedPtr<FEdGraphSchemaAction>> LuaActions;
+	TArray<TSharedPtr<FScriptSchemaAction>> ScriptActions;
+
+	TArray<TSharedPtr<FScriptSchemaAction>> ScriptFunctions;
+	TArray<TSharedPtr<FScriptSchemaAction>> ScriptStaticFunctions;
+	TArray<TSharedPtr<FScriptSchemaAction>> ScriptVariables;
+	TArray<TSharedPtr<FScriptSchemaAction>> ScriptStaticVariables;
+
+	TArray<TSharedPtr<FScriptSchemaAction>> LuaActions;
 
 	FGraphActionListBuilderBase* ScriptActionList;
 	FGraphActionListBuilderBase* LuaActionList;

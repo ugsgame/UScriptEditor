@@ -59,17 +59,18 @@ void UScriptActionCollecter::Reflash()
 	CreateScriptActions();
 }
 
-void UScriptActionCollecter::AddScriptAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString InCodeClip)
+void UScriptActionCollecter::AddScriptAction(UClass* Class, bool InIsStatic, bool InIsFunction,FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString InCodeClip)
 {
-	TSharedPtr<FScriptSchemaAction> NewAction(new FScriptSchemaAction(FText::FromString(InNodeCategory), FText::FromString(InMenuDesc), FText::FromString(InToolTip), InCodeClip));
-	ScriptActions.Add(NewAction);
+	TSharedPtr<FScriptSchemaAction> NewAction(new FScriptSchemaAction(FText::FromString(InNodeCategory), FText::FromString(InMenuDesc), FText::FromString(InToolTip), InCodeClip, InIsStatic, InIsFunction));
+	NewAction->Class = Class;
 
+	ScriptActions.Add(NewAction);
 	ScriptActionList->AddAction(NewAction);
 }
 
 void UScriptActionCollecter::AddLuaAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString InCodeClip)
 {
-	TSharedPtr<FScriptSchemaAction> NewAction(new FScriptSchemaAction(FText::FromString(InNodeCategory), FText::FromString(InMenuDesc), FText::FromString(InToolTip), InCodeClip));
+	TSharedPtr<FScriptSchemaAction> NewAction(new FScriptSchemaAction(FText::FromString(InNodeCategory), FText::FromString(InMenuDesc), FText::FromString(InToolTip), InCodeClip,true,true));
 	LuaActions.Add(NewAction);
 
 	LuaActionList->AddAction(NewAction);
@@ -349,12 +350,12 @@ FString UScriptActionCollecter::GetAPICodeClip(UClass *Class, UFunction *Functio
 	}
 }
 
-TArray<TSharedPtr<FEdGraphSchemaAction>> UScriptActionCollecter::GetScriptActions()
+TArray<TSharedPtr<FScriptSchemaAction>> UScriptActionCollecter::GetScriptActions()
 {
 	return ScriptActions;
 }
 
-TArray<TSharedPtr<FEdGraphSchemaAction>> UScriptActionCollecter::GetLuaActions()
+TArray<TSharedPtr<FScriptSchemaAction>> UScriptActionCollecter::GetLuaActions()
 {
 	return LuaActions;
 }
@@ -497,7 +498,7 @@ void UScriptActionCollecter::CreateLuaActions()
 	AddLuaAction(ConcatCategories(LuaCategory, "Table"), "table.maxn", "", "table.maxn(table)");
 }
 
-void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByClass, UClass* ContextClass)
+void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByClass)
 {
 	UClass* Class = InClass;
 	FString ClassName = *Class->GetName();
@@ -508,6 +509,7 @@ void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByCl
 	{
 		if (DefaultClass == FullClassName)
 		{
+			//Add Functions
 			for (TFieldIterator<UFunction> FuncIt(Class, EFieldIteratorFlags::ExcludeSuper, EFieldIteratorFlags::ExcludeDeprecated); FuncIt; ++FuncIt)
 			{
 
@@ -543,26 +545,10 @@ void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByCl
 				CategoryStr = CategoryByClass ? ConcatCategories(ClassName, CategoryStr) : CategoryStr;
 
 				//////////////////////////////////////////////////////////////////////////
-				if (ContextClass)
-				{
-					if (ContextClass->GetName() == Class->GetName())
-					{
-						AddScriptAction(CategoryStr, FunctionName, ToolTipStr, CodeClip);
-					}
-					else
-					{
-						if (Function->HasAllFunctionFlags(FUNC_Static))
-						{
-							AddScriptAction(CategoryStr, FunctionName, ToolTipStr, CodeClip);
-						}
-					}
-				}
-				else
-				{
-					AddScriptAction(CategoryStr, FunctionName, ToolTipStr, CodeClip);
-				}
-
+				AddScriptAction(Class, Function->HasAllFunctionFlags(FUNC_Static),true,CategoryStr, FunctionName, ToolTipStr, CodeClip);
+			
 			}
+			//@todo:Add Variables
 		}
 	}
 }

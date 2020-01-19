@@ -50,6 +50,8 @@ void SAutoCompleteMenu::Construct(const FArguments& InArgs, TSharedPtr<FScriptEd
 	this->bAutoExpandActionMenu = InArgs._AutoExpandActionMenu;
 	this->OnActionCodeSelected = InArgs._OnActionCodeSelected;
 	this->ReferenceInfo = InArgs._ReferenceInfo;
+	this->ParseType = InArgs._ParseType;
+	this->SelfContext = InArgs._SelfContext;
 	this->EditorPtr = InEditor;
 
 
@@ -150,20 +152,68 @@ void SAutoCompleteMenu::CollectAllActions(FGraphActionListBuilderBase& OutAllAct
 	{
 		//UScriptActionCollecter::Get()->Reflash();
 
-		for (TSharedPtr<FEdGraphSchemaAction> Action : UScriptActionCollecter::Get()->GetScriptActions())
+		for (TSharedPtr<FScriptSchemaAction> Action : UScriptActionCollecter::Get()->GetScriptActions())
 		{
-			OutAllActions.AddAction(Action);
+			
+			switch (ParseType)
+			{
+				case ECompleteParseType::Colon:
+				{				
+					if (Action->IsFunction && !Action->IsStatic)
+					{
+						if (SelfContext)
+						{
+							for (UClass* klass:ReferenceInfo.NativeClasses)
+							{
+								if (Action->Class->GetName() == klass->GetName())
+								{
+									OutAllActions.AddAction(Action);
+									//US_Log("Klass:%s", *Action->Class->GetName());
+								}
+							}
+						}
+						else
+						{
+							OutAllActions.AddAction(Action);
+						}
+					}
+				}
+				break;
+			case ECompleteParseType::Dot:
+				{
+					if (!Action->IsFunction || Action->IsStatic)
+					{
+						if (SelfContext)
+						{
+							for (UClass* klass : ReferenceInfo.NativeClasses)
+							{
+								if (Action->Class->GetName() == klass->GetName())
+								{
+									OutAllActions.AddAction(Action);
+								}
+							}
+						}
+						else
+						{
+							OutAllActions.AddAction(Action);
+						}					
+					}	
+				}
+				break;
+			default:
+				{
+					OutAllActions.AddAction(Action);
+				}
+				break;
+			}
+			
 		}
 
 		for (TSharedPtr<FEdGraphSchemaAction> Action : UScriptActionCollecter::Get()->GetLuaActions())
 		{
 			OutAllActions.AddAction(Action);
 		}
-		/*
-		UScriptActionCollecter::Get()->Reflash();
-		OutAllActions.Append(*UScriptActionCollecter::Get()->GetScriptActionList());
-		OutAllActions.Append(*UScriptActionCollecter::Get()->GetLuaActionList());
-		*/
+
 	}
 }
 
