@@ -346,7 +346,7 @@ FString UScriptActionCollecter::GetAPICodeClip(UClass *Class, UFunction *Functio
 	}
 	else
 	{
-		return FString::Printf(TEXT("[%s]:%s(%s)%s"),*FullClassName, *FunctionName, *ParameterListString, *ParameterNotesString);
+		return FString::Printf(TEXT("%s(%s)%s"), *FunctionName, *ParameterListString, *ParameterNotesString);
 	}
 }
 
@@ -521,7 +521,7 @@ void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByCl
 				}
 
 				//US_Log("Function:%s", *Function->GetName());
-				FString FunctionName = *Function->GetName();
+				FString FunctionName = *Function->GetName() + FString("()");
 
 				FString *CategoryPtr = MetaMap->Find("Category");
 				if (!CategoryPtr)

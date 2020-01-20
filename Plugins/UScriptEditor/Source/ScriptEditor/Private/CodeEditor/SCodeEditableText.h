@@ -76,7 +76,7 @@ protected:
 
 	void OpenAPIBrowser();
 
-	void OpenAutoCompleteMenu(FString InKeywork, ECompleteParseType InParse = ECompleteParseType::None,bool InContext = false);
+	void OpenAutoCompleteMenu(FString InKeywork, ECompleteParseType InParse = ECompleteParseType::None,bool InContext = false, bool InShowAll = false);
 
 	bool PushKeyword(FString InKeywork, ECompleteParseType InParse = ECompleteParseType::None);
 
