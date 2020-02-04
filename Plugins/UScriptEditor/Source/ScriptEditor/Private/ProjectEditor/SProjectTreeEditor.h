@@ -56,10 +56,15 @@ private:
 
 	void HandleMouseButtonDoubleClick(class UCodeProjectItem* Item) const;
 
+	void OnExpansionChanged(class UCodeProjectItem* Item,bool InChagned);
+
 	void OnRescanOver();
 
 	virtual FReply OnClickedCodeProject();
 	virtual FReply OnClickedScriptProject();
+public:
+
+	TArray<class UCodeProjectItem*> ExpandedItems;
 
 private:
 	class  UCodeProjectItem* SourceProject;

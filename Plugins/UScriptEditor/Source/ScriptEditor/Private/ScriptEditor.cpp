@@ -72,6 +72,8 @@ public:
 				//TODO:Switch to ScriptProject or SoucreProject
 				//Expanded item
 				SProjectTreeEditor::Get()->ExpanedEditingItem(Item);
+
+				SProjectTreeEditor::Get()->ExpandedItems.Add(Item);
 			}
 		}
 		//	InCodeProjectEditorPtr.Pin()->OnCodeEditorFocused(CodeEditor);
@@ -100,6 +102,11 @@ public:
 		if (UCodeProjectItem* Item = CodeEditor->GetCodeProjectItem())
 		{
 			UScriptEdtiorSetting::Get()->EdittingFiles.Remove(Item->Path);
+
+			if (SProjectTreeEditor::Get().IsValid())
+			{
+				SProjectTreeEditor::Get()->ExpandedItems.Remove(Item);
+			}
 		}
 		CodeEditor->OnClose();
 	}

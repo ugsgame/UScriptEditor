@@ -47,6 +47,7 @@ void SProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* I
 			.OnGenerateRow(this, &SProjectTreeEditor::OnGenerateRow)
 			.OnGetChildren(this, &SProjectTreeEditor::OnGetChildren)
 			.OnMouseButtonDoubleClick(this, &SProjectTreeEditor::HandleMouseButtonDoubleClick)
+			.OnExpansionChanged(this, &SProjectTreeEditor::OnExpansionChanged)
 			.HighlightParentNodesForSelection(true);
 	}
 
@@ -189,6 +190,10 @@ void SProjectTreeEditor::SwitchToScriptProject()
 	SourceProjectButton->SetBorderBackgroundColor(UnSelectedColor);
 
 	//TODO:Expanded editting items
+	for (UCodeProjectItem* Item:ExpandedItems)
+	{
+		ExpanedItem(Item, true);
+	}
 }
 
 void SProjectTreeEditor::SwitchToSourceProject()
@@ -199,6 +204,10 @@ void SProjectTreeEditor::SwitchToSourceProject()
 	ScriptProjectButton->SetBorderBackgroundColor(UnSelectedColor);
 
 	//TODO:Expanded editting items
+	for (UCodeProjectItem* Item : ExpandedItems)
+	{
+		ExpanedItem(Item, true);
+	}
 }
 
 void SProjectTreeEditor::Tick( const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime )
@@ -243,6 +252,11 @@ void SProjectTreeEditor::HandleMouseButtonDoubleClick(UCodeProjectItem* Item) co
 	{
 		FScriptEditor::Get()->OpenFileForEditing(Item);
 	}
+}
+
+void SProjectTreeEditor::OnExpansionChanged(class UCodeProjectItem* Item, bool InChagned) 
+{
+	
 }
 
 void SProjectTreeEditor::OnRescanOver()
