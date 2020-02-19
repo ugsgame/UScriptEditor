@@ -6,7 +6,11 @@ IMPLEMENT_MODULE(FScriptHookModule, ScriptHook);
 
 void FScriptHookModule::StartupModule()
 {
+#if WITH_EDITOR
+
+#else
 	UScriptHookClient::Get();
+#endif
 }
 
 void FScriptHookModule::ShutdownModule()
