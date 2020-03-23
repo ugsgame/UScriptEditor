@@ -36,7 +36,11 @@ DEFINE_FUNCTION(FLuaInvoker::execCallLua)
         }
         else
         {
-            Stack.SkipCode(1);      // skip EX_CallLua
+            if (Func->GetNativeFunc() == (FNativeFuncPtr)&FLuaInvoker::execCallLua)
+            {
+                check(*Stack.Code == EX_CallLua);
+                Stack.SkipCode(1);      // skip EX_CallLua only when called from native func
+            }
         }
     }
 
@@ -53,6 +57,14 @@ DEFINE_FUNCTION(FLuaInvoker::execCallLua)
     bool bRpcCall = false;
 #if SUPPORTS_RPC_CALL
     AActor *Actor = Cast<AActor>(Stack.Object);
+    if (!Actor)
+    {
+        UActorComponent *ActorComponent = Cast<UActorComponent>(Stack.Object);
+        if (ActorComponent)
+        {
+            Actor = ActorComponent->GetOwner();
+        }
+    }
     if (Actor)
     {
         ENetMode NetMode = Actor->GetNetMode();
@@ -208,7 +220,11 @@ void RemoveUFunction(UFunction *Function, UClass *OuterClass)
  */
 void OverrideUFunction(UFunction *Function, FNativeFuncPtr NativeFunc, void *Userdata, bool bInsertOpcodes)
 {
-    Function->SetNativeFunc(NativeFunc);
+        if (!Function->HasAnyFunctionFlags(FUNC_Net) || Function->HasAnyFunctionFlags(FUNC_Native))
+    {
+        Function->SetNativeFunc(NativeFunc);
+    }
+
     if (Function->Script.Num() < 1)
     {
 #if UE_BUILD_SHIPPING || UE_BUILD_TEST

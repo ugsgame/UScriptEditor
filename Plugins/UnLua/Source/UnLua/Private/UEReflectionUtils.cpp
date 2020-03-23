@@ -1145,6 +1145,13 @@ int32 FFunctionDesc::CallUE(lua_State *L, int32 NumParams, void *Userdata)
         return 0;
     }
 
+#if SUPPORTS_RPC_CALL
+    int32 Callspace = Object->GetFunctionCallspace(Function, nullptr);
+    bool bRemote = Callspace & FunctionCallspace::Remote;
+#else
+    bool bRemote = false;
+#endif
+
     void *Params = PreCall(L, NumParams, FirstParamIndex, Userdata);        // prepare values of properties
 
     UFunction *FinalFunction = Function;
@@ -1169,7 +1176,7 @@ int32 FFunctionDesc::CallUE(lua_State *L, int32 NumParams, void *Userdata)
 #if ENABLE_CALL_OVERRIDDEN_FUNCTION
     else
     {
-        if (Function->HasAnyFunctionFlags(FUNC_BlueprintEvent))
+        if (Function->HasAnyFunctionFlags(FUNC_BlueprintEvent) && !bRemote)
         {
             UFunction *OverriddenFunc = GReflectionRegistry.FindOverriddenFunction(Function);
             if (OverriddenFunc)
@@ -1193,7 +1200,14 @@ int32 FFunctionDesc::CallUE(lua_State *L, int32 NumParams, void *Userdata)
     else
 #endif
     {
-        Object->UObject::ProcessEvent(FinalFunction, Params);
+        if (bRemote)
+        {
+            Object->CallRemoteFunction(FinalFunction, Params, nullptr, nullptr);
+        }
+        else
+        {
+            Object->UObject::ProcessEvent(FinalFunction, Params);
+        }
     }
 
     int32 NumReturnValues = PostCall(L, NumParams, FirstParamIndex, Params);        // push 'out' properties to Lua stack
