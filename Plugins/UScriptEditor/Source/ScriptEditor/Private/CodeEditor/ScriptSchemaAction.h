@@ -63,6 +63,7 @@ protected:
 	void AddLuaAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString InCodeClip);
 	
 	FString GetAPICodeClip(UClass *Class, UFunction *Function,bool WithNote = false)const;
+	FString GetVarCodeClip(UClass *Class, UProperty *Property, bool WithNote = false)const;
 private:
 
 	TArray<TSharedPtr<FScriptSchemaAction>> ScriptActions;

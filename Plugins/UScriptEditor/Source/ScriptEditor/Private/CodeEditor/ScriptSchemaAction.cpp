@@ -350,6 +350,13 @@ FString UScriptActionCollecter::GetAPICodeClip(UClass *Class, UFunction *Functio
 	}
 }
 
+FString UScriptActionCollecter::GetVarCodeClip(UClass *Class, UProperty *Property, bool WithNote /*= false*/) const
+{
+	FString CPPType = Property->GetCPPType();
+	FString CPPName = Property->GetNameCPP();
+	return CPPName;
+}
+
 TArray<TSharedPtr<FScriptSchemaAction>> UScriptActionCollecter::GetScriptActions()
 {
 	return ScriptActions;
@@ -510,7 +517,7 @@ void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByCl
 		if (DefaultClass == FullClassName)
 		{
 			//Add Functions
-			for (TFieldIterator<UFunction> FuncIt(Class, EFieldIteratorFlags::ExcludeSuper, EFieldIteratorFlags::ExcludeDeprecated); FuncIt; ++FuncIt)
+			for (TFieldIterator<UFunction> FuncIt(Class, EFieldIteratorFlags::ExcludeSuper, EFieldIteratorFlags::ExcludeDeprecated); FuncIt/*&&(FuncIt->FunctionFlags & FUNC_BlueprintCallable&FUNC_BlueprintEvent&FUNC_BlueprintPure)*/; ++FuncIt)
 			{
 
 				UFunction *Function = *FuncIt;
@@ -549,6 +556,44 @@ void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByCl
 			
 			}
 			//@todo:Add Variables
+			for (TFieldIterator<UProperty> ProIt(Class, EFieldIteratorFlags::ExcludeSuper, EFieldIteratorFlags::ExcludeDeprecated); ProIt/*&&(ProIt->PropertyFlags & CPF_BlueprintVisible&CPF_BlueprintReadOnly)*/; ++ProIt)
+			{
+				UProperty *Property = *ProIt;
+
+				TMap<FName, FString> *MetaMap = UMetaData::GetMapForObject(Property);
+				if (!MetaMap)
+				{
+					continue;
+				}
+
+				FString PropertyName = *Property->GetNameCPP();
+
+
+				FString *CategoryPtr = MetaMap->Find("Category");
+				if (!CategoryPtr)
+				{
+					CategoryPtr = new FString("");
+					//US_Log("Category:%s", *CategoryStr);
+					CategoryPtr->Append(ClassName);
+				}
+
+				FString CategoryStr = FString(*CategoryPtr);
+
+				FString *ToolTipPtr = MetaMap->Find("ToolTip");
+				if (!ToolTipPtr)
+				{
+					ToolTipPtr = new FString(PropertyName);
+				}
+				FString ToolTipStr = FString(*ToolTipPtr);
+				ToolTipStr +=(FString::Printf(TEXT("\nType:%s"), *Property->GetCPPType()));
+				ToolTipStr += FString::Printf(TEXT("\n\nTarget is %s"), *FullClassName);
+
+				FString CodeClip = PropertyName;
+				CategoryStr = CategoryByClass ? ConcatCategories(ClassName, CategoryStr) : CategoryStr;
+
+				//////////////////////////////////////////////////////////////////////////
+				AddScriptAction(Class, false, false, CategoryStr, PropertyName, ToolTipStr, CodeClip);
+			}
 		}
 	}
 }
