@@ -1,4 +1,4 @@
-// Tencent is pleased to support the open source community by making UnLua available.
+﻿// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -21,7 +21,7 @@
  * Interface for binding UCLASS and Lua module
  */
 
-UNLUA_API struct FModuleContext
+struct FModuleContext
 {
 	FString Path;
 

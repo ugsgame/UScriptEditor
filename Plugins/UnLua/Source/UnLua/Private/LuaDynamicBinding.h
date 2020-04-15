@@ -1,4 +1,4 @@
-// Tencent is pleased to support the open source community by making UnLua available.
+﻿// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -17,7 +17,7 @@
 #include "CoreMinimal.h"
 #include "CoreUObject.h"
 
-UNLUA_API struct FLuaDynamicBinding
+struct FLuaDynamicBinding
 {
     FLuaDynamicBinding()
         : Class(nullptr), InitializerTableRef(INDEX_NONE)
