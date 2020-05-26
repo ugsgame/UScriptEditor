@@ -338,8 +338,6 @@ void SScriptDebugger::EnterDebug(const FString& LuaFilePath, int32 Line)
 	ShowCode(LuaFilePath, Line);
 	UScriptDebuggerSetting::Get()->HittingPoint.Line = Line;
 	UScriptDebuggerSetting::Get()->HittingPoint.FilePath = LuaFilePath;
-	UScriptDebuggerSetting::Get()->HittingPoint.Line = -1;
-	UScriptDebuggerSetting::Get()->HittingPoint.FilePath = "";
 
 	if (!IsDebugRemote)
 	{
