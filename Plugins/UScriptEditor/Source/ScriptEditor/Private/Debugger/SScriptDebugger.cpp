@@ -487,6 +487,9 @@ void SScriptDebugger::DebugStepover()
 	{
 		UScriptRemoteDebuggerSetting::Get()->SendStepOver();
 	}
+
+	UScriptDebuggerSetting::Get()->HittingPoint.Line = -1;
+	UScriptDebuggerSetting::Get()->HittingPoint.FilePath = "";
 }
 
 
