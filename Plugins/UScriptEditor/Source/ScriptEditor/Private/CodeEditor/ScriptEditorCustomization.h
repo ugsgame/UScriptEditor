@@ -1,18 +1,18 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h"
 #include "UObject/Object.h"
-#include "CodeEditorCustomization.generated.h"
+#include "ScriptEditorCustomization.generated.h"
 
 USTRUCT()
-struct FCodeEditorTextCustomization
+struct FScriptEditorTextCustomization
 {
 	GENERATED_USTRUCT_BODY()
 
-	FCodeEditorTextCustomization()
+	FScriptEditorTextCustomization()
 		: Font("")
 		, Color(0.0f, 0.0f, 0.0f, 1.0f)
 	{
@@ -26,11 +26,11 @@ struct FCodeEditorTextCustomization
 };
 
 USTRUCT()
-struct FCodeEditorControlCustomization
+struct FScriptEditorControlCustomization
 {
 	GENERATED_USTRUCT_BODY()
 
-	FCodeEditorControlCustomization()
+	FScriptEditorControlCustomization()
 		: Color(0.0f, 0.0f, 0.0f, 1.0f)
 	{
 	}
@@ -40,18 +40,18 @@ struct FCodeEditorControlCustomization
 };
 
 UCLASS(Config=Editor)
-class UCodeEditorCustomization : public UObject
+class UScriptEditorCustomization : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
-	static const FCodeEditorControlCustomization& GetControl(const FName& ControlCustomizationName);
+	static const FScriptEditorControlCustomization& GetControl(const FName& ControlCustomizationName);
 
-	static const FCodeEditorTextCustomization& GetText(const FName& TextCustomizationName);
+	static const FScriptEditorTextCustomization& GetText(const FName& TextCustomizationName);
 
 private:
 	UPROPERTY(EditAnywhere, EditFixedSize, Category=Controls)
-	TArray<FCodeEditorControlCustomization> Controls;
+	TArray<FScriptEditorControlCustomization> Controls;
 
 	UPROPERTY(EditAnywhere, EditFixedSize, Category=Text)
-	TArray<FCodeEditorTextCustomization> Text;
+	TArray<FScriptEditorTextCustomization> Text;
 };

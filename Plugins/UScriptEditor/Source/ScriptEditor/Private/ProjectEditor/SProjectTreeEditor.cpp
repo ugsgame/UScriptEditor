@@ -16,7 +16,7 @@
 #include "DirectoryScanner.h"
 #include "Widgets/Images/SThrobber.h"
 
-#include "ModuleManager.h"
+#include "Modules/ModuleManager.h"
 #include "AssetRegistryModule.h"
 
 
@@ -24,7 +24,7 @@
 
 TWeakPtr<SProjectTreeEditor> SProjectTreeEditor::ProjectTreeEditor;
 
-void SProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InSourceProject, UCodeProjectItem* InScriptProject)
+void SProjectTreeEditor::Construct(const FArguments& InArgs, UScriptProjectItem* InSourceProject, UScriptProjectItem* InScriptProject)
 {
 	check(InSourceProject);
 	check(InScriptProject);
@@ -42,7 +42,7 @@ void SProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* I
 
 	if (!ProjectTree.IsValid())
 	{
-		SAssignNew(ProjectTree, STreeView<UCodeProjectItem*>)
+		SAssignNew(ProjectTree, STreeView<UScriptProjectItem*>)
 			.TreeItemsSource(&EditingProject->Children)
 			.OnGenerateRow(this, &SProjectTreeEditor::OnGenerateRow)
 			.OnGetChildren(this, &SProjectTreeEditor::OnGetChildren)
@@ -116,7 +116,7 @@ void SProjectTreeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* I
 	
 }
 
-void SProjectTreeEditor::ExpanedScriptItem(UCodeProjectItem* Item,bool ShouldExpandItem, bool Always)
+void SProjectTreeEditor::ExpanedScriptItem(UScriptProjectItem* Item,bool ShouldExpandItem, bool Always)
 {
 	if (Item)
 	{
@@ -140,7 +140,7 @@ void SProjectTreeEditor::ExpanedAllScriptItems()
 	ExpanedAllEditingItems();
 }
 
-void SProjectTreeEditor::ExpanedEditingItem(class UCodeProjectItem* Item, bool ShouldExpandItem /*= true*/, bool Always /*= true*/)
+void SProjectTreeEditor::ExpanedEditingItem(class UScriptProjectItem* Item, bool ShouldExpandItem /*= true*/, bool Always /*= true*/)
 {
 	ProjectTree->SetSelection(Item, ESelectInfo::OnMouseClick);
 
@@ -190,7 +190,7 @@ void SProjectTreeEditor::SwitchToScriptProject()
 	SourceProjectButton->SetBorderBackgroundColor(UnSelectedColor);
 
 	//TODO:Expanded editting items
-	for (UCodeProjectItem* Item:ExpandedItems)
+	for (UScriptProjectItem* Item:ExpandedItems)
 	{
 		ExpanedItem(Item, true);
 	}
@@ -204,7 +204,7 @@ void SProjectTreeEditor::SwitchToSourceProject()
 	ScriptProjectButton->SetBorderBackgroundColor(UnSelectedColor);
 
 	//TODO:Expanded editting items
-	for (UCodeProjectItem* Item : ExpandedItems)
+	for (UScriptProjectItem* Item : ExpandedItems)
 	{
 		ExpanedItem(Item, true);
 	}
@@ -220,15 +220,15 @@ void SProjectTreeEditor::Tick( const FGeometry& AllottedGeometry, const double I
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 }
 
-FName SProjectTreeEditor::GetIconForItem(UCodeProjectItem* Item) const
+FName SProjectTreeEditor::GetIconForItem(UScriptProjectItem* Item) const
 {
 	return Item->GetBrush();
 }
 
-TSharedRef<class ITableRow> SProjectTreeEditor::OnGenerateRow(UCodeProjectItem* Item, const TSharedRef<STableViewBase >& OwnerTable)
+TSharedRef<class ITableRow> SProjectTreeEditor::OnGenerateRow(UScriptProjectItem* Item, const TSharedRef<STableViewBase >& OwnerTable)
 {
 	return
-	SNew(STableRow<UCodeProjectItem*>, OwnerTable)
+	SNew(STableRow<UScriptProjectItem*>, OwnerTable)
 	[
 		SNew(SProjectViewItem)
 		.Text(FText::FromString(Item->Name))
@@ -236,7 +236,7 @@ TSharedRef<class ITableRow> SProjectTreeEditor::OnGenerateRow(UCodeProjectItem* 
 	];
 }
 
-void SProjectTreeEditor::OnGetChildren(UCodeProjectItem* Item, TArray<UCodeProjectItem*>& OutChildItems)
+void SProjectTreeEditor::OnGetChildren(UScriptProjectItem* Item, TArray<UScriptProjectItem*>& OutChildItems)
 {
 	OutChildItems = Item->Children;
 }
@@ -246,15 +246,15 @@ EVisibility SProjectTreeEditor::GetThrobberVisibility() const
 	return FDirectoryScanner::IsScanning() ? EVisibility::Visible : EVisibility::Hidden; 
 }
 
-void SProjectTreeEditor::HandleMouseButtonDoubleClick(UCodeProjectItem* Item) const
+void SProjectTreeEditor::HandleMouseButtonDoubleClick(UScriptProjectItem* Item) const
 {
-	if(Item->Type == ECodeProjectItemType::File)
+	if(Item->Type == EScriptProjectItemType::File)
 	{
 		FScriptEditor::Get()->OpenFileForEditing(Item);
 	}
 }
 
-void SProjectTreeEditor::OnExpansionChanged(class UCodeProjectItem* Item, bool InChagned) 
+void SProjectTreeEditor::OnExpansionChanged(class UScriptProjectItem* Item, bool InChagned) 
 {
 	
 }
@@ -262,10 +262,10 @@ void SProjectTreeEditor::OnExpansionChanged(class UCodeProjectItem* Item, bool I
 void SProjectTreeEditor::OnRescanOver()
 {
 	//Sort the items from EdittingFiles;
-	TArray<UCodeProjectItem*> SortItems;
+	TArray<UScriptProjectItem*> SortItems;
 	for (FString FilePath:UScriptEdtiorSetting::Get()->EdittingFiles)
 	{
-		for (UCodeProjectItem* Item : UScriptEdtiorSetting::Get()->PreEdittingItems)
+		for (UScriptProjectItem* Item : UScriptEdtiorSetting::Get()->PreEdittingItems)
 		{
 			if (FilePath == Item->Path)
 				SortItems.Add(Item);
@@ -275,7 +275,7 @@ void SProjectTreeEditor::OnRescanOver()
 	FScriptEditor::Get()->CloseAllEditingFiles();
 	//
 	//Open PreEditting file tabs
-	for (UCodeProjectItem* Item: SortItems)
+	for (UScriptProjectItem* Item: SortItems)
 	{
 		FScriptEditor::Get()->OpenFileForEditing(Item);
 		ExpanedEditingItem(Item);
@@ -284,7 +284,7 @@ void SProjectTreeEditor::OnRescanOver()
 	SortItems.Empty();
 }
 
-void SProjectTreeEditor::ExpanedItem(UCodeProjectItem* Item, bool ShouldExpandItem) const
+void SProjectTreeEditor::ExpanedItem(UScriptProjectItem* Item, bool ShouldExpandItem) const
 {
 	if (Item)
 	{
@@ -296,14 +296,14 @@ void SProjectTreeEditor::ExpanedItem(UCodeProjectItem* Item, bool ShouldExpandIt
 	}
 }
 
-void SProjectTreeEditor::ExpanedItemChildren(UCodeProjectItem* Item) const
+void SProjectTreeEditor::ExpanedItemChildren(UScriptProjectItem* Item) const
 {
 	if (Item)
 	{
 		ProjectTree->SetItemExpansion(Item, true);
 		if (Item->Children.Num()>0)
 		{
-			for (UCodeProjectItem* Child: Item->Children)
+			for (UScriptProjectItem* Child: Item->Children)
 			{
 				ExpanedItemChildren(Child);
 			}

@@ -2,11 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h"
-#include "CodeProjectItem.h"
+#include "ScriptProjectItem.h"
 #include "ScriptProject.generated.h"
 
 UCLASS()
-class UScriptProject : public UCodeProjectItem
+class UScriptProject : public UScriptProjectItem
 {
 	GENERATED_UCLASS_BODY()
 };

@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "Animation/AnimInstance.h"
 #include "ScriptAnimInstance.generated.h"
 
 //TODO:Not work yet!!

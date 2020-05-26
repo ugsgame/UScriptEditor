@@ -1,8 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "ScriptHookReceive.h"
-#include "PlatformProcess.h"
+#include "HAL/PlatformProcess.h"
 #include "ScriptHookClient.h"
 
 

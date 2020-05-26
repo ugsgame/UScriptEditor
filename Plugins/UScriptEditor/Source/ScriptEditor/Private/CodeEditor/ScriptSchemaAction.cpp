@@ -1,10 +1,10 @@
 ﻿#include "ScriptSchemaAction.h"
 #include "UScriptDebuggerSetting.h"
-#include "UObjectIterator.h"
-#include "MetaData.h"
+#include "UObject/UObjectIterator.h"
+#include "UObject/MetaData.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Engine/BlueprintGeneratedClass.h"
-#include "KismetEditorUtilities.h"
+#include "Kismet2/KismetEditorUtilities.h"
 #include "ScriptParamCollection.h"
 
 #define  LOCTEXT_NAMESPACE "ScriptActionCollecter"

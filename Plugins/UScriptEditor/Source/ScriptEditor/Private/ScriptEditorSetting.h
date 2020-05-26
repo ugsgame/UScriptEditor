@@ -17,5 +17,5 @@ public:
 	TArray<FString> EdittingFiles;
 
 	//For UCodeProjectItem scanning files optimization
-	TArray<class UCodeProjectItem*> PreEdittingItems;
+	TArray<class UScriptProjectItem*> PreEdittingItems;
 };

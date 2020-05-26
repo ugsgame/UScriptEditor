@@ -15,17 +15,17 @@ public:
 	SLATE_BEGIN_ARGS(SProjectTreeEditor) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, class UCodeProjectItem* InSourceProject, class UCodeProjectItem* InScriptProject);
+	void Construct(const FArguments& InArgs, class UScriptProjectItem* InSourceProject, class UScriptProjectItem* InScriptProject);
 
 	static TSharedPtr<SProjectTreeEditor> Get()
 	{
 		return ProjectTreeEditor.Pin();
 	}
 
-	void ExpanedScriptItem(class UCodeProjectItem* Item, bool ShouldExpandItem = true, bool Always = true);
+	void ExpanedScriptItem(class UScriptProjectItem* Item, bool ShouldExpandItem = true, bool Always = true);
 	void ExpanedAllScriptItems();
 
-	void ExpanedEditingItem(class UCodeProjectItem* Item, bool ShouldExpandItem = true, bool Always = true);
+	void ExpanedEditingItem(class UScriptProjectItem* Item, bool ShouldExpandItem = true, bool Always = true);
 	void ExpanedAllEditingItems();
 ;
 	void RescanScripts();
@@ -42,21 +42,21 @@ private:
 	void Tick( const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime ) override;
 	/** End SWidget interface */
 
-	TSharedRef<class ITableRow> OnGenerateRow(class UCodeProjectItem* Item, const TSharedRef<class STableViewBase>& TableView);
+	TSharedRef<class ITableRow> OnGenerateRow(class UScriptProjectItem* Item, const TSharedRef<class STableViewBase>& TableView);
 
-	void OnGetChildren(class UCodeProjectItem* Item, TArray<class UCodeProjectItem*>& OutChildItems);
+	void OnGetChildren(class UScriptProjectItem* Item, TArray<class UScriptProjectItem*>& OutChildItems);
 
 	EVisibility GetThrobberVisibility() const;
 
-	FName GetIconForItem(class UCodeProjectItem* Item) const;
+	FName GetIconForItem(class UScriptProjectItem* Item) const;
 
-	void ExpanedItem(class UCodeProjectItem* Item,bool ShouldExpandItem = true) const;
+	void ExpanedItem(class UScriptProjectItem* Item,bool ShouldExpandItem = true) const;
 
-	void ExpanedItemChildren(class UCodeProjectItem* Item) const;
+	void ExpanedItemChildren(class UScriptProjectItem* Item) const;
 
-	void HandleMouseButtonDoubleClick(class UCodeProjectItem* Item) const;
+	void HandleMouseButtonDoubleClick(class UScriptProjectItem* Item) const;
 
-	void OnExpansionChanged(class UCodeProjectItem* Item,bool InChagned);
+	void OnExpansionChanged(class UScriptProjectItem* Item,bool InChagned);
 
 	void OnRescanOver();
 
@@ -64,15 +64,15 @@ private:
 	virtual FReply OnClickedScriptProject();
 public:
 
-	TArray<class UCodeProjectItem*> ExpandedItems;
+	TArray<class UScriptProjectItem*> ExpandedItems;
 
 private:
-	class  UCodeProjectItem* SourceProject;
-	class  UCodeProjectItem* ScriptProject;
+	class  UScriptProjectItem* SourceProject;
+	class  UScriptProjectItem* ScriptProject;
 
-	class UCodeProjectItem* EditingProject;
+	class UScriptProjectItem* EditingProject;
 
-	TSharedPtr<STreeView<class UCodeProjectItem*>> ProjectTree;
+	TSharedPtr<STreeView<class UScriptProjectItem*>> ProjectTree;
 
 	TSharedPtr<SButton> ScriptProjectButton;
 	TSharedPtr<SButton> SourceProjectButton;

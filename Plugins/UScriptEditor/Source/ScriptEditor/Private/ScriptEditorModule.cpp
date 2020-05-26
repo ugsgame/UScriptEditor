@@ -162,7 +162,7 @@ void FScriptEditorModule::OnScriptAssetDeleted(UObject*  AssetObject)
 				if (ProjectEditor.IsValid())
 				{
 					
-					if (UCodeProjectItem* Item = Cast<UCodeProjectItem>(ScriptAsset->UserObject))
+					if (UScriptProjectItem* Item = Cast<UScriptProjectItem>(ScriptAsset->UserObject))
 					{
 						if (Item->Parent)Item->Parent->Children.Remove(Item);
 						ProjectEditor->CloseEditingFile(Item);
@@ -220,7 +220,7 @@ void FScriptEditorModule::OnScriptAssetRenamed(const FAssetData& RenamedAsset, c
 			TSharedPtr<FScriptEditor> ProjectEditor = FScriptEditor::Get();
 
 			//change the item info
-			if (UCodeProjectItem* Item = Cast<UCodeProjectItem>(ScriptAsset->UserObject))
+			if (UScriptProjectItem* Item = Cast<UScriptProjectItem>(ScriptAsset->UserObject))
 			{
 				Item->Path = NewScriptPath;
 				Item->Name = ScriptAsset->GetName();

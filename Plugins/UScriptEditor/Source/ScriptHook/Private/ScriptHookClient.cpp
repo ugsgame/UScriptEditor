@@ -14,7 +14,7 @@
 #include "ScriptStackVars.h"
 #include "ScriptReqChild.h"
 #include "ScriptChildVars.h"
-#include "SlateApplication.h"
+#include "Framework/Application/SlateApplication.h"
 #include "GameFramework/Actor.h"
 #include "UnLua/Private/LuaContext.h"
 #include "UnLua/Private/UEReflectionUtils.h"

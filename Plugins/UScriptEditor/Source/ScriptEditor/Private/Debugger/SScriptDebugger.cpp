@@ -7,18 +7,18 @@
 #include "Widgets/Text/STextBlock.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "EditorStyleSet.h"
-#include "FileManager.h"
-#include "FileHelper.h"
+#include "HAL/FileManager.h"
+#include "Misc/FileHelper.h"
 #include "UScriptDebuggerSetting.h"
-#include "SlateApplication.h"
-#include "SSearchBox.h"
-#include "CoreDelegates.h"
-#include "SEditableTextBox.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Widgets/Input/SSearchBox.h"
+#include "Misc/CoreDelegates.h"
+#include "Widgets/Input/SEditableTextBox.h"
 
 #include "ScriptEditor.h"
 #include "ScriptHelperBPFunLib.h"
 
-#include "ProjectEditor/CodeProjectItem.h"
+#include "ProjectEditor/ScriptProjectItem.h"
 #include "ProjectEditor/SProjectTreeEditor.h"
 #include "UScriptRemoteDebuggerSetting.h"
 
@@ -368,8 +368,8 @@ void SScriptDebugger::SetStackData(TArray<TTuple<int32, int32, FString, FString>
 void SScriptDebugger::ShowCode(const FString& FilePath, int32 Line /*= 0*/)
 {
 	//TODO
-	UCodeProjectItem* ScriptProject = FScriptEditor::Get()->GetScriptProjectBeingEdited();
-	UCodeProjectItem* CodeItem = ScriptProject->FindChild(FilePath);
+	UScriptProjectItem* ScriptProject = FScriptEditor::Get()->GetScriptProjectBeingEdited();
+	UScriptProjectItem* CodeItem = ScriptProject->FindChild(FilePath);
 
 	if (CodeItem)
 	{

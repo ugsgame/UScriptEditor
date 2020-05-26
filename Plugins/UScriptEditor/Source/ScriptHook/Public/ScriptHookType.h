@@ -1,10 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "lua.hpp"
-#include "STreeView.h"
+//#include "Widgets/STreeView.h"
 #include "ScriptHookType.generated.h"
 
 struct lua_Debug;
@@ -291,7 +291,7 @@ public:
 };
 
 using FScriptDebuggerVarNode_Ref = TSharedRef<FScriptDebuggerVarNode>;
-using SDebuggerVarTree = STreeView<FScriptDebuggerVarNode_Ref>;
+//using SDebuggerVarTree = STreeView<FScriptDebuggerVarNode_Ref>;
 
 UENUM()
 enum class EBreakPointState : uint8

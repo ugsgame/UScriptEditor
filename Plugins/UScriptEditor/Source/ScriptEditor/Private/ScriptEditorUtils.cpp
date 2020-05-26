@@ -11,7 +11,7 @@
 #include "ScriptHelperBPFunLib.h"
 #include "LuaWrapper/LuaScript.h"
 
-#include "IPluginManager.h"
+#include "Interfaces/IPluginManager.h"
 
 DEFINE_LOG_CATEGORY(UScriptLog);
 

@@ -42,7 +42,7 @@ void FLuaScriptAssetTypeActions::OpenAssetEditor(const TArray<UObject*>& InObjec
 			if (FScriptEditorModule::GetInstance()->IsEditorOpen)
 			{
 				//Goto item tab			
-				UCodeProjectItem* Item = Cast<UCodeProjectItem>(ScriptAsset->UserObject);
+				UScriptProjectItem* Item = Cast<UScriptProjectItem>(ScriptAsset->UserObject);
 				TSharedPtr<FScriptEditor> ScriptEditor = FScriptEditor::Get();
 				if (ScriptEditor.IsValid() && Item)
 				{

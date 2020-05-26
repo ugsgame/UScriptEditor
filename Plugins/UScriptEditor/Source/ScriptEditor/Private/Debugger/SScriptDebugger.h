@@ -3,13 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SCompoundWidget.h"
-#include "STableRow.h"
-#include "STreeView.h"
+#include "Widgets/SCompoundWidget.h"
+#include "Widgets/Views/STableRow.h"
+#include "Widgets/Views/STreeView.h"
 #include "ScriptHookType.h"
-#include "IInputProcessor.h"
-#include "Regex.h"
-
+#include "Framework/Application/IInputProcessor.h"
+#include "Internationalization/Regex.h"
 
 
 struct FStackListNode
@@ -80,6 +79,7 @@ enum class EStackListState : uint8
 	BreakPoints,
 };
 
+using SDebuggerVarTree = STreeView<FScriptDebuggerVarNode_Ref>;
 
 class SScriptDebugger : public SCompoundWidget
 {

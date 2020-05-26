@@ -29,7 +29,7 @@
 #include "ScriptEditorStyle.h"
 #include "ScriptSchemaAction.h"
 #include "BlueprintActionDatabase.h"
-#include "MetaData.h"
+#include "UObject/MetaData.h"
 
 #define LOCTEXT_NAMESPACE "SScriptActionMenu"
 

@@ -8,13 +8,13 @@
 #include "Widgets/Views/SListView.h"
 
 #include "UScriptDebuggerSetting.h"
-#include "SComboBox.h"
+#include "Widgets/Input/SComboBox.h"
 
 class SCodeEditableText;
 class SScrollBar;
 class SScrollBox;
 
-class UCodeProjectItem;
+class UScriptProjectItem;
 
 struct FCodeLineNode
 {
@@ -60,7 +60,7 @@ public:
 	SLATE_BEGIN_ARGS(SCodeEditor) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, class UCodeProjectItem* InCodeProjectItem);
+	void Construct(const FArguments& InArgs, class UScriptProjectItem* InCodeProjectItem);
 
 	//
 	bool Save() const;
@@ -70,7 +70,7 @@ public:
 	//
 	//
 	int32 GetLineCount() const;
-	UCodeProjectItem* GetCodeProjectItem()const;
+	UScriptProjectItem* GetCodeProjectItem()const;
 	void GotoLineAndColumn(int32 LineNumber, int32 ColumnNumber);
 	FText GetLineAndColumn() const;
 	FText GetReferenceInfo() const;
@@ -101,7 +101,7 @@ protected:
 	bool GetBlueprintClassParents(const UClass* InClass, TArray<UBlueprint*>& OutBlueprintParents);
 	bool GetNativeClassParents(const UClass* InClass, TArray<UClass*>& OutNativeClassParents);
 protected:
-	UCodeProjectItem* CodeProjectItem;
+	UScriptProjectItem* CodeProjectItem;
 
 	TArray<TSharedPtr<FCodeLineNode>>LineCount;
 

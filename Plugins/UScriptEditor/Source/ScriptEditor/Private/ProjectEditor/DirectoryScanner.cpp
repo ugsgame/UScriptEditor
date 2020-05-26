@@ -11,7 +11,7 @@ FOnDirectoryScannedOver FDirectoryScanner::OnDirectoryScannedOver;
 
 struct FDirectoryResult
 {
-	FDirectoryResult(const FString& InPathName, ECodeProjectItemType::Type InType)
+	FDirectoryResult(const FString& InPathName, EScriptProjectItemType::Type InType)
 		: PathName(InPathName)
 		, Type(InType)
 	{
@@ -19,7 +19,7 @@ struct FDirectoryResult
 
 	FString PathName;
 
-	ECodeProjectItemType::Type Type;
+	EScriptProjectItemType::Type Type;
 };
 
 struct FDirectoryScannerCommand : public IQueuedWork
@@ -51,11 +51,11 @@ struct FDirectoryScannerCommand : public IQueuedWork
 			{
 				if(bIsDirectory)
 				{
-					FoundFiles.Push(new FDirectoryResult(FilenameOrDirectory, ECodeProjectItemType::Folder));
+					FoundFiles.Push(new FDirectoryResult(FilenameOrDirectory, EScriptProjectItemType::Folder));
 				}
 				else
 				{
-					FoundFiles.Push(new FDirectoryResult(FilenameOrDirectory, ECodeProjectItemType::File));
+					FoundFiles.Push(new FDirectoryResult(FilenameOrDirectory, EScriptProjectItemType::File));
 				}
 
 				return true;

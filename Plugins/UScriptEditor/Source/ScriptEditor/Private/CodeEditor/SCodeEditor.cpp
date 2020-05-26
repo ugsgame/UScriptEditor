@@ -15,7 +15,7 @@
 #include "Widgets/Notifications/SNotificationList.h"
 
 #include "ScriptEditorStyle.h"
-#include "CodeProjectItem.h"
+#include "ScriptProjectItem.h"
 #include "ScriptEditorUtils.h"
 #include "CPPRichTextSyntaxHighlighterTextLayoutMarshaller.h"
 #include "LUARichTextSyntaxHighlighterTextLayoutMarshaller.h"
@@ -27,13 +27,13 @@
 
 #include "Editor/EditorStyle/Public/EditorStyle.h"
 #include "AssetRegistryModule.h"
-#include "AssetRegistryInterface.h"
-#include "SSearchBox.h"
+#include "Misc/AssetRegistryInterface.h"
+#include "Widgets/Input/SSearchBox.h"
 
 #define LOCTEXT_NAMESPACE "CodeEditor"
 
 
-void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodeProjectItem)
+void SCodeEditor::Construct(const FArguments& InArgs, UScriptProjectItem* InCodeProjectItem)
 {
 	bDirty = false;
 
@@ -542,7 +542,7 @@ int32 SCodeEditor::GetLineCount() const
 	return Count;
 }
 
-UCodeProjectItem* SCodeEditor::GetCodeProjectItem() const
+UScriptProjectItem* SCodeEditor::GetCodeProjectItem() const
 {
 	return CodeProjectItem;
 }
