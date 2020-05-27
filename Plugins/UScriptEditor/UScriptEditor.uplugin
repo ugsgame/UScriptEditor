@@ -17,6 +17,17 @@
   "CanBeUsedWithUnrealHeaderTool": true,
   "Modules": [
     {
+      "Name": "UnLua",
+      "Type": "Runtime",
+      "LoadingPhase": "PostConfigInit",
+      "WhitelistPlatforms": [ "Win64", "Mac", "IOS", "Android", "Linux" ]
+    },
+    {
+      "Name": "UnLuaDefaultParamCollector",
+      "Type": "Program",
+      "LoadingPhase": "PostConfigInit"
+    },
+    {
       "Name": "ScriptHelper",
       "Type": "Runtime",
       "LoadingPhase": "PreDefault"
@@ -24,8 +35,10 @@
     {
       "Name": "ScriptEditor",
       "Type": "Editor",
-      "LoadingPhase": "Default"
+      "LoadingPhase": "Default",
+      "WhitelistPlatforms": [ "Win64", "Mac" ]
     },
+
     {
       "Name": "ScriptParamCollector",
       "Type": "Program",
@@ -38,10 +51,6 @@
     }
   ],
   "Plugins": [
-    {
-      "Name": "Unlua",
-      "Enabled": true
-    },
     {
       "Name": "EditorScriptingUtilities",
       "Enabled": true
