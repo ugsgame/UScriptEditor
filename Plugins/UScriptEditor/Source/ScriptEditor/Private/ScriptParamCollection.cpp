@@ -15,7 +15,7 @@ void CreateDefaultParamCollection()
 		CollectionCreated = true;
 
 //#include "UScriptParamCollection.inl"
- //#include "UScriptClassCollection.inl"	
+ #include "UScriptClassCollection.inl"	
 	}
 }
 
