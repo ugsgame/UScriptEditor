@@ -54,6 +54,8 @@ namespace ScriptEditorUtils
 			FString LuaTemp = CreateLuaTemplate(TemplateType, ScriptAsset->GetName());
 			FFileHelper::SaveStringToFile(*LuaTemp, *FullPath,FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 		}
+		//
+		ScriptAsset->ScriptFileMD5 = LexToString(FMD5Hash::HashFile(*FullPath));
 		ScriptAsset->Path = ScriptRelativePath;
 
 		return FullPath;
@@ -77,7 +79,7 @@ namespace ScriptEditorUtils
 			{
 				NewAsset->Path = ScriptEditorUtils::CoverToRelativeScriptPath(LuaScriptFileFullPath);
 				NewAsset->SourceCode = CodeText;
-
+				NewAsset->ScriptFileMD5 = LexToString(FMD5Hash::HashFile(*LuaScriptFileFullPath));
 				//TArray<UObject*> ObjectsToSync;
 				//ObjectsToSync.Add(NewAsset);
 				//GEditor->SyncBrowserToObjects(ObjectsToSync);

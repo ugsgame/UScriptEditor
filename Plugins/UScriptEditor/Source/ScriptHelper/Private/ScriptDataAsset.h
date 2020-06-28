@@ -16,6 +16,7 @@ public:
 public:
 
 #if WITH_EDITORONLY_DATA
+	FString ScriptFileMD5;
 	bool EFlag_IsValid;
 #endif // WITH_EDITORONLY_DATA
 

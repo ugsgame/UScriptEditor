@@ -4,6 +4,7 @@
 #include "EditorAssetLibrary.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Misc/SecureHash.h"
 #include "UObject/WeakObjectPtr.h"
 #include "UObject/Package.h"
 #include "IDirectoryWatcher.h"
@@ -11,6 +12,7 @@
 #include "DirectoryWatcherModule.h"
 #include "ScriptHelperBPFunLib.h"
 #include "ScriptEditorSetting.h"
+
 
 UScriptProjectItem::UScriptProjectItem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -301,17 +303,26 @@ bool UScriptProjectItem::BuildScriptAssetContext()
 			{
 				ScriptDataAsset = ScriptAsset;
 				ScriptAsset->Path = ScriptEditorUtils::CoverToRelativeScriptPath(Path);
-				//
-				TArray<uint8> CodeByte;
-				FString CodeText;
-				if (FFileHelper::LoadFileToString(CodeText, *Path))
-				{
-					FFileHelper::LoadFileToArray(CodeByte, *Path);
 
-					ScriptAsset->SourceCode = CodeText;
-					ScriptAsset->ByteCode = CodeByte;
-					ScriptAsset->UserObject = this;
+				//TODO:Check file MD5
+				FString MD5 = LexToString(FMD5Hash::HashFile(*Path));
+				if (MD5!= ScriptAsset->ScriptFileMD5)
+				{
+					//
+					TArray<uint8> CodeByte;
+					FString CodeText;
+					if (FFileHelper::LoadFileToString(CodeText, *Path))
+					{
+						FFileHelper::LoadFileToArray(CodeByte, *Path);
+
+						ScriptAsset->ScriptFileMD5 = MD5;
+
+						ScriptAsset->SourceCode = CodeText;
+						ScriptAsset->ByteCode = CodeByte;
+						ScriptAsset->UserObject = this;
+					}
 				}
+
 				//Log
 				//GEditor->AddOnScreenDebugMessage(0, 1, FColor::Red, "Build Asset Content:" + ScriptAssetPath);
 

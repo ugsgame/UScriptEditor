@@ -490,6 +490,7 @@ bool SCodeEditor::Save() const
 			//Save to asset
 			if (CodeProjectItem->ScriptDataAsset)
 			{
+				CodeProjectItem->ScriptDataAsset->ScriptFileMD5 = LexToString(FMD5Hash::HashFile(*CodeProjectItem->Path));
 				CodeProjectItem->ScriptDataAsset->SourceCode = CodeEditableText->GetText().ToString();
 				FFileHelper::LoadFileToArray(CodeProjectItem->ScriptDataAsset->ByteCode, *CodeProjectItem->Path);
 				//ScriptEditorUtils::StringToByteArray(CodeProjectItem->ScriptDataAsset->SourceCode, CodeProjectItem->ScriptDataAsset->ByteCode);
