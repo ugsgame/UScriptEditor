@@ -38,3 +38,4 @@ function BP_Game_C:NotifyEnemyDied()
 end
 
 return BP_Game_C
+
