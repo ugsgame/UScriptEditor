@@ -481,7 +481,7 @@ bool SCodeEditor::IsCodeEditable() const
 
 bool SCodeEditor::Save() const
 {
-	if (bDirty)
+	//if (bDirty)
 	{
 		bool bResult = FFileHelper::SaveStringToFile(CodeEditableText->GetText().ToString(), *CodeProjectItem->Path, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 		if (bResult)
@@ -518,6 +518,9 @@ bool SCodeEditor::Reload()
 	if (FFileHelper::LoadFileToString(FileText, *CodeProjectItem->Path))
 	{
 		CodeEditableText->SetText(FText::FromString(FileText));
+
+		FString MD5 = LexToString(FMD5Hash::HashFile(*CodeProjectItem->Path));
+		bDirty = CodeProjectItem->ScriptDataAsset->ScriptFileMD5 !=MD5;
 
 		return true;
 	}
