@@ -513,7 +513,7 @@ bool SCodeEditor::Reload()
 {
 	FString FileText = "File Loading, please wait";
 	//
-	CheckReferences();
+	CheckReferences(); 
 
 	if (FFileHelper::LoadFileToString(FileText, *CodeProjectItem->Path))
 	{
