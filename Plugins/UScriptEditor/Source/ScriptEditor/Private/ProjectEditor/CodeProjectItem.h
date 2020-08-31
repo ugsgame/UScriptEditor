@@ -6,11 +6,11 @@
 #include "UObject/ObjectMacros.h"
 #include "UObject/Object.h"
 #include "ScriptDataAsset.h"
-#include "ScriptProjectItem.generated.h"
+#include "CodeProjectItem.generated.h"
 
 /** Types of project items. Note that the enum ordering determines the tree sorting */
 UENUM()
-namespace EScriptProjectItemType
+namespace ECodeProjectItemType
 {
 	enum Type
 	{
@@ -21,7 +21,7 @@ namespace EScriptProjectItemType
 }
 
 UCLASS()
-class UScriptProjectItem : public UObject
+class UCodeProjectItem : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
@@ -31,7 +31,7 @@ public:
 
 	void DeletedEmptyFolder();
 
-	void HandleDirectoryScanned(const FString& InPathName, EScriptProjectItemType::Type InType);
+	void HandleDirectoryScanned(const FString& InPathName, ECodeProjectItemType::Type InType);
 
 	/** Handle directory changing */
 	void HandleDirectoryChanged(const TArray<struct FFileChangeData>& FileChanges);
@@ -40,7 +40,7 @@ public:
 
 	bool IsEmptyFolder()const;
 
-	UScriptProjectItem* FindChild(FString ChildFullPath);
+	UCodeProjectItem* FindChild(FString ChildFullPath);
 
 	FName GetBrush() const;
 
@@ -52,14 +52,14 @@ protected:
 
 	void DirectoryScannedOver();
 private:
-	void RescaParentIsLegal(UScriptProjectItem* InParent);
+	void RescaParentIsLegal(UCodeProjectItem* InParent);
 
-	void DeleteUnlegalChildren(UScriptProjectItem* InParent);
+	void DeleteUnlegalChildren(UCodeProjectItem* InParent);
 
-	void FindChild(UScriptProjectItem* InParent, FString ChildFullPath, OUT UScriptProjectItem* & OutChild);
+	void FindChild(UCodeProjectItem* InParent, FString ChildFullPath, OUT UCodeProjectItem* & OutChild);
 public:
 	UPROPERTY(Transient)
-	TEnumAsByte<EScriptProjectItemType::Type> Type;
+	TEnumAsByte<ECodeProjectItemType::Type> Type;
 
 	UPROPERTY(Transient)
 	FString Name;
@@ -71,10 +71,10 @@ public:
 	FString Path;
 
 	UPROPERTY(Transient)
-	UScriptProjectItem* Parent;
+	UCodeProjectItem* Parent;
 
 	UPROPERTY(Transient)
-	TArray<UScriptProjectItem*> Children;
+	TArray<UCodeProjectItem*> Children;
 
 	UPROPERTY(Transient)
 	UScriptDataAsset* ScriptDataAsset;

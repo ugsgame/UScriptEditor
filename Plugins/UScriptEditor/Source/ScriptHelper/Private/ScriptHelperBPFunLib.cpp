@@ -9,10 +9,10 @@
 #include "UnLua/Private/LuaContext.h"
 #include "UnLua/Private/LuaDynamicBinding.h"
 #include "UnLua/Private/UnLuaManager.h"
+#include "UnLua/Private/UnLuaCompatibility.h"
 #include "UnLuaInterface.h"
 
 #include "ScriptDataAsset.h"
-
 
 
 bool UScriptHelperBPFunLib::GetFloatByName(UObject* Target, FName VarName, float &outFloat)
@@ -20,7 +20,11 @@ bool UScriptHelperBPFunLib::GetFloatByName(UObject* Target, FName VarName, float
 	if (Target) //make sure Target was set in blueprints. 
 	{
 		float FoundFloat;
-		UFloatProperty* FloatProp = FindField<UFloatProperty>(Target->GetClass(), VarName);  // try to find float property in Target named VarName
+#if ENGINE_MINOR_VERSION <25 
+		FFloatProperty* FloatProp = FindField<FFloatProperty>(Target->GetClass(), VarName);  // try to find float property in Target named VarName
+#else
+		FFloatProperty* FloatProp = FindFProperty<FFloatProperty>(Target->GetClass(), VarName);  // try to find float property in Target named VarName
+#endif
 		if (FloatProp) //if we found variable
 		{
 			FoundFloat = FloatProp->GetPropertyValue_InContainer(Target);  // get the value from FloatProp
@@ -36,7 +40,11 @@ bool UScriptHelperBPFunLib::GetScriptDataByName(UObject* Target, FName VarName, 
 	if (Target) //make sure Target was set in blueprints. 
 	{
 		UScriptDataAsset* FoundScriptData = nullptr;
-		UObjectProperty* ScriptProp = FindField<UObjectProperty>(Target->GetClass(), VarName);  // try to find float property in Target named VarName
+#if ENGINE_MINOR_VERSION <25 
+		FObjectProperty* ScriptProp = FindField<FObjectProperty>(Target->GetClass(), VarName);  // try to find float property in Target named VarName
+#else
+		FObjectProperty* ScriptProp = FindFProperty<FObjectProperty>(Target->GetClass(), VarName);  // try to find float property in Target named VarName
+#endif
 		if (ScriptProp) //if we found variable
 		{
 			FoundScriptData = Cast<UScriptDataAsset>(ScriptProp->GetPropertyValue_InContainer(Target));  // get the value from FloatProp
@@ -55,11 +63,12 @@ FString UScriptHelperBPFunLib::ScriptSourceRoot()
 
 FString UScriptHelperBPFunLib::ScriptSourceDir()
 {
-	return FPaths::ProjectDir() + ScriptSourceRoot();
+	return FPaths::ProjectContentDir() + ScriptSourceRoot();
 }
 
 bool UScriptHelperBPFunLib::TryToRegisterScriptAsset(FString ModuleName)
 {
+	/*
 	if (ModuleName.IsEmpty())return false;
 
 	FString ScriptAssetPath = FString("/Game/") + ModuleName.Replace(TEXT("."), TEXT("/"));
@@ -99,11 +108,13 @@ bool UScriptHelperBPFunLib::TryToRegisterScriptAsset(FString ModuleName)
 	}
 	
 	UE_LOG(LogTemp, Error, TEXT("Load %s fail!"), *ScriptAssetPath);
+	*/
 	return false;
 }
 
 bool UScriptHelperBPFunLib::TryToBindingScript(UObject* InObject, UScriptDataAsset *InScriptData)
 {
+	/*
 	FLuaContext* Context = FLuaContext::Create();
 	if (InObject &&  Context && Context->IsEnable() && Context->GetManager())
 	{
@@ -128,9 +139,15 @@ bool UScriptHelperBPFunLib::TryToBindingScript(UObject* InObject, UScriptDataAss
 		GModuleContext = CodeContext;
 		return Context->GetManager()->Bind(InObject, Class, *ModuleName, GLuaDynamicBinding.InitializerTableRef);
 	}
+	*/
 	return false;
 }
 
+
+bool UScriptHelperBPFunLib::IsValidObject(UObject* TestPtr)
+{
+	return TestPtr && TestPtr->IsValidLowLevelFast();
+}
 
 FString UScriptHelperBPFunLib::ConvertAnyPathToObjectPath(const FString& AnyAssetPath, FString& OutFailureReason)
 {

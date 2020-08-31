@@ -22,7 +22,7 @@ namespace UnrealBuildTool.Rules
 
             PrivateIncludePaths.AddRange(
                 new string[] {
-                    "ScriptParamCollertor/Private",
+                    "ScriptParamCollector/Private",
                 }
                 );
 

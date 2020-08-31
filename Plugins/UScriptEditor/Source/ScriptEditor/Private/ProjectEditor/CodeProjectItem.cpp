@@ -1,10 +1,9 @@
 ﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
-#include "ScriptProjectItem.h"
+#include "CodeProjectItem.h"
 #include "EditorAssetLibrary.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
-#include "Misc/SecureHash.h"
 #include "UObject/WeakObjectPtr.h"
 #include "UObject/Package.h"
 #include "IDirectoryWatcher.h"
@@ -13,8 +12,7 @@
 #include "ScriptHelperBPFunLib.h"
 #include "ScriptEditorSetting.h"
 
-
-UScriptProjectItem::UScriptProjectItem(const FObjectInitializer& ObjectInitializer)
+UCodeProjectItem::UCodeProjectItem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	LegalExtensions.Add("h");
@@ -26,18 +24,18 @@ UScriptProjectItem::UScriptProjectItem(const FObjectInitializer& ObjectInitializ
 	bWithLegalFile = false;
 }
 
-void UScriptProjectItem::RescanChildren(bool ShowEmptyFolder)
+void UCodeProjectItem::RescanChildren(bool ShowEmptyFolder)
 {
 	if(Path.Len() > 0)
 	{
 		bShowEmptyFolder = ShowEmptyFolder;
 
-		FDirectoryScanner::OnDirectoryScannedOver = FOnDirectoryScannedOver::CreateUObject(this, &UScriptProjectItem::DirectoryScannedOver);
-		FDirectoryScanner::AddDirectory(Path, FOnDirectoryScanned::CreateUObject(this, &UScriptProjectItem::HandleDirectoryScanned));
+		FDirectoryScanner::OnDirectoryScannedOver = FOnDirectoryScannedOver::CreateUObject(this, &UCodeProjectItem::DirectoryScannedOver);
+		FDirectoryScanner::AddDirectory(Path, FOnDirectoryScanned::CreateUObject(this, &UCodeProjectItem::HandleDirectoryScanned));
 	}
 }
 
-void UScriptProjectItem::DeletedEmptyFolder()
+void UCodeProjectItem::DeletedEmptyFolder()
 {
 	if (this->Children.Num() > 0)
 	{
@@ -45,7 +43,7 @@ void UScriptProjectItem::DeletedEmptyFolder()
 	}
 }
 
-void UScriptProjectItem::HandleDirectoryScanned(const FString& InPathName, EScriptProjectItemType::Type InType)
+void UCodeProjectItem::HandleDirectoryScanned(const FString& InPathName, ECodeProjectItemType::Type InType)
 {
 	// check for a child that already exists
 	bool bCreateNew = true;
@@ -61,12 +59,12 @@ void UScriptProjectItem::HandleDirectoryScanned(const FString& InPathName, EScri
 	// create children now & kick off their scan
 	if(bCreateNew)
 	{
-		UScriptProjectItem* NewItem = NewObject<UScriptProjectItem>(GetOutermost(), UScriptProjectItem::StaticClass());
+		UCodeProjectItem* NewItem = NewObject<UCodeProjectItem>(GetOutermost(), UCodeProjectItem::StaticClass());
 		NewItem->Type = InType;
 		NewItem->Path = InPathName;
 		NewItem->Name = FPaths::GetCleanFilename(InPathName);
 		NewItem->Parent = this;
-		if(InType != EScriptProjectItemType::Folder)
+		if(InType != ECodeProjectItemType::Folder)
 		{
 			NewItem->Extension = FPaths::GetExtension(InPathName);
 			//Check Extension!!
@@ -96,7 +94,7 @@ void UScriptProjectItem::HandleDirectoryScanned(const FString& InPathName, EScri
 		Children.Add(NewItem);
 		
 		Children.Sort(
-			[](const UScriptProjectItem& ItemA, const UScriptProjectItem& ItemB) -> bool
+			[](const UCodeProjectItem& ItemA, const UCodeProjectItem& ItemB) -> bool
 			{
 				if(ItemA.Type != ItemB.Type)
 				{
@@ -107,10 +105,10 @@ void UScriptProjectItem::HandleDirectoryScanned(const FString& InPathName, EScri
 			}
 		);
 
-		if(InType == EScriptProjectItemType::Folder)
+		if(InType == ECodeProjectItemType::Folder)
 		{
 			// kick off another scan for subdirectories
-			FDirectoryScanner::AddDirectory(InPathName, FOnDirectoryScanned::CreateUObject(NewItem, &UScriptProjectItem::HandleDirectoryScanned));
+			FDirectoryScanner::AddDirectory(InPathName, FOnDirectoryScanned::CreateUObject(NewItem, &UCodeProjectItem::HandleDirectoryScanned));
 
 			// @TODO: now register for any changes to this directory if needed
 			//FDirectoryWatcherModule& DirectoryWatcherModule = FModuleManager::Get().LoadModuleChecked<FDirectoryWatcherModule>(TEXT("DirectoryWatcher"));
@@ -119,7 +117,7 @@ void UScriptProjectItem::HandleDirectoryScanned(const FString& InPathName, EScri
 	}
 }
 
-void UScriptProjectItem::HandleDirectoryChanged(const TArray<FFileChangeData>& FileChanges)
+void UCodeProjectItem::HandleDirectoryChanged(const TArray<FFileChangeData>& FileChanges)
 {
 	// @TODO: dynamical update directory watchers so we can update the view in real-time
 	for(const auto& Change : FileChanges)
@@ -148,7 +146,7 @@ void UScriptProjectItem::HandleDirectoryChanged(const TArray<FFileChangeData>& F
 	}
 }
 
-bool UScriptProjectItem::IsLegalFile()const
+bool UCodeProjectItem::IsLegalFile()const
 {
 	for (FString CompareEx:LegalExtensions)
 	{
@@ -160,12 +158,12 @@ bool UScriptProjectItem::IsLegalFile()const
 	return false;
 }
 
-bool UScriptProjectItem::IsEmptyFolder()const
+bool UCodeProjectItem::IsEmptyFolder()const
 {
-	return Type== EScriptProjectItemType::Folder && !bWithLegalFile;
+	return Type== ECodeProjectItemType::Folder && !bWithLegalFile;
 }
 
-UScriptProjectItem* UScriptProjectItem::FindChild(FString ChildFullPath)
+UCodeProjectItem* UCodeProjectItem::FindChild(FString ChildFullPath)
 {
 	//层序遍历
 	/*
@@ -192,7 +190,7 @@ UScriptProjectItem* UScriptProjectItem::FindChild(FString ChildFullPath)
 	return nullptr;
 	*/
 	
-	UScriptProjectItem* OutChild = nullptr;
+	UCodeProjectItem* OutChild = nullptr;
 	if (this->Path == ChildFullPath)
 	{
 		return this;
@@ -207,15 +205,15 @@ UScriptProjectItem* UScriptProjectItem::FindChild(FString ChildFullPath)
 }
 
 
-FName UScriptProjectItem::GetBrush() const
+FName UCodeProjectItem::GetBrush() const
 {
 	switch (Type)
 	{
-	case EScriptProjectItemType::Project:
+	case ECodeProjectItemType::Project:
 		return "ProjectEditor.Icon.Project";
-	case EScriptProjectItemType::Folder:
+	case ECodeProjectItemType::Folder:
 		return "ProjectEditor.Icon.Folder";
-	case EScriptProjectItemType::File:
+	case ECodeProjectItemType::File:
 	{
 		if (Extension == "lua")
 		{
@@ -228,7 +226,7 @@ FName UScriptProjectItem::GetBrush() const
 	}
 }
 
-void UScriptProjectItem::RescaParentIsLegal(UScriptProjectItem* InParent)
+void UCodeProjectItem::RescaParentIsLegal(UCodeProjectItem* InParent)
 {
 	InParent->bWithLegalFile = true;
 	if (InParent->Parent)
@@ -237,7 +235,7 @@ void UScriptProjectItem::RescaParentIsLegal(UScriptProjectItem* InParent)
 	}
 }
 
-void UScriptProjectItem::DeleteUnlegalChildren(UScriptProjectItem* InParent)
+void UCodeProjectItem::DeleteUnlegalChildren(UCodeProjectItem* InParent)
 {
 	if (InParent->bWithLegalFile)
 	{
@@ -267,11 +265,11 @@ void UScriptProjectItem::DeleteUnlegalChildren(UScriptProjectItem* InParent)
 	}
 }
 
-void UScriptProjectItem::FindChild(UScriptProjectItem* InParent, FString ChildFullPath, OUT UScriptProjectItem*  &OutChild)
+void UCodeProjectItem::FindChild(UCodeProjectItem* InParent, FString ChildFullPath, OUT UCodeProjectItem*  &OutChild)
 {
 	if (InParent && InParent->Children.Num() > 0)
 	{
-		for (UScriptProjectItem* Child : InParent->Children)
+		for (UCodeProjectItem* Child : InParent->Children)
 		{
 			if (Child->Path == ChildFullPath)
 			{
@@ -286,7 +284,7 @@ void UScriptProjectItem::FindChild(UScriptProjectItem* InParent, FString ChildFu
 	}
 }
 
-bool UScriptProjectItem::BuildScriptAssetContext()
+bool UCodeProjectItem::BuildScriptAssetContext()
 {
 	if (Extension == "lua")
 	{
@@ -303,10 +301,11 @@ bool UScriptProjectItem::BuildScriptAssetContext()
 			{
 				ScriptDataAsset = ScriptAsset;
 				ScriptAsset->Path = ScriptEditorUtils::CoverToRelativeScriptPath(Path);
-
+				ScriptAsset->UserObject = this;
+				//
 				//TODO:Check file MD5
 				FString MD5 = LexToString(FMD5Hash::HashFile(*Path));
-				if (MD5!= ScriptAsset->ScriptFileMD5)
+				if (MD5 != ScriptAsset->ScriptFileMD5)
 				{
 					//
 					TArray<uint8> CodeByte;
@@ -316,10 +315,8 @@ bool UScriptProjectItem::BuildScriptAssetContext()
 						FFileHelper::LoadFileToArray(CodeByte, *Path);
 
 						ScriptAsset->ScriptFileMD5 = MD5;
-
 						ScriptAsset->SourceCode = CodeText;
 						ScriptAsset->ByteCode = CodeByte;
-						ScriptAsset->UserObject = this;
 					}
 				}
 
@@ -357,7 +354,7 @@ bool UScriptProjectItem::BuildScriptAssetContext()
 	return false;
 }
 
-void UScriptProjectItem::DirectoryScannedOver()
+void UCodeProjectItem::DirectoryScannedOver()
 {
 	if (!bShowEmptyFolder)
 	{

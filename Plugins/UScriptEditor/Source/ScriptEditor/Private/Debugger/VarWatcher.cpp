@@ -154,8 +154,10 @@ void SVarWatcher::Update(float Delta)
 
 void SVarWatcher::RefreshVarTree()
 {
-	if (VarTreePtr.IsValid())
+	if (VarTreePtr.IsValid()&& VarTreePtr.Pin().IsValid())
+	{
 		VarTreePtr.Pin()->RequestListRefresh();
+	}
 }
 
 void SVarWatcher::WatcherTabClose(TSharedRef<SDockTab> DockTab)

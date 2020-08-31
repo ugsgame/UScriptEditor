@@ -14,7 +14,7 @@ class FScriptEditorToolbar;
 class FDocumentTracker;
 class FTabInfo;
 class USourceProject;
-class UScriptProjectItem;
+class UCodeProjectItem;
 
 class FScriptEditor : public FWorkflowCentricApplication, public FGCObject
 {
@@ -46,14 +46,14 @@ public:
 
 public:
 	/** Initialize the code editor */
-	void InitScriptEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, class UScriptProjectItem* CodeProject, class UScriptProjectItem* ScriptProject);
+	void InitScriptEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, class UCodeProjectItem* CodeProject, class UCodeProjectItem* ScriptProject);
 
 	/** Try to open a new file for editing */
-	void OpenFileForEditing(class UScriptProjectItem* Item);
+	void OpenFileForEditing(class UCodeProjectItem* Item);
 	/** Try to open a new file for editing */
-	void OpenFileAndGotoLine(class UScriptProjectItem* Item,int32 Line);
+	void OpenFileAndGotoLine(class UCodeProjectItem* Item,int32 Line);
 	/** Try to close a editing file */
-	void CloseEditingFile(class UScriptProjectItem* Item);
+	void CloseEditingFile(class UCodeProjectItem* Item);
 	/** Try to close a all editing files */
 	void CloseAllEditingFiles();
 
@@ -61,10 +61,10 @@ public:
 	void RescanProject();
 
 	/** Get the current project being edited by this code editor */
-	UScriptProjectItem* GetCodeProjectBeingEdited() const { return CodeProjectBeingEdited.Get(); }
-	UScriptProjectItem* GetScriptProjectBeingEdited() const { return ScriptProjectBeingEdited.Get(); }
+	UCodeProjectItem* GetCodeProjectBeingEdited() const { return CodeProjectBeingEdited.Get(); }
+	UCodeProjectItem* GetScriptProjectBeingEdited() const { return ScriptProjectBeingEdited.Get(); }
 
-	TSharedRef<SWidget> CreateCodeEditorWidget(TSharedRef<FTabInfo> TabInfo, UScriptProjectItem* Item);
+	TSharedRef<SWidget> CreateCodeEditorWidget(TSharedRef<FTabInfo> TabInfo, UCodeProjectItem* Item);
 
 	void RegisterToolbarTab(const TSharedRef<class FTabManager>& TabManager);
 
@@ -126,8 +126,8 @@ protected:
 	TSharedPtr<FDocumentTracker> DocumentManager;
 
 	/** The code project we are currently editing */
-	TWeakObjectPtr<UScriptProjectItem> CodeProjectBeingEdited;
-	TWeakObjectPtr<UScriptProjectItem> ScriptProjectBeingEdited;
+	TWeakObjectPtr<UCodeProjectItem> CodeProjectBeingEdited;
+	TWeakObjectPtr<UCodeProjectItem> ScriptProjectBeingEdited;
 
 	TSharedPtr<class FScriptEditorToolbar> ToolbarBuilder;
 

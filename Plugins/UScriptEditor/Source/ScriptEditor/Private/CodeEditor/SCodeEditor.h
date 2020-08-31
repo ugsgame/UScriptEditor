@@ -8,13 +8,13 @@
 #include "Widgets/Views/SListView.h"
 
 #include "UScriptDebuggerSetting.h"
-#include "Widgets/Input/SComboBox.h"
+#include "SComboBox.h"
 
 class SCodeEditableText;
 class SScrollBar;
 class SScrollBox;
 
-class UScriptProjectItem;
+class UCodeProjectItem;
 
 struct FCodeLineNode
 {
@@ -60,7 +60,7 @@ public:
 	SLATE_BEGIN_ARGS(SCodeEditor) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, class UScriptProjectItem* InCodeProjectItem);
+	void Construct(const FArguments& InArgs, class UCodeProjectItem* InCodeProjectItem);
 
 	//
 	bool Save() const;
@@ -70,7 +70,7 @@ public:
 	//
 	//
 	int32 GetLineCount() const;
-	UScriptProjectItem* GetCodeProjectItem()const;
+	UCodeProjectItem* GetCodeProjectItem()const;
 	void GotoLineAndColumn(int32 LineNumber, int32 ColumnNumber);
 	FText GetLineAndColumn() const;
 	FText GetReferenceInfo() const;
@@ -95,13 +95,15 @@ protected:
 	void OnReferenceSelectionChanged(TSharedPtr<FName> InItem, ESelectInfo::Type InSeletionInfo);
 	FText CreateTagSourcesComboBoxContent() const;
 
+	virtual FReply OnClickedBrowseReference();
+
 	void OnSearchTextChanged(const FText& InFilterText);
 	void OnSearchTextCommitted(const FText& InText, ETextCommit::Type CommitInfo);
 
 	bool GetBlueprintClassParents(const UClass* InClass, TArray<UBlueprint*>& OutBlueprintParents);
 	bool GetNativeClassParents(const UClass* InClass, TArray<UClass*>& OutNativeClassParents);
 protected:
-	UScriptProjectItem* CodeProjectItem;
+	UCodeProjectItem* CodeProjectItem;
 
 	TArray<TSharedPtr<FCodeLineNode>>LineCount;
 

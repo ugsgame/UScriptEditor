@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+
+// UE 4.25 Compatible.
+#include "UnLua/Private/UnLuaCompatibility.h"
+
 #include "ScriptHelperBPFunLib.generated.h"
 /**
  * 
@@ -31,6 +35,9 @@ public:
 	static bool TryToRegisterScriptAsset(FString ModuleName);
 	UFUNCTION(BlueprintCallable, Category = "Script|UBPFuncLib")
 	static bool TryToBindingScript(UObject* InObject, class UScriptDataAsset *InScriptData);
+
+	UFUNCTION(BlueprintCallable, Category = "Script|UBPFuncLib")
+	static bool IsValidObject(UObject* TestPtr);
 
 	//TODO:move to utils category
 	static FString ConvertAnyPathToObjectPath(const FString& AnyAssetPath, FString& OutFailureReason);

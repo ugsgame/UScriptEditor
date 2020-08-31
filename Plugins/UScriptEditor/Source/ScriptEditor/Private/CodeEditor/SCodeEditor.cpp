@@ -15,7 +15,7 @@
 #include "Widgets/Notifications/SNotificationList.h"
 
 #include "ScriptEditorStyle.h"
-#include "ScriptProjectItem.h"
+#include "CodeProjectItem.h"
 #include "ScriptEditorUtils.h"
 #include "CPPRichTextSyntaxHighlighterTextLayoutMarshaller.h"
 #include "LUARichTextSyntaxHighlighterTextLayoutMarshaller.h"
@@ -27,13 +27,13 @@
 
 #include "Editor/EditorStyle/Public/EditorStyle.h"
 #include "AssetRegistryModule.h"
-#include "Misc/AssetRegistryInterface.h"
-#include "Widgets/Input/SSearchBox.h"
+#include "AssetRegistryInterface.h"
+#include "SSearchBox.h"
 
 #define LOCTEXT_NAMESPACE "CodeEditor"
 
 
-void SCodeEditor::Construct(const FArguments& InArgs, UScriptProjectItem* InCodeProjectItem)
+void SCodeEditor::Construct(const FArguments& InArgs, UCodeProjectItem* InCodeProjectItem)
 {
 	bDirty = false;
 
@@ -232,7 +232,14 @@ void SCodeEditor::Construct(const FArguments& InArgs, UScriptProjectItem* InCode
 						[
 							SNew(SHorizontalBox)
 							+ SHorizontalBox::Slot()
-							.VAlign(VAlign_Fill).AutoWidth()
+							.AutoWidth()
+							[
+								SNew(SButton)
+								.Text(LOCTEXT("BrowseReference", "Browse"))
+								.OnClicked(this, &SCodeEditor::OnClickedBrowseReference)
+							]
+							+ SHorizontalBox::Slot()
+							.AutoWidth()
 							[
 								SAssignNew(ReferenceComboBox, SComboBox<TSharedPtr<FName>>)
 								.OptionsSource(&ReferenceItems)
@@ -321,7 +328,7 @@ void SCodeEditor::CheckReferences()
 			for (FAssetData Asset : AssetDatas)
 			{
 				FScriptReferenceInfo ReferenceInfo;
-				ReferenceInfo.ReferencedAsset = Asset.AssetName;
+				ReferenceInfo.ReferencedAsset = Asset;
 				//Blueprint Class
 				if (Asset.GetClass()->IsChildOf(UBlueprint::StaticClass()))
 				{				
@@ -372,7 +379,7 @@ void SCodeEditor::CheckReferences()
 		ReferenceItems.Empty();
 		for (FScriptReferenceInfo Info:ReferenceInfoes)
 		{
-			ReferenceItems.Add(MakeShareable(new FName(Info.ReferencedAsset)));
+			ReferenceItems.Add(MakeShareable(new FName(Info.ReferencedAsset.AssetName)));
 		}
 
 		if (ReferenceComboBox.IsValid() && ReferenceItems.Num()>0)ReferenceComboBox->SetSelectedItem(ReferenceItems[0]);
@@ -513,14 +520,14 @@ bool SCodeEditor::Reload()
 {
 	FString FileText = "File Loading, please wait";
 	//
-	CheckReferences(); 
+	CheckReferences();
 
 	if (FFileHelper::LoadFileToString(FileText, *CodeProjectItem->Path))
 	{
 		CodeEditableText->SetText(FText::FromString(FileText));
 
 		FString MD5 = LexToString(FMD5Hash::HashFile(*CodeProjectItem->Path));
-		bDirty = CodeProjectItem->ScriptDataAsset->ScriptFileMD5 !=MD5;
+		bDirty = CodeProjectItem->ScriptDataAsset->ScriptFileMD5 != MD5;
 
 		return true;
 	}
@@ -546,7 +553,7 @@ int32 SCodeEditor::GetLineCount() const
 	return Count;
 }
 
-UScriptProjectItem* SCodeEditor::GetCodeProjectItem() const
+UCodeProjectItem* SCodeEditor::GetCodeProjectItem() const
 {
 	return CodeProjectItem;
 }
@@ -642,7 +649,7 @@ void SCodeEditor::OnReferenceSelectionChanged(TSharedPtr<FName> InItem, ESelectI
 		{
 			for (FScriptReferenceInfo Info:ReferenceInfoes)
 			{
-				if (Info.ReferencedAsset == *Item)
+				if (Info.ReferencedAsset.AssetName == *Item)
 				{
 					CodeEditableText->SetReferenceInfo(Info);
 					break;
@@ -658,6 +665,20 @@ FText SCodeEditor::CreateTagSourcesComboBoxContent() const
 	const bool bHasSelectedItem = ReferenceComboBox.IsValid() && ReferenceComboBox->GetSelectedItem().IsValid();
 
 	return bHasSelectedItem ? FText::FromName(*ReferenceComboBox->GetSelectedItem().Get()) : LOCTEXT("NewTagLocationNotSelected", "Not selected");
+}
+
+FReply SCodeEditor::OnClickedBrowseReference()
+{
+	FScriptReferenceInfo ReferenceInfo = CodeEditableText->GetReferenceInfo();
+
+	if (ReferenceInfo.ReferencedAsset.IsValid())
+	{
+		TArray<struct FAssetData> AssetToSync;
+		AssetToSync.Add(ReferenceInfo.ReferencedAsset);
+		GEditor->SyncBrowserToObjects(AssetToSync);
+	}
+
+	return FReply::Handled();
 }
 
 void SCodeEditor::OnSearchTextChanged(const FText& InFilterText)

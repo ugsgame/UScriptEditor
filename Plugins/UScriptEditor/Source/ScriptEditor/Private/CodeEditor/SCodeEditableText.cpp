@@ -3,15 +3,15 @@
 #include "SCodeEditableText.h"
 #include "ScriptEditorStyle.h"
 #include "ScriptEditorCommands.h"
-#include "Framework/Commands/UICommandList.h"
+#include "UICommandList.h"
 #include "Framework/Commands/UIAction.h"
 #include "Framework/MultiBox/MultiBoxExtender.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "ScriptEditorUtils.h"
-#include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "MultiBoxBuilder.h"
 #include "SScriptActionMenu.h"
 #include "GraphEditor.h"
-#include "Framework/Application/SlateApplication.h"
+#include "SlateApplication.h"
 #include "SAutoCompleteMenu.h"
 #include "ScriptSchemaAction.h"
 
@@ -73,7 +73,7 @@ void SCodeEditableText::GetLineAndColumn(int32& Line, int32& Column)
 void SCodeEditableText::SetReferenceInfo(FScriptReferenceInfo& InInfo)
 {
 	ReferenceInfo = InInfo;
-	US_Log("Refrence:%s", *ReferenceInfo.ReferencedAsset.ToString());
+	US_Log("Refrence:%s", *ReferenceInfo.ReferencedAsset.AssetName.ToString());
 }
 
 const FTextLocation& SCodeEditableText::GetCursorLocation() const

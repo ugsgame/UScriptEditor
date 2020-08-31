@@ -1,7 +1,7 @@
 ﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "ScriptEditor.h"
-#include "ScriptProjectItem.h"
+#include "CodeProjectItem.h"
 #include "SourceProject.h"
 #include "ScriptEditorStyle.h"
 #include "ScriptEditorCommands.h"
@@ -20,9 +20,9 @@
 #include "ScriptEditorSetting.h"
 #include "ScriptEditorModule.h"
 #include "SGraphActionMenu.h"
-#include "Kismet/Private/SBlueprintActionMenu.h"
+#include "Private/SBlueprintActionMenu.h"
 #include "SScriptActionMenu.h"
-#include "Framework/Application/SlateApplication.h"
+#include "SlateApplication.h"
 
 
 #define LOCTEXT_NAMESPACE "ScriptEditor"
@@ -49,23 +49,32 @@ namespace ScriptEditorTabs
 };
 
 
-struct FCodeTabSummoner : public FDocumentTabFactoryForObjects<UScriptProjectItem>
+struct FCodeTabSummoner : public FDocumentTabFactoryForObjects<UCodeProjectItem>
 {
 public:
-	DECLARE_DELEGATE_RetVal_TwoParams(TSharedRef<SWidget>, FOnCreateScriptEditorWidget, TSharedRef<FTabInfo>, UScriptProjectItem*);
+	DECLARE_DELEGATE_RetVal_TwoParams(TSharedRef<SWidget>, FOnCreateScriptEditorWidget, TSharedRef<FTabInfo>, UCodeProjectItem*);
 
 public:
 	FCodeTabSummoner(TSharedPtr<class FScriptEditor> InCodeProjectEditorPtr, FOnCreateScriptEditorWidget CreateScriptEditorWidgetCallback)
-		: FDocumentTabFactoryForObjects<UScriptProjectItem>(ScriptEditorTabs::CodeViewID, InCodeProjectEditorPtr)
+		: FDocumentTabFactoryForObjects<UCodeProjectItem>(ScriptEditorTabs::CodeViewID, InCodeProjectEditorPtr)
 		, ScriptEditorPtr(InCodeProjectEditorPtr)
 		, OnCreateScriptEditorWidget(CreateScriptEditorWidgetCallback)
 	{
 	}
 
+protected:
+
+	void OnTabClosedBinding(TSharedPtr<SDockTab> Tab) const
+	{
+		Tab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &FCodeTabSummoner::OnCloseTab));
+	}
+
+public:
+
 	virtual void OnTabActivated(TSharedPtr<SDockTab> Tab) const override
 	{
 		TSharedRef<SCodeEditor> CodeEditor = StaticCastSharedRef<SCodeEditor>(Tab->GetContent());
-		if (UScriptProjectItem* Item = CodeEditor->GetCodeProjectItem())
+		if (UCodeProjectItem* Item = CodeEditor->GetCodeProjectItem())
 		{
 			if (SProjectTreeEditor::Get().IsValid())
 			{
@@ -78,7 +87,7 @@ public:
 		}
 		//	InCodeProjectEditorPtr.Pin()->OnCodeEditorFocused(CodeEditor);
 
-		Tab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &FCodeTabSummoner::OnCloseTab));
+		OnTabClosedBinding(Tab);
 	}
 
 	virtual void OnTabRefreshed(TSharedPtr<SDockTab> Tab) const override
@@ -95,11 +104,11 @@ public:
 		//	BlueprintEditorPtr.Pin()->GetBlueprintObj()->LastEditedDocuments.Add(FEditedDocumentInfo(Graph, ViewLocation, ZoomAmount));
 	}
 
-	void OnCloseTab(TSharedRef<class SDockTab> Tab)
+	void OnCloseTab(TSharedRef<class SDockTab> Tab) const
 	{
 		TSharedRef<SCodeEditor> CodeEditor = StaticCastSharedRef<SCodeEditor>(Tab->GetContent());
 
-		if (UScriptProjectItem* Item = CodeEditor->GetCodeProjectItem())
+		if (UCodeProjectItem* Item = CodeEditor->GetCodeProjectItem())
 		{
 			UScriptEdtiorSetting::Get()->EdittingFiles.Remove(Item->Path);
 
@@ -112,18 +121,18 @@ public:
 	}
 
 protected:
-	virtual TAttribute<FText> ConstructTabNameForObject(UScriptProjectItem* DocumentID) const override
+	virtual TAttribute<FText> ConstructTabNameForObject(UCodeProjectItem* DocumentID) const override
 	{
 		return FText::FromString(DocumentID->Name);
 	}
 
-	virtual TSharedRef<SWidget> CreateTabBodyForObject(const FWorkflowTabSpawnInfo& Info, UScriptProjectItem* DocumentID) const override
+	virtual TSharedRef<SWidget> CreateTabBodyForObject(const FWorkflowTabSpawnInfo& Info, UCodeProjectItem* DocumentID) const override
 	{
 		check(Info.TabInfo.IsValid());
 		return OnCreateScriptEditorWidget.Execute(Info.TabInfo.ToSharedRef(), DocumentID);
 	}
 
-	virtual const FSlateBrush* GetTabIconForObject(const FWorkflowTabSpawnInfo& Info, UScriptProjectItem* DocumentID) const override
+	virtual const FSlateBrush* GetTabIconForObject(const FWorkflowTabSpawnInfo& Info, UCodeProjectItem* DocumentID) const override
 	{
 		if (DocumentID)
 		{
@@ -182,7 +191,7 @@ public:
 
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override
 	{
-		return SNew(SScriptEditorLog).Messages(FScriptEditorModule::GetInstance()->ScriptLogHistory->GetMessages());
+		return SNew(SScriptEditorLog);
 	}
 };
 
@@ -214,7 +223,7 @@ public:
 		return Tab;
 	}
 
-	void OnTabClosed(TSharedRef<class SDockTab> DebugTab)
+	void OnTabClosed(TSharedRef<class SDockTab> DebugTab)const
 	{
 		SScriptDebugger::Get()->DebugTabClose(DebugTab);
 	}
@@ -248,7 +257,7 @@ public:
 		return Tab;
 	}
 
-	void OnTabClosed(TSharedRef<class SDockTab> DebugTab)
+	void OnTabClosed(TSharedRef<class SDockTab> DebugTab)const
 	{
 		SVarWatcher::Get()->WatcherTabClose(DebugTab);
 	}
@@ -383,7 +392,7 @@ void FScriptEditor::RegisterToolbarTab(const TSharedRef<class FTabManager>& InTa
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 }
 
-void FScriptEditor::InitScriptEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, class UScriptProjectItem* CodeProject, class UScriptProjectItem* ScriptProject)
+void FScriptEditor::InitScriptEditor(const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, class UCodeProjectItem* CodeProject, class UCodeProjectItem* ScriptProject)
 {
 #if ENGINE_MINOR_VERSION < 24
 	FAssetEditorManager::Get().CloseOtherEditors(ScriptProject, this);
@@ -494,7 +503,7 @@ void FScriptEditor::BindCommands()
 	);
 }
 
-void FScriptEditor::OpenFileForEditing(UScriptProjectItem* Item)
+void FScriptEditor::OpenFileForEditing(UCodeProjectItem* Item)
 {
 	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(Item);
 	DocumentManager->OpenDocument(Payload, FDocumentTracker::OpenNewDocument);
@@ -502,7 +511,7 @@ void FScriptEditor::OpenFileForEditing(UScriptProjectItem* Item)
 	UScriptEdtiorSetting::Get()->EdittingFiles.Add(Item->Path);
 }
 
-void FScriptEditor::OpenFileAndGotoLine(UScriptProjectItem* Item, int32 Line)
+void FScriptEditor::OpenFileAndGotoLine(UCodeProjectItem* Item, int32 Line)
 {
 	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(Item);
 	TSharedPtr<SDockTab> DocTab = DocumentManager->OpenDocument(Payload, FDocumentTracker::OpenNewDocument);
@@ -516,7 +525,7 @@ void FScriptEditor::OpenFileAndGotoLine(UScriptProjectItem* Item, int32 Line)
 	UScriptEdtiorSetting::Get()->EdittingFiles.Add(Item->Path);
 }
 
-void FScriptEditor::CloseEditingFile(UScriptProjectItem* Item)
+void FScriptEditor::CloseEditingFile(UCodeProjectItem* Item)
 {
 	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(Item);
 	DocumentManager->CloseTab(Payload);
@@ -599,14 +608,14 @@ FLinearColor FScriptEditor::GetWorldCentricTabColorScale() const
 
 void FScriptEditor::AddReferencedObjects(FReferenceCollector& Collector)
 {
-	UScriptProjectItem* CodeProject = CodeProjectBeingEdited.Get();
+	UCodeProjectItem* CodeProject = CodeProjectBeingEdited.Get();
 	Collector.AddReferencedObject(CodeProject);
 
-	UScriptProjectItem* ScriptProject = ScriptProjectBeingEdited.Get();
+	UCodeProjectItem* ScriptProject = ScriptProjectBeingEdited.Get();
 	Collector.AddReferencedObject(ScriptProject);
 }
 
-TSharedRef<SWidget> FScriptEditor::CreateCodeEditorWidget(TSharedRef<FTabInfo> TabInfo, UScriptProjectItem* Item)
+TSharedRef<SWidget> FScriptEditor::CreateCodeEditorWidget(TSharedRef<FTabInfo> TabInfo, UCodeProjectItem* Item)
 {
 	return SNew(SCodeEditor, Item);
 }

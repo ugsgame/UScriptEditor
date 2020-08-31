@@ -7,6 +7,10 @@
 #include "IPAddress.h"
 #include "ScriptHookType.h"
 #include "Networking/Public/Interfaces/IPv4/IPv4Address.h"
+
+// UE 4.25 Compatible.
+#include "UnLua/Private/UnLuaCompatibility.h"
+
 #include "ScriptHookClient.generated.h"
 
 class FSocket;
@@ -92,7 +96,7 @@ protected:
 
 	void GlobalListen(FScriptDebuggerVarNode& InNode);
 
-	bool PropertyTranslate(FString& VarValue, FString& VarType, int32& KindType, void*& VarPtr, UProperty* Property, UObject* Object);
+	bool PropertyTranslate(FString& VarValue, FString& VarType, int32& KindType, void*& VarPtr, FProperty* Property, UObject* Object);
 
 	void UEObjectListen(FScriptDebuggerVarNode& InNode);
 

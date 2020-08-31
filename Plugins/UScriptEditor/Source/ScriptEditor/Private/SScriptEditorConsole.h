@@ -62,7 +62,7 @@ protected:
 private:
 
 	/** Editable text box for this debug console's input line */
-	TSharedPtr< SEditableTextBox > EditableTextBox;
+	TSharedPtr< SMultiLineEditableTextBox > EditableTextBox;
 
 	/** Current style of the debug console.  Can be changed on the fly. */
 	EScriptEditorConsoleStyle::Type CurrentStyle;

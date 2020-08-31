@@ -55,6 +55,7 @@ public:
 	void GetLineAndColumn(int32 & Line, int32 & Column);
 
 	void SetReferenceInfo(FScriptReferenceInfo& InInfo);
+	FScriptReferenceInfo GetReferenceInfo()const { return ReferenceInfo; };
 
 	const FTextLocation &GetCursorLocation() const;
 	const FString GetUnderCursor() const;

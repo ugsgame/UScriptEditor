@@ -1,14 +1,14 @@
-﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h"
 #include "Factories/Factory.h"
-#include "ScriptProjectFactory.generated.h"
+#include "CodeProjectFactory.generated.h"
 
 UCLASS()
-class UScriptProjectFactory : public UFactory
+class UCodeProjectFactory : public UFactory
 {
 	GENERATED_UCLASS_BODY()
 

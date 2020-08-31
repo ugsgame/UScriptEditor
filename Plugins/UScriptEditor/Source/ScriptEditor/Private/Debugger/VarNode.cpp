@@ -5,7 +5,9 @@
 #include "UnLuaDelegates.h"
 #include "lua.hpp"
 #include "UnLua.h"
-#include "UnLua/Private/UEReflectionUtils.h"
+#include "UnLua/Private/ReflectionUtils/ClassDesc.h"
+#include "UnLua/Private/ReflectionUtils/FunctionDesc.h"
+#include "UnLua/Private/ReflectionUtils/PropertyDesc.h"
 #include "GameFramework/Actor.h"
 
 void FVarWatcherNode::GetChildren(TArray<TSharedRef<FVarWatcherNode>>& OutChildren)
@@ -372,7 +374,7 @@ void UVarWatcherSetting::GlobalListen(FVarWatcherNode& InNode)
 	lua_pop(L, 1);
 }
 
-bool UVarWatcherSetting::PropertyTranslate(FString& VarValue, FString& VarType, int32& KindType, void*& VarPtr, UProperty* Property, UObject* Object)
+bool UVarWatcherSetting::PropertyTranslate(FString& VarValue, FString& VarType, int32& KindType, void*& VarPtr, FProperty* Property, UObject* Object)
 {
 	//reset data
 	VarValue.Empty();
@@ -382,35 +384,35 @@ bool UVarWatcherSetting::PropertyTranslate(FString& VarValue, FString& VarType, 
 	FString CPPType = Property->GetCPPType();
 	void* ValuePtr;
 
-	if (Cast<UNumericProperty>(Property))
+	if (CastField<FNumericProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("UNumericProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FNumericProperty -- %s"), *CPPType);
 
-		UNumericProperty* NumericProperty = Cast<UNumericProperty>(Property);
+		FNumericProperty* NumericProperty = CastField<FNumericProperty>(Property);
 		ValuePtr = NumericProperty->ContainerPtrToValuePtr<uint8>(Object);
 		VarValue = NumericProperty->GetNumericPropertyValueToString(ValuePtr);
 	}
-	else if (Cast<UEnumProperty>(Property))
+	else if (CastField<FEnumProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("UEnumProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FEnumProperty -- %s"), *CPPType);
 
-		UEnumProperty* EnumProperty = Cast<UEnumProperty>(Property);
+		FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property);
 		ValuePtr = EnumProperty->ContainerPtrToValuePtr<uint8>(Object);
 		EnumProperty->ExportTextItem(VarValue, ValuePtr, ValuePtr, Object, 0, NULL);
 	}
-	else if (Cast<UBoolProperty>(Property))
+	else if (CastField<FBoolProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("UBoolProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FBoolProperty -- %s"), *CPPType);
 
-		UBoolProperty* BoolProperty = Cast<UBoolProperty>(Property);
+		FBoolProperty* BoolProperty = CastField<FBoolProperty>(Property);
 		ValuePtr = BoolProperty->ContainerPtrToValuePtr<uint8>(Object);
 		VarValue = BoolProperty->GetPropertyValue(ValuePtr) ? TEXT("True") : TEXT("False");
 	}
-	else if (Cast<UObjectPropertyBase>(Property))
+	else if (CastField<FObjectPropertyBase>(Property))
 	{
-		VarType = FString::Printf(TEXT("UObjectPropertyBase -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FObjectPropertyBase -- %s"), *CPPType);
 
-		UObjectPropertyBase* ObjectPropertyBase = Cast<UObjectPropertyBase>(Property);
+		FObjectPropertyBase* ObjectPropertyBase = CastField<FObjectPropertyBase>(Property);
 		ValuePtr = ObjectPropertyBase->ContainerPtrToValuePtr<uint8>(Object);
 		UObject* ObjectValue = ObjectPropertyBase->GetObjectPropertyValue(ValuePtr);
 		if (ObjectValue)
@@ -422,70 +424,70 @@ bool UVarWatcherSetting::PropertyTranslate(FString& VarValue, FString& VarType, 
 			VarPtr = (void*)ObjectValue;
 		}
 	}
-	else if (Cast<USoftObjectProperty>(Property))
+	else if (CastField<FSoftObjectProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("USoftObjectProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FSoftObjectProperty -- %s"), *CPPType);
 	}
-	else if (Cast<UInterfaceProperty>(Property))
+	else if (CastField<FInterfaceProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("UInterfaceProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FInterfaceProperty -- %s"), *CPPType);
 	}
-	else if (Cast<UNameProperty>(Property))
+	else if (CastField<FNameProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("UNameProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FNameProperty -- %s"), *CPPType);
 
-		UNameProperty* NameProperty = Cast<UNameProperty>(Property);
+		FNameProperty* NameProperty = CastField<FNameProperty>(Property);
 		ValuePtr = NameProperty->ContainerPtrToValuePtr<uint8>(Object);
 		VarValue = NameProperty->GetPropertyValue(ValuePtr).ToString();
 	}
-	else if (Cast<UStrProperty>(Property))
+	else if (CastField<FStrProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("UStrProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FStrProperty -- %s"), *CPPType);
 
-		UStrProperty* StrProperty = Cast<UStrProperty>(Property);
+		FStrProperty* StrProperty = CastField<FStrProperty>(Property);
 		ValuePtr = StrProperty->ContainerPtrToValuePtr<uint8>(Object);
 		VarValue = StrProperty->GetPropertyValue(ValuePtr);
 	}
-	else if (Cast<UTextProperty>(Property))
+	else if (CastField<FTextProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("UTextProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FTextProperty -- %s"), *CPPType);
 
-		UTextProperty* TextProperty = Cast<UTextProperty>(Property);
+		FTextProperty* TextProperty = CastField<FTextProperty>(Property);
 		ValuePtr = TextProperty->ContainerPtrToValuePtr<uint8>(Object);
 		VarValue = TextProperty->GetPropertyValue(ValuePtr).ToString();
 	}
-	else if (Cast<UArrayProperty>(Property))
+	else if (CastField<FArrayProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("UArrayProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FArrayProperty -- %s"), *CPPType);
 
-		UArrayProperty* ArrayProperty = Cast<UArrayProperty>(Property);
+		FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property);
 		ValuePtr = ArrayProperty->ContainerPtrToValuePtr<uint8>(Object);
 		ArrayProperty->ExportTextItem(VarValue, ValuePtr, ValuePtr, Object, 0, NULL);
 		KindType = (int32)EScriptUEKindType::T_TList;
 	}
-	else if (Cast<USetProperty>(Property))
+	else if (CastField<FSetProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("USetProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FSetProperty -- %s"), *CPPType);
 
-		USetProperty* SetProperty = Cast<USetProperty>(Property);
+		FSetProperty* SetProperty = CastField<FSetProperty>(Property);
 		ValuePtr = SetProperty->ContainerPtrToValuePtr<uint8>(Object);
 		SetProperty->ExportTextItem(VarValue, ValuePtr, ValuePtr, Object, 0, NULL);
 		KindType = (int32)EScriptUEKindType::T_TList;
 	}
-	else if (Cast<UMapProperty>(Property))
+	else if (CastField<FMapProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("UMapProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FMapProperty -- %s"), *CPPType);
 
-		UMapProperty* MapProperty = Cast<UMapProperty>(Property);
+		FMapProperty* MapProperty = CastField<FMapProperty>(Property);
 		ValuePtr = MapProperty->ContainerPtrToValuePtr<uint8>(Object);
 		MapProperty->ExportTextItem(VarValue, ValuePtr, ValuePtr, Object, 0, NULL);
 		KindType = (int32)EScriptUEKindType::T_TDict;
 	}
-	else if (Cast<UStructProperty>(Property))
+	else if (CastField<FStructProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("UStructProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FStructProperty -- %s"), *CPPType);
 
-		UStructProperty* StructProperty = Cast<UStructProperty>(Property);
+		FStructProperty* StructProperty = CastField<FStructProperty>(Property);
 		ValuePtr = StructProperty->ContainerPtrToValuePtr<uint8>(Object);
 		StructProperty->ExportTextItem(VarValue, ValuePtr, ValuePtr, Object, 0, NULL);
 
@@ -494,13 +496,13 @@ bool UVarWatcherSetting::PropertyTranslate(FString& VarValue, FString& VarType, 
 		else
 			KindType = (int32)EScriptUEKindType::T_TDict;
 	}
-	else if (Cast<UDelegateProperty>(Property))
+	else if (CastField<FDelegateProperty>(Property))
 	{
 		VarType = FString::Printf(TEXT("UDelegateProperty -- %s"), *CPPType);
 	}
-	else if (Cast<UMulticastDelegateProperty>(Property))
+	else if (CastField<FMulticastDelegateProperty>(Property))
 	{
-		VarType = FString::Printf(TEXT("UMulticastDelegateProperty -- %s"), *CPPType);
+		VarType = FString::Printf(TEXT("FMulticastDelegateProperty -- %s"), *CPPType);
 	}
 
 	return true;
@@ -654,9 +656,9 @@ void UVarWatcherSetting::UEObjectListen(FVarWatcherNode& InNode)
 			UObject* Object = (UObject*)InNode.VarPtr;
 
 			//get property
-			for (TFieldIterator<UProperty> ProIt(Object->GetClass()); ProIt; ++ProIt)
+			for (TFieldIterator<FProperty> ProIt(Object->GetClass()); ProIt; ++ProIt)
 			{
-				UProperty* Property = *ProIt;
+				FProperty* Property = *ProIt;
 
 				if (!InNode.NodeChildren.Contains(Property->GetNameCPP()))
 				{
@@ -750,9 +752,9 @@ void UVarWatcherSetting::UEObjectListen(FVarWatcherNode& InNode)
 			}
 
 			//get property
-			for (TFieldIterator<UProperty> ProIt(Object->GetClass()); ProIt; ++ProIt)
+			for (TFieldIterator<FProperty> ProIt(Object->GetClass()); ProIt; ++ProIt)
 			{
-				UProperty* Property = *ProIt;
+				FProperty* Property = *ProIt;
 
 				if (!InNode.NodeChildren.Contains(Property->GetNameCPP()))
 				{
@@ -847,9 +849,9 @@ void UVarWatcherSetting::UEObjectListen(FVarWatcherNode& InNode)
 			}
 
 			//get property
-			for (TFieldIterator<UProperty> ProIt(Object->GetClass()); ProIt; ++ProIt)
+			for (TFieldIterator<FProperty> ProIt(Object->GetClass()); ProIt; ++ProIt)
 			{
-				UProperty* Property = *ProIt;
+				FProperty* Property = *ProIt;
 
 				if (!InNode.NodeChildren.Contains(Property->GetNameCPP()))
 				{
@@ -897,9 +899,9 @@ void UVarWatcherSetting::UEObjectListen(FVarWatcherNode& InNode)
 			UFunction* Function = (UFunction*)InNode.VarPtr;
 
 			//iter function var
-			for (TFieldIterator<UProperty> ProIt(Function); ProIt; ++ProIt)
+			for (TFieldIterator<FProperty> ProIt(Function); ProIt; ++ProIt)
 			{
-				UProperty* Property = *ProIt;
+				FProperty* Property = *ProIt;
 
 				VarName = Property->GetNameCPP();
 				if (!VarName.Equals(ReturnValueName) && !InNode.NodeChildren.Contains(VarName))

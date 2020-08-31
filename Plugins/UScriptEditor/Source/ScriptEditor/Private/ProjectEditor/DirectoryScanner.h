@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ScriptProjectItem.h"
+#include "CodeProjectItem.h"
 
-DECLARE_DELEGATE_TwoParams(FOnDirectoryScanned, const FString& /*InPathName*/, EScriptProjectItemType::Type /*InType*/);
+DECLARE_DELEGATE_TwoParams(FOnDirectoryScanned, const FString& /*InPathName*/, ECodeProjectItemType::Type /*InType*/);
 DECLARE_DELEGATE(FOnDirectoryScannedOver);
 
 class FDirectoryScanner

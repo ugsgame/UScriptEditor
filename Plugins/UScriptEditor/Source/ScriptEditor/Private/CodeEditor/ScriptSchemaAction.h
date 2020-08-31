@@ -6,6 +6,9 @@
 #include "AssetData.h"
 #include "EdGraph/EdGraphSchema.h"
 
+// UE 4.25 Compatible.
+#include "UnLua/Private/UnLuaCompatibility.h"
+
 #include "ScriptSchemaAction.generated.h"
 
 /** Action to add a script function to the CodeEditor */
@@ -63,7 +66,6 @@ protected:
 	void AddLuaAction(FString InNodeCategory, FString InMenuDesc, FString InToolTip, FString InCodeClip);
 	
 	FString GetAPICodeClip(UClass *Class, UFunction *Function,bool WithNote = false)const;
-	FString GetVarCodeClip(UClass *Class, UProperty *Property, bool WithNote = false)const;
 private:
 
 	TArray<TSharedPtr<FScriptSchemaAction>> ScriptActions;

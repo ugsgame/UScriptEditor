@@ -29,7 +29,7 @@ public:
 
 	/** Generates a console input box widget.  Remember, this widget will become invalid if the
 	output log DLL is unloaded on the fly. */
-	virtual TSharedRef< SWidget > MakeConsoleInputBox(TSharedPtr< SEditableTextBox >& OutExposedEditableTextBox) const;
+	//virtual TSharedRef< SWidget > MakeConsoleInputBox(TSharedPtr< SEditableTextBox >& OutExposedEditableTextBox) const;
 
 	/** This function will be bound to Command (by default it will bring up plugin window) */
 	void OpenEditorWindow();
@@ -79,7 +79,7 @@ private:
 
 	bool IsCheckScriptAssetsOver;
 public:
-	TSharedPtr<class FScriptLogHistory> ScriptLogHistory;
+	//TSharedPtr<class FScriptLogHistory> ScriptLogHistory;
 
 	static const FName ScriptEditorTabName;
 };

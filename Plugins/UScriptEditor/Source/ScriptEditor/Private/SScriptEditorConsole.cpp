@@ -17,7 +17,7 @@ void SScriptEditorConsole::Construct( const FArguments& InArgs, const EScriptEdi
 {
 	CurrentStyle = InStyle;
 
-	TSharedPtr<SScriptEditorConsoleInputBox> ConsoleInputBox;
+	TSharedPtr<SScriptConsoleInputBox> ConsoleInputBox;
 
 	//check( PythonConsoleModule != NULL );
 	ChildSlot
@@ -76,7 +76,7 @@ void SScriptEditorConsole::Construct( const FArguments& InArgs, const EScriptEdi
 					.VAlign(VAlign_Center)
 					.MaxWidth(400.0f)
 					[
-						SAssignNew(ConsoleInputBox, SScriptEditorConsoleInputBox)
+						SAssignNew(ConsoleInputBox, SScriptConsoleInputBox)
 						.OnConsoleCommandExecuted(PythonConsoleDelegates->OnConsoleCommandExecuted)
 					]
 				]

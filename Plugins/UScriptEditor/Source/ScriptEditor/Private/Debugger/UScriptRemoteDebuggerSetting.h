@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "UScriptDebuggerSetting.h"
 #include "Networking/Public/Interfaces/IPv4/IPv4Endpoint.h"
-#include "HAL/Runnable.h"
+#include "Runnable.h"
 #include "ScriptHookType.h"
 #include "UScriptRemoteDebuggerSetting.generated.h"
 

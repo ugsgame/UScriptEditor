@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Debugger/VarNode.h"
-#include "Widgets/Views/STableRow.h"
-#include "Widgets/Views/STreeView.h"
+#include "VarNode.h"
+#include "STableRow.h"
+#include "STreeView.h"
 
 #include "UScriptDebuggerSetting.h"
 

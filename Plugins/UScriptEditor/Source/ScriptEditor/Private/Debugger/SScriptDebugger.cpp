@@ -7,18 +7,18 @@
 #include "Widgets/Text/STextBlock.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "EditorStyleSet.h"
-#include "HAL/FileManager.h"
-#include "Misc/FileHelper.h"
+#include "FileManager.h"
+#include "FileHelper.h"
 #include "UScriptDebuggerSetting.h"
-#include "Framework/Application/SlateApplication.h"
-#include "Widgets/Input/SSearchBox.h"
-#include "Misc/CoreDelegates.h"
-#include "Widgets/Input/SEditableTextBox.h"
+#include "SlateApplication.h"
+#include "SSearchBox.h"
+#include "CoreDelegates.h"
+#include "SEditableTextBox.h"
 
 #include "ScriptEditor.h"
 #include "ScriptHelperBPFunLib.h"
 
-#include "ProjectEditor/ScriptProjectItem.h"
+#include "ProjectEditor/CodeProjectItem.h"
 #include "ProjectEditor/SProjectTreeEditor.h"
 #include "UScriptRemoteDebuggerSetting.h"
 
@@ -366,8 +366,8 @@ void SScriptDebugger::SetStackData(TArray<TTuple<int32, int32, FString, FString>
 void SScriptDebugger::ShowCode(const FString& FilePath, int32 Line /*= 0*/)
 {
 	//TODO
-	UScriptProjectItem* ScriptProject = FScriptEditor::Get()->GetScriptProjectBeingEdited();
-	UScriptProjectItem* CodeItem = ScriptProject->FindChild(FilePath);
+	UCodeProjectItem* ScriptProject = FScriptEditor::Get()->GetScriptProjectBeingEdited();
+	UCodeProjectItem* CodeItem = ScriptProject->FindChild(FilePath);
 
 	if (CodeItem)
 	{
@@ -487,9 +487,6 @@ void SScriptDebugger::DebugStepover()
 	{
 		UScriptRemoteDebuggerSetting::Get()->SendStepOver();
 	}
-
-	UScriptDebuggerSetting::Get()->HittingPoint.Line = -1;
-	UScriptDebuggerSetting::Get()->HittingPoint.FilePath = "";
 }
 
 

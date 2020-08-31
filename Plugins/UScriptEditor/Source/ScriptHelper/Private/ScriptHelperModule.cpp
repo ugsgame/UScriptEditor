@@ -1,12 +1,12 @@
 ﻿#include "ScriptHelperModule.h"
-//#include "ScriptHelperPrivatePCH.h"
+#include "ScriptHelperPrivatePCH.h"
 #include "Runtime/Core/Public/Features/IModularFeatures.h"
 #include "Runtime/SlateCore/Public/Rendering/SlateRenderer.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 #include "Modules/ModuleManager.h"
 #include "ScriptHelperBPFunLib.h"
-#include "Misc/Paths.h"
-#include "Misc/FileHelper.h"
+#include "Paths.h"
+#include "FileHelper.h"
 
 #include "UnLuaInterface.h"
 #include "UnLuaDelegates.h"
@@ -23,7 +23,7 @@ public:
 	virtual void ShutdownModule() override;
 
 protected:
-	bool OnLoadModuleContext(const FString& InModuleName,FModuleContext& InCodeContext);
+	//bool OnLoadModuleContext(const FString& InModuleName,FModuleContext& InCodeContext);
 private:
 	bool SpawnSystemScriptFiles();
 	void Initialize(TSharedPtr<SWindow> InRootWindow, bool bIsNewProjectWindow);
@@ -38,9 +38,9 @@ IMPLEMENT_MODULE(FScriptHelperModule, ScriptHelper)
 void FScriptHelperModule::StartupModule()
 {
 	//Spawn Script
-	SpawnSystemScriptFiles();
+	//SpawnSystemScriptFiles();
 	//
-	FUnLuaDelegates::LoadModuleContext.BindRaw(this, &FScriptHelperModule::OnLoadModuleContext);
+	//FUnLuaDelegates::LoadModuleContext.BindRaw(this, &FScriptHelperModule::OnLoadModuleContext);
 }
 
 bool FScriptHelperModule::SpawnSystemScriptFiles()
@@ -55,9 +55,9 @@ bool FScriptHelperModule::SpawnSystemScriptFiles()
 	ScriptCode = FString(RawUnlua);
 
 	//if (!FPaths::FileExists(ScriptPath))
-	{
-		FFileHelper::SaveStringToFile(ScriptCode, *ScriptPath);
-	}
+// 	{
+// 		FFileHelper::SaveStringToFile(ScriptCode, *ScriptPath);
+// 	}
 
 	return false;
 }
@@ -76,7 +76,7 @@ void FScriptHelperModule::ShutdownModule()
 {
 
 }
-
+/*
 bool FScriptHelperModule::OnLoadModuleContext(const FString& InModuleName, FModuleContext& InCodeContext)
 {
 	FString ContextPath(InModuleName);
@@ -94,5 +94,5 @@ bool FScriptHelperModule::OnLoadModuleContext(const FString& InModuleName, FModu
 	}
 	return false;
 }
-
+*/
 #undef LOCTEXT_NAMESPACE

@@ -13,7 +13,7 @@ enum class EScriptTemplateType : uint8
 
 struct FScriptReferenceInfo
 {
-	FName ReferencedAsset;			//Only Blueprint or Native Object
+	FAssetData ReferencedAsset;			//Only Blueprint or Native Object
 
 	TArray<UBlueprint*> BlueprintClasses;
 	TArray<UClass*> NativeClasses;

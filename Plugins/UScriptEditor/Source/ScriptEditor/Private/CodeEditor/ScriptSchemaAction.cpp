@@ -1,10 +1,10 @@
 ﻿#include "ScriptSchemaAction.h"
 #include "UScriptDebuggerSetting.h"
-#include "UObject/UObjectIterator.h"
-#include "UObject/MetaData.h"
+#include "UObjectIterator.h"
+#include "MetaData.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Engine/BlueprintGeneratedClass.h"
-#include "Kismet2/KismetEditorUtilities.h"
+#include "KismetEditorUtilities.h"
 #include "ScriptParamCollection.h"
 
 #define  LOCTEXT_NAMESPACE "ScriptActionCollecter"
@@ -90,9 +90,9 @@ FString UScriptActionCollecter::GetAPICodeClip(UClass *Class, UFunction *Functio
 	bool bIsStatic = Function->HasAllFunctionFlags(FUNC_Static);
 	TArray<FParameterData> Parameters;
 
-	for (TFieldIterator<UProperty> It(Function); It && (It->PropertyFlags & CPF_Parm); ++It)
+	for (TFieldIterator<FProperty> It(Function); It && (It->PropertyFlags & CPF_Parm); ++It)
 	{
-		UProperty *Property = *It;
+		FProperty *Property = *It;
 		bool IsDefaultValve = true;
 
 		// filter out properties without default value
@@ -106,7 +106,7 @@ FString UScriptActionCollecter::GetAPICodeClip(UClass *Class, UFunction *Functio
 		}
 
 		const FString &ValueStr = *ValuePtr;
-		if (Property->IsA(UStructProperty::StaticClass()))
+		if (Property->IsA(FStructProperty::StaticClass()))
 		{
 			// get all possible script structs
 			UPackage* CoreUObjectPackage = UObject::StaticClass()->GetOutermost();
@@ -115,8 +115,11 @@ FString UScriptActionCollecter::GetAPICodeClip(UClass *Class, UFunction *Functio
 			static const UScriptStruct* RotatorStruct = FindObjectChecked<UScriptStruct>(CoreUObjectPackage, TEXT("Rotator"));
 			static const UScriptStruct* LinearColorStruct = FindObjectChecked<UScriptStruct>(CoreUObjectPackage, TEXT("LinearColor"));
 			static const UScriptStruct* ColorStruct = FindObjectChecked<UScriptStruct>(CoreUObjectPackage, TEXT("Color"));
-
-			const UStructProperty *StructProperty = CastChecked<UStructProperty>(Property);
+#if ENGINE_MINOR_VERSION <25
+			const FStructProperty *StructProperty = CastChecked<FStructProperty>(Property);
+#else
+			const FStructProperty* StructProperty = CastFieldChecked<FStructProperty>(Property);
+#endif
 			if (StructProperty->Struct == VectorStruct)                     // FVector
 			{
 				TArray<FString> Values;
@@ -172,44 +175,52 @@ FString UScriptActionCollecter::GetAPICodeClip(UClass *Class, UFunction *Functio
 		}
 		else
 		{
-			if (Property->IsA(UIntProperty::StaticClass()))                 // int
+			if (Property->IsA(FIntProperty::StaticClass()))                 // int
 			{
 				int32 Value = TCString<TCHAR>::Atoi(*ValueStr);
 				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FIntParamValue(Value, EScriptParamType::Int), ValueStr));
 			}
-			else if (Property->IsA(UByteProperty::StaticClass()))           // byte
+			else if (Property->IsA(FByteProperty::StaticClass()))           // byte
 			{
-				const UEnum *Enum = CastChecked<UByteProperty>(Property)->Enum;
+#if ENGINE_MINOR_VERSION<25
+				const UEnum *Enum = CastChecked<FByteProperty>(Property)->Enum;
+#else
+				const UEnum* Enum = CastFieldChecked<FByteProperty>(Property)->Enum;
+#endif
 				int32 Value = Enum ? (int32)Enum->GetValueByNameString(ValueStr) : TCString<TCHAR>::Atoi(*ValueStr);
 				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FByteParamValue(Value, EScriptParamType::Byte), ValueStr));
 			}
-			else if (Property->IsA(UEnumProperty::StaticClass()))           // enum
+			else if (Property->IsA(FEnumProperty::StaticClass()))           // enum
 			{
-				const UEnum *Enum = CastChecked<UEnumProperty>(Property)->GetEnum();
+#if ENGINE_MINOR_VERSION<25
+				const UEnum *Enum = CastChecked<FEnumProperty>(Property)->GetEnum();
+#else
+				const UEnum* Enum = CastFieldChecked<FEnumProperty>(Property)->GetEnum();
+#endif
 				int64 Value = Enum ? Enum->GetValueByNameString(ValueStr) : TCString<TCHAR>::Atoi64(*ValueStr);
 				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FEnumParamValue(Value, EScriptParamType::Enum), ValueStr));
 			}
-			else if (Property->IsA(UFloatProperty::StaticClass()))          // float
+			else if (Property->IsA(FFloatProperty::StaticClass()))          // float
 			{
 				float Value = TCString<TCHAR>::Atof(*ValueStr);
 				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FFloatParamValue(Value, EScriptParamType::Float), ValueStr));
 			}
-			else if (Property->IsA(UDoubleProperty::StaticClass()))         // double
+			else if (Property->IsA(FDoubleProperty::StaticClass()))         // double
 			{
 				double Value = TCString<TCHAR>::Atod(*ValueStr);
 				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FDoubleParamValue(Value, EScriptParamType::Double), ValueStr));
 			}
-			else if (Property->IsA(UBoolProperty::StaticClass()))           // boolean
+			else if (Property->IsA(FBoolProperty::StaticClass()))           // boolean
 			{
 				static FString FalseValue(TEXT("false"));
 				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FBoolParamValue(true, EScriptParamType::Bool), ValueStr));
 			}
-			else if (Property->IsA(UNameProperty::StaticClass()))           // FName
+			else if (Property->IsA(FNameProperty::StaticClass()))           // FName
 			{
 				static FString NoneValue(TEXT("None"));
 				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FNameParamValue(*ValueStr, EScriptParamType::Name), ValueStr));
 			}
-			else if (Property->IsA(UTextProperty::StaticClass()))           // FText
+			else if (Property->IsA(FTextProperty::StaticClass()))           // FText
 			{
 #if ENGINE_MINOR_VERSION > 20
 				if (ValueStr.StartsWith(TEXT("INVTEXT(\"")))
@@ -222,15 +233,15 @@ FString UScriptActionCollecter::GetAPICodeClip(UClass *Class, UFunction *Functio
 					Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FTextParamValue(FText::FromString(*ValueStr), EScriptParamType::Text), ValueStr));
 				}
 			}
-			else if (Property->IsA(UStrProperty::StaticClass()))            // FString
+			else if (Property->IsA(FStrProperty::StaticClass()))            // FString
 			{
 				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FStringParamValue(*ValueStr, EScriptParamType::String), ValueStr));
 			}
-			else if (Property->IsA(UArrayProperty::StaticClass()))			// UArray
+			else if (Property->IsA(FArrayProperty::StaticClass()))			// UArray
 			{
 				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FTArrayParamValue(*ValueStr, EScriptParamType::Array), ValueStr));
 			}
-			else if (Property->IsA(UObjectProperty::StaticClass()))			// UObject
+			else if (Property->IsA(FObjectProperty::StaticClass()))			// UObject
 			{
 				Parameters.Add(FParameterData(IsDefaultValve, Property->GetName(), new FUObjectParamValue(*ValueStr, EScriptParamType::Object), ValueStr));
 			}
@@ -348,13 +359,6 @@ FString UScriptActionCollecter::GetAPICodeClip(UClass *Class, UFunction *Functio
 	{
 		return FString::Printf(TEXT("%s(%s)%s"), *FunctionName, *ParameterListString, *ParameterNotesString);
 	}
-}
-
-FString UScriptActionCollecter::GetVarCodeClip(UClass *Class, UProperty *Property, bool WithNote /*= false*/) const
-{
-	FString CPPType = Property->GetCPPType();
-	FString CPPName = Property->GetNameCPP();
-	return CPPName;
 }
 
 TArray<TSharedPtr<FScriptSchemaAction>> UScriptActionCollecter::GetScriptActions()
@@ -517,7 +521,7 @@ void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByCl
 		if (DefaultClass == FullClassName)
 		{
 			//Add Functions
-			for (TFieldIterator<UFunction> FuncIt(Class, EFieldIteratorFlags::ExcludeSuper, EFieldIteratorFlags::ExcludeDeprecated); FuncIt/*&&(FuncIt->FunctionFlags & FUNC_BlueprintCallable&FUNC_BlueprintEvent&FUNC_BlueprintPure)*/; ++FuncIt)
+			for (TFieldIterator<UFunction> FuncIt(Class, EFieldIteratorFlags::ExcludeSuper, EFieldIteratorFlags::ExcludeDeprecated); FuncIt; ++FuncIt)
 			{
 
 				UFunction *Function = *FuncIt;
@@ -556,44 +560,6 @@ void UScriptActionCollecter::AddActionByClass(UClass* InClass, bool CategoryByCl
 			
 			}
 			//@todo:Add Variables
-			for (TFieldIterator<UProperty> ProIt(Class, EFieldIteratorFlags::ExcludeSuper, EFieldIteratorFlags::ExcludeDeprecated); ProIt/*&&(ProIt->PropertyFlags & CPF_BlueprintVisible&CPF_BlueprintReadOnly)*/; ++ProIt)
-			{
-				UProperty *Property = *ProIt;
-
-				TMap<FName, FString> *MetaMap = UMetaData::GetMapForObject(Property);
-				if (!MetaMap)
-				{
-					continue;
-				}
-
-				FString PropertyName = *Property->GetNameCPP();
-
-
-				FString *CategoryPtr = MetaMap->Find("Category");
-				if (!CategoryPtr)
-				{
-					CategoryPtr = new FString("");
-					//US_Log("Category:%s", *CategoryStr);
-					CategoryPtr->Append(ClassName);
-				}
-
-				FString CategoryStr = FString(*CategoryPtr);
-
-				FString *ToolTipPtr = MetaMap->Find("ToolTip");
-				if (!ToolTipPtr)
-				{
-					ToolTipPtr = new FString(PropertyName);
-				}
-				FString ToolTipStr = FString(*ToolTipPtr);
-				ToolTipStr +=(FString::Printf(TEXT("\nType:%s"), *Property->GetCPPType()));
-				ToolTipStr += FString::Printf(TEXT("\n\nTarget is %s"), *FullClassName);
-
-				FString CodeClip = PropertyName;
-				CategoryStr = CategoryByClass ? ConcatCategories(ClassName, CategoryStr) : CategoryStr;
-
-				//////////////////////////////////////////////////////////////////////////
-				AddScriptAction(Class, false, false, CategoryStr, PropertyName, ToolTipStr, CodeClip);
-			}
 		}
 	}
 }

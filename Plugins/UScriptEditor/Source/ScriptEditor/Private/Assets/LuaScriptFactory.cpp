@@ -36,7 +36,7 @@ UObject* ULuaScriptFactory::FactoryCreateNew(UClass* InClass, UObject* InParent,
 	ScriptEditorUtils::CreateLuaFileFromLuaScriptAsset(ScriptAsset,EScriptTemplateType::Actor);
 
 	//Reflash Browser
-	FString ScriptPath = UScriptHelperBPFunLib::ScriptSourceDir() + ScriptAsset->Path;
+	FString ScriptPath =/*UScriptHelperBPFunLib::ScriptSourceDir()*/FPaths::ProjectContentDir() + ScriptAsset->Path;
 	UScriptEdtiorSetting::Get()->EdittingFiles.Add(ScriptPath);
 	if (FScriptEditorModule::GetInstance()->IsEditorOpen)
 	{	

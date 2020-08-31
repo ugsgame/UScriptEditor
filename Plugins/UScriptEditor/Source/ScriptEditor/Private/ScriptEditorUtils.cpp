@@ -11,7 +11,7 @@
 #include "ScriptHelperBPFunLib.h"
 #include "LuaWrapper/LuaScript.h"
 
-#include "Interfaces/IPluginManager.h"
+#include "IPluginManager.h"
 
 DEFINE_LOG_CATEGORY(UScriptLog);
 
@@ -40,7 +40,7 @@ namespace ScriptEditorUtils
 		FullPath.RemoveFromEnd(ScriptAsset->GetName());
 
 		FString ScriptRelativePath = FullPath + TEXT("lua");
-		FullPath = UScriptHelperBPFunLib::ScriptSourceDir() + ScriptRelativePath;
+		FullPath = /*UScriptHelperBPFunLib::ScriptSourceDir()*/FPaths::ProjectContentDir() + ScriptRelativePath;
 
 		FString CodeText;
 		if (FFileHelper::LoadFileToString(CodeText, *FullPath))
@@ -132,7 +132,7 @@ namespace ScriptEditorUtils
 		{
 			int32 FirstIndex = ScriptFullPath.Find(UScriptHelperBPFunLib::ScriptSourceRoot());
 			ScriptFullPath.RemoveAt(0, FirstIndex + UScriptHelperBPFunLib::ScriptSourceRoot().Len());
-			ScriptFullPath = FPaths::ProjectContentDir() + ScriptFullPath;
+			ScriptFullPath = /*FPaths::ProjectContentDir()*/UScriptHelperBPFunLib::ScriptSourceDir() + ScriptFullPath;
 		}
 		return ScriptFullPath;
 	}
@@ -177,12 +177,12 @@ namespace ScriptEditorUtils
 
 	FString CovertContentPathToScriptPath(FString ContentFilePath)
 	{
-		if (ContentFilePath.Contains("Content/"))
-		{
-			int32 FirstIndex = ContentFilePath.Find("Content/");
-			ContentFilePath.RemoveAt(0, FirstIndex + 8);
-			ContentFilePath = UScriptHelperBPFunLib::ScriptSourceDir() + ContentFilePath;
-		}
+// 		if (ContentFilePath.Contains("Content/"))
+// 		{
+// 			int32 FirstIndex = ContentFilePath.Find("Content/");
+// 			ContentFilePath.RemoveAt(0, FirstIndex + 8);
+// 			ContentFilePath = UScriptHelperBPFunLib::ScriptSourceDir() + ContentFilePath;
+// 		}
 		return ContentFilePath;
 	}
 

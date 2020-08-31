@@ -1,4 +1,4 @@
-﻿// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 #include "ScriptEditorModule.h"
 #include "Modules/ModuleInterface.h"
 #include "Textures/SlateIcon.h"
@@ -41,7 +41,7 @@ void FScriptEditorModule::StartupModule()
 	FScriptEditorStyle::Initialize();
 	FScriptEditorStyle::ReloadTextures();
 
-	ScriptLogHistory = MakeShareable(new FScriptLogHistory());
+	//ScriptLogHistory = MakeShareable(new FScriptLogHistory());
 
 	FScriptEditorCommands::Register();
 
@@ -66,17 +66,17 @@ void FScriptEditorModule::StartupModule()
 		LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 	}
 
-	{
-		TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
-		ToolbarExtender->AddToolBarExtension(
-			"Settings",
-			EExtensionHook::After,
-			PluginCommands,
-			FToolBarExtensionDelegate::CreateRaw(this, &FScriptEditorModule::AddToolbarExtension)
-		);
+	//{
+	//	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
+	//	ToolbarExtender->AddToolBarExtension(
+	//		"Settings",
+	//		EExtensionHook::After,
+	//		PluginCommands,
+	//		FToolBarExtensionDelegate::CreateRaw(this, &FScriptEditorModule::AddToolbarExtension)
+	//	);
 
-		LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolbarExtender);
-	}
+	//	LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolbarExtender);
+	//}
 
 	FGlobalTabmanager::Get()->RegisterTabSpawner(ScriptEditorTabName, FOnSpawnTab::CreateRaw(this, &FScriptEditorModule::OnSpawnPluginTab))
 		.SetDisplayName(LOCTEXT("UScriptEditorTabTitle", "UScriptEditor"))
@@ -125,12 +125,12 @@ void FScriptEditorModule::SaveConfig()
 	UScriptDebuggerSetting::Get()->SaveConfig();
 }
 
-TSharedRef< SWidget > FScriptEditorModule::MakeConsoleInputBox(TSharedPtr< SEditableTextBox >& OutExposedEditableTextBox) const
-{
-	TSharedRef< SScriptEditorConsoleInputBox > NewConsoleInputBox = SNew(SScriptEditorConsoleInputBox);
-	OutExposedEditableTextBox = NewConsoleInputBox->GetEditableTextBox();
-	return NewConsoleInputBox;
-}
+// TSharedRef< SWidget > FScriptEditorModule::MakeConsoleInputBox(TSharedPtr< SEditableTextBox >& OutExposedEditableTextBox) const
+// {
+// 	TSharedRef< SScriptConsoleInputBox > NewConsoleInputBox = SNew(SScriptConsoleInputBox);
+// 	OutExposedEditableTextBox = NewConsoleInputBox->GetEditableTextBox();
+// 	return NewConsoleInputBox;
+// }
 
 TSharedRef<SDockTab> FScriptEditorModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
@@ -162,7 +162,7 @@ void FScriptEditorModule::OnScriptAssetDeleted(UObject*  AssetObject)
 				if (ProjectEditor.IsValid())
 				{
 					
-					if (UScriptProjectItem* Item = Cast<UScriptProjectItem>(ScriptAsset->UserObject))
+					if (UCodeProjectItem* Item = Cast<UCodeProjectItem>(ScriptAsset->UserObject))
 					{
 						if (Item->Parent)Item->Parent->Children.Remove(Item);
 						ProjectEditor->CloseEditingFile(Item);
@@ -220,7 +220,7 @@ void FScriptEditorModule::OnScriptAssetRenamed(const FAssetData& RenamedAsset, c
 			TSharedPtr<FScriptEditor> ProjectEditor = FScriptEditor::Get();
 
 			//change the item info
-			if (UScriptProjectItem* Item = Cast<UScriptProjectItem>(ScriptAsset->UserObject))
+			if (UCodeProjectItem* Item = Cast<UCodeProjectItem>(ScriptAsset->UserObject))
 			{
 				Item->Path = NewScriptPath;
 				Item->Name = ScriptAsset->GetName();
@@ -266,7 +266,7 @@ void FScriptEditorModule::OnClearInvalidScriptAssets()
 	FARFilter Filter;
 
 	Filter.ClassNames.Add(UScriptDataAsset::StaticClass()->GetFName());
-	Filter.PackagePaths.Add("/Game");//Set the script path to optimization
+	Filter.PackagePaths.Add("/Game/Script");//Set the script path to optimization
 	Filter.bRecursivePaths = true;
 	Filter.bRecursiveClasses = true;
 	AssetRegistryModule.Get().GetAssets(Filter, AssetDatas);

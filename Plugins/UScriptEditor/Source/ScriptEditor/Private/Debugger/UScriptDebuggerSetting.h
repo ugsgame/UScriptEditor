@@ -5,8 +5,11 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "ScriptHookType.h"
-#include "UScriptDebuggerSetting.generated.h"
 
+// UE 4.25 Compatible.
+#include "UnLua/Private/UnLuaCompatibility.h"
+
+#include "UScriptDebuggerSetting.generated.h"
 
 
 USTRUCT()
@@ -140,7 +143,7 @@ public:
 
 	void GlobalListen(FScriptDebuggerVarNode& InNode);
 
-	bool PropertyTranslate(FString& VarValue, FString& VarType, int32& KindType, void*& VarPtr, UProperty* Property, UObject* Object);
+	bool PropertyTranslate(FString& VarValue, FString& VarType, int32& KindType, void*& VarPtr, FProperty* Property, UObject* Object);
 
 	void UEObjectListen(FScriptDebuggerVarNode& InNode);
 

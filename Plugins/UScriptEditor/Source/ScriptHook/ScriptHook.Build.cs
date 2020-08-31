@@ -59,6 +59,6 @@ public class ScriptHook : ModuleRules
             }
             );
 
-
+		PublicDefinitions.Add("_HAS_CXX17=0");
     }
 }

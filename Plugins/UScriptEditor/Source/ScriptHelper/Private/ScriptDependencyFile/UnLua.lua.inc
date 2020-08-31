@@ -58,11 +58,7 @@ end
 local function Class(super_name)
 	local super_class = nil
 	if super_name ~= nil then
-		if CheckModule(super_name) then
-			super_class = require(super_name)
-		else 
-			super_class = RequireModule(super_name)	
-		end	
+		super_class = require(super_name)
 	end
 
 	local new_class = {}

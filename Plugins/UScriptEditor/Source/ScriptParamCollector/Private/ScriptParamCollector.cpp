@@ -17,6 +17,53 @@
 #include "IScriptGeneratorPluginInterface.h"
 #include "Runtime/Launch/Resources/Version.h"
 
+// UE 4.25 Compatible.
+#if ENGINE_MINOR_VERSION < 25
+#define CastField Cast
+#define CastFieldChecked CastChecked
+#define GetPropertyOuter(Property) (Property)->GetOuter()
+#define GetChildProperties(Function) (Function)->Children
+
+typedef UProperty FProperty;
+typedef UByteProperty FByteProperty;
+typedef UInt8Property FInt8Property;
+typedef UInt16Property FInt16Property;
+typedef UIntProperty FIntProperty;
+typedef UInt64Property FInt64Property;
+typedef UUInt16Property FUInt16Property;
+typedef UUInt32Property FUInt32Property;
+typedef UUInt64Property FUInt64Property;
+typedef UFloatProperty FFloatProperty;
+typedef UDoubleProperty FDoubleProperty;
+typedef UNumericProperty FNumericProperty;
+typedef UEnumProperty FEnumProperty;
+typedef UBoolProperty FBoolProperty;
+typedef UObjectPropertyBase FObjectPropertyBase;
+typedef UObjectProperty FObjectProperty;
+typedef UClassProperty FClassProperty;
+typedef UWeakObjectProperty FWeakObjectProperty;
+typedef ULazyObjectProperty FLazyObjectProperty;
+typedef USoftObjectProperty FSoftObjectProperty;
+typedef USoftClassProperty FSoftClassProperty;
+typedef UInterfaceProperty FInterfaceProperty;
+typedef UNameProperty FNameProperty;
+typedef UStrProperty FStrProperty;
+typedef UTextProperty FTextProperty;
+typedef UArrayProperty FArrayProperty;
+typedef UMapProperty FMapProperty;
+typedef USetProperty FSetProperty;
+typedef UStructProperty FStructProperty;
+typedef UDelegateProperty FDelegateProperty;
+typedef UMulticastDelegateProperty FMulticastDelegateProperty;
+#if ENGINE_MINOR_VERSION > 22
+typedef UMulticastInlineDelegateProperty FMulticastInlineDelegateProperty;
+typedef UMulticastSparseDelegateProperty FMulticastSparseDelegateProperty;
+#endif
+#else
+#define GetPropertyOuter(Property) (Property)->GetOwnerUObject()
+#define GetChildProperties(Function) (Function)->ChildProperties
+#endif
+
 #define LOCTEXT_NAMESPACE "FScriptParamCollectorModule"
 
 class FScriptParamCollectorModule : public IScriptGeneratorPluginInterface
@@ -70,9 +117,9 @@ public:
 
 			PreAddProperty(Class, Function);
             // parameters
-            for (TFieldIterator<UProperty> It(Function); It && (It->PropertyFlags & CPF_Parm ); ++It)
+            for (TFieldIterator<FProperty> It(Function); It && (It->PropertyFlags & CPF_Parm ); ++It)
             {
-                UProperty *Property = *It;
+                FProperty *Property = *It;
 
                 // filter out properties without default value
                 FName KeyName = FName(*FString::Printf(TEXT("CPP_Default_%s"), *Property->GetName()));
@@ -84,7 +131,7 @@ public:
                 }
 
                 const FString &ValueStr = *ValuePtr;
-                if (Property->IsA(UStructProperty::StaticClass()))
+                if (Property->IsA(FStructProperty::StaticClass()))
                 {
                     // get all possible script structs
                     UPackage* CoreUObjectPackage = UObject::StaticClass()->GetOutermost();
@@ -94,7 +141,7 @@ public:
                     static const UScriptStruct* LinearColorStruct = FindObjectChecked<UScriptStruct>(CoreUObjectPackage, TEXT("LinearColor"));
                     static const UScriptStruct* ColorStruct = FindObjectChecked<UScriptStruct>(CoreUObjectPackage, TEXT("Color"));
 
-                    const UStructProperty *StructProperty = CastChecked<UStructProperty>(Property);
+                    const FStructProperty *StructProperty = CastFieldChecked<FStructProperty>(Property);
                     if (StructProperty->Struct == VectorStruct)                     // FVector
                     {
                         TArray<FString> Values;
@@ -150,44 +197,44 @@ public:
                 }
                 else
                 {
-                    if (Property->IsA(UIntProperty::StaticClass()))                 // int
+                    if (Property->IsA(FIntProperty::StaticClass()))                 // int
                     {
                         int32 Value = TCString<TCHAR>::Atoi(*ValueStr);
                         GeneratedParamFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FIntParamValue(%d));\r\n"), *Property->GetName(), Value);
                     }
-                    else if (Property->IsA(UByteProperty::StaticClass()))           // byte
+                    else if (Property->IsA(FByteProperty::StaticClass()))           // byte
                     {
-                        const UEnum *Enum = CastChecked<UByteProperty>(Property)->Enum;
+                        const UEnum *Enum = CastFieldChecked<FByteProperty>(Property)->Enum;
                         int32 Value = Enum ? (int32)Enum->GetValueByNameString(ValueStr) : TCString<TCHAR>::Atoi(*ValueStr);
                         GeneratedParamFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FByteParamValue(%d));\r\n"), *Property->GetName(), Value);
                     }
-                    else if (Property->IsA(UEnumProperty::StaticClass()))           // enum
+                    else if (Property->IsA(FEnumProperty::StaticClass()))           // enum
                     {
-                        const UEnum *Enum = CastChecked<UEnumProperty>(Property)->GetEnum();
+                        const UEnum *Enum = CastFieldChecked<FEnumProperty>(Property)->GetEnum();
                         int64 Value = Enum ? Enum->GetValueByNameString(ValueStr) : TCString<TCHAR>::Atoi64(*ValueStr);
                         GeneratedParamFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FEnumParamValue(%ld));\r\n"), *Property->GetName(), Value);
                     }
-                    else if (Property->IsA(UFloatProperty::StaticClass()))          // float
+                    else if (Property->IsA(FFloatProperty::StaticClass()))          // float
                     {
                         float Value = TCString<TCHAR>::Atof(*ValueStr);
                         GeneratedParamFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FFloatParamValue(%ff));\r\n"), *Property->GetName(), Value);
                     }
-                    else if (Property->IsA(UDoubleProperty::StaticClass()))         // double
+                    else if (Property->IsA(FDoubleProperty::StaticClass()))         // double
                     {
                         double Value = TCString<TCHAR>::Atod(*ValueStr);
                         GeneratedParamFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FDoubleParamValue(%lf));\r\n"), *Property->GetName(), Value);
                     }
-                    else if (Property->IsA(UBoolProperty::StaticClass()))           // boolean
+                    else if (Property->IsA(FBoolProperty::StaticClass()))           // boolean
                     {
                         static FString FalseValue(TEXT("false"));
                         GeneratedParamFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FBoolParamValue(true));\r\n"), *Property->GetName());
                     }
-                    else if (Property->IsA(UNameProperty::StaticClass()))           // FName
+                    else if (Property->IsA(FNameProperty::StaticClass()))           // FName
                     {
                         static FString NoneValue(TEXT("None"));
                         GeneratedParamFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FNameParamValue(FName(\"%s\")));\r\n"), *Property->GetName(), *ValueStr);
                     }
-                    else if (Property->IsA(UTextProperty::StaticClass()))           // FText
+                    else if (Property->IsA(FTextProperty::StaticClass()))           // FText
                     {
 #if ENGINE_MINOR_VERSION > 20
                         if (ValueStr.StartsWith(TEXT("INVTEXT(\"")))
@@ -200,15 +247,15 @@ public:
                             GeneratedParamFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FTextParamValue(FText::FromString(TEXT(\"%s\"))));\r\n"), *Property->GetName(), *ValueStr);
                         }
                     }
-                    else if (Property->IsA(UStrProperty::StaticClass()))            // FString
+                    else if (Property->IsA(FStrProperty::StaticClass()))            // FString
                     {
                         GeneratedParamFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FStringParamValue(TEXT(\"%s\")));\r\n"), *Property->GetName(), *ValueStr);
                     }
-					else if (Property->IsA(UArrayProperty::StaticClass()))			// UArray
+					else if (Property->IsA(FArrayProperty::StaticClass()))			// UArray
 					{
 						GeneratedParamFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FTArrayParamValue(TEXT(\"%s(TArrayType)\")));\r\n"), *Property->GetName(), *ValueStr);
 					}
-					else if (Property->IsA(UObjectProperty::StaticClass()))			// UObject
+					else if (Property->IsA(FObjectProperty::StaticClass()))			// UObject
 					{
 						GeneratedParamFileContent += FString::Printf(TEXT("PC->Parameters.Add(TEXT(\"%s\"), new FUObjectParamValue(TEXT(\"%s(UObjectType)\")));\r\n"), *Property->GetName(), *ValueStr);
 					}
