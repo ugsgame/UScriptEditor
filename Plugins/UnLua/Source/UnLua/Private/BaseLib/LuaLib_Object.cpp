@@ -16,9 +16,9 @@
 #include "UnLuaManager.h"
 #include "LuaContext.h"
 #include "LuaCore.h"
-#include "UEReflectionUtils.h"
-#include "UEObjectReferencer.h"
 #include "DelegateHelper.h"
+#include "UEObjectReferencer.h"
+#include "ReflectionUtils/ReflectionRegistry.h"
 
 /**
  * Load an object. for example: UObject.Load("/Game/Core/Blueprints/AI/BehaviorTree_Enemy.BehaviorTree_Enemy")
@@ -57,7 +57,17 @@ int32 UObject_Load(lua_State *L)
     UObject *Object = LoadObject<UObject>(nullptr, *ObjectPath);
     if (Object)
     {
-        UnLua::PushUObject(L, Object);
+        UEnum *Enum = Cast<UEnum>(Object);
+        if (Enum)
+        {
+            RegisterEnum(L, Enum);
+            int32 Type = luaL_getmetatable(L, TCHAR_TO_ANSI(*Enum->GetName()));
+            check(Type == LUA_TTABLE);
+        }
+        else
+        {
+            UnLua::PushUObject(L, Object);
+        }
     }
     else
     {
@@ -388,9 +398,12 @@ static const luaL_Reg FSoftObjectPtrLib[] =
 
 BEGIN_EXPORT_CLASS(FSoftObjectPtr, const UObject*)
     ADD_CONST_FUNCTION_EX("IsValid", bool, IsValid)
+    ADD_CONST_FUNCTION_EX("IsNull", bool, IsNull)
+    ADD_CONST_FUNCTION_EX("IsPending", bool, IsPending)
     ADD_FUNCTION_EX("Reset", void, Reset)
     ADD_FUNCTION_EX("Set", void, operator=, const UObject*)
     ADD_CONST_FUNCTION_EX("Get", UObject*, Get)
+    ADD_CONST_FUNCTION_EX("LoadSynchronous", UObject*, LoadSynchronous)
     ADD_LIB(FSoftObjectPtrLib)
 END_EXPORT_CLASS()
 IMPLEMENT_EXPORTED_CLASS(FSoftObjectPtr)

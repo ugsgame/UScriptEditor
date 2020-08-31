@@ -20,9 +20,12 @@ static int32 FGameplayTag_New(lua_State *L)
 {
 	int32 NumParams = lua_gettop(L);
 	void *Userdata = NewTypedUserdata(L, FGameplayTag);
-	FGameplayTag* V = new(Userdata) FGameplayTag();
-	const char *TagName = lua_tostring(L, 2);
-	*V = UGameplayTagsManager::Get().RequestGameplayTag(FName(TagName));
+	FGameplayTag* A = new(Userdata) FGameplayTag();
+	if (NumParams > 1)
+	{
+		const char *TagName = lua_tostring(L, 2);
+		*A = UGameplayTagsManager::Get().RequestGameplayTag(FName(TagName));
+	}
 	return 1;
 }
 
@@ -101,6 +104,39 @@ static int32 FGameplayTag_ToString(lua_State *L)
 	return 1;
 }
 
+static int32 FGameplayTag_ReSet(lua_State *L)
+{
+	int32 NumParams = lua_gettop(L);
+	if (NumParams < 1)
+	{
+		UE_LOG(LogUnLua, Log, TEXT("%s: Invalid parameters for __tostring!"), ANSI_TO_TCHAR(__FUNCTION__));
+		return 0;
+	}
+
+	FGameplayTag* A = (FGameplayTag*)GetCppInstanceFast(L, 1);
+	if (!A)
+	{
+		UE_LOG(LogUnLua, Log, TEXT("%s: Invalid GameplayTag!"), ANSI_TO_TCHAR(__FUNCTION__));
+		return 0;
+	}
+
+	if (NumParams == 2)
+	{
+		FGameplayTag* B = (FGameplayTag*)GetCppInstanceFast(L, 2);
+		if (!B)
+		{
+			UE_LOG(LogUnLua, Log, TEXT("%s: Invalid GameplayTag!"), ANSI_TO_TCHAR(__FUNCTION__));
+			return 0;
+		}
+		*A = UGameplayTagsManager::Get().RequestGameplayTag(FName(B->GetTagName()));
+	}
+	else
+	{
+		*A = FGameplayTag();
+	}
+	return 0;
+}
+
 static int32 FGameplayTag_IsValid(lua_State *L)
 {
 	int32 NumParams = lua_gettop(L);
@@ -140,7 +176,7 @@ static int32 FGameplayTag_RequestDirectParent(lua_State *L)
 	void *Userdata = NewTypedUserdata(L, FGameplayTag);
 	FGameplayTag* B = new(Userdata) FGameplayTag();
 	*B = A->RequestDirectParent();
-	
+
 	return 1;
 }
 
@@ -206,6 +242,8 @@ static const luaL_Reg FGameplayTagLib[] =
 	{ "__eq", FGameplayTag_Equals },
 	{ "__lt", FGameplayTag_LessThan },
 	{ "__tostring", FGameplayTag_ToString },
+	{ "ToString", FGameplayTag_ToString },
+	{ "Reset", FGameplayTag_ReSet },
 	{ "IsValid", FGameplayTag_IsValid },
 	{ "RequestDirectParent", FGameplayTag_RequestDirectParent },
 	{ "MatchesTag", FGameplayTag_MatchesTag },

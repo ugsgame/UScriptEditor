@@ -12,13 +12,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 // See the License for the specific language governing permissions and limitations under the License.
 
-#include "UnLuaInterface.h"
 #include "UnLuaEx.h"
 #include "UnLuaPrivate.h"
 #include "UnLuaDelegates.h"
 #include "LuaContext.h"
-
-DEFINE_LOG_CATEGORY(LogUnLua);
 
 DEFINE_STAT(STAT_UnLua_Lua_Memory);
 DEFINE_STAT(STAT_UnLua_PersistentParamBuffer_Memory);
@@ -26,69 +23,6 @@ DEFINE_STAT(STAT_UnLua_OutParmRec_Memory);
 
 namespace UnLua
 {
-
-    bool AddTypeInterface(FName Name, TSharedPtr<ITypeInterface> TypeInterface)
-    {
-        FLuaContext::Create();
-        return GLuaCxt->AddTypeInterface(Name, TypeInterface);
-    }
-
-    IExportedClass* FindExportedClass(FName Name)
-    {
-        FLuaContext::Create();
-        return GLuaCxt->FindExportedClass(Name);
-    }
-
-    bool ExportClass(IExportedClass *Class)
-    {
-        FLuaContext::Create();
-        return GLuaCxt->ExportClass(Class);
-    }
-
-    bool ExportFunction(IExportedFunction *Function)
-    {
-        FLuaContext::Create();
-        return GLuaCxt->ExportFunction(Function);
-    }
-
-    bool ExportEnum(IExportedEnum *Enum)
-    {
-        FLuaContext::Create();
-        return GLuaCxt->ExportEnum(Enum);
-    }
-
-    lua_State* CreateState()
-    {
-        if (GLuaCxt)
-        {
-            GLuaCxt->CreateState();
-            return *GLuaCxt;
-        }
-        return nullptr;
-    }
-
-    lua_State* GetState()
-    {
-        return GLuaCxt ? (lua_State*)(*GLuaCxt) : nullptr;
-    }
-
-    bool Startup()
-    {
-        if (GLuaCxt)
-        {
-            GLuaCxt->SetEnable(true);
-            return true;
-        }
-        return false;
-    }
-
-    void Shutdown()
-    {
-        if (GLuaCxt)
-        {
-            GLuaCxt->SetEnable(false);
-        }
-    }
 
     /**
      * Lua stack index wrapper
@@ -454,6 +388,4 @@ bool HotfixLua()
 }
 
 FString GLuaSrcRelativePath = TEXT("Script/");
-FString GLuaSrcFullPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() + GLuaSrcRelativePath);
-
-FModuleContext GModuleContext;
+FString GLuaSrcFullPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() + GLuaSrcRelativePath);

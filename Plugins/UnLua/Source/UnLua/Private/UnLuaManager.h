@@ -17,10 +17,11 @@
 #include "InputCoreTypes.h"
 #include "Engine/EngineBaseTypes.h"
 #include "UnLuaCompatibility.h"
+#include "ReflectionUtils/ReflectionRegistry.h"
 #include "UnLuaManager.generated.h"
 
 UCLASS()
-class UNLUA_API UUnLuaManager : public UObject
+class UUnLuaManager : public UObject
 {
     GENERATED_BODY()
 
@@ -36,7 +37,7 @@ public:
     void Cleanup(class UWorld *World, bool bFullCleanup);
 
     void CleanUpByClass(UClass *Class);
-    
+
     void PostCleanup();
 
     void GetDefaultInputs();
@@ -112,6 +113,10 @@ private:
     TMap<FString, TSet<FName>> ModuleFunctions;
     TMap<UFunction*, FNativeFuncPtr> CachedNatives;
     TMap<UFunction*, TArray<uint8>> CachedScripts;
+
+#if !ENABLE_CALL_OVERRIDDEN_FUNCTION
+    TMap<UFunction*, UFunction*> New2TemplateFunctions;
+#endif
 
     TMap<UClass*, TArray<UClass*>> Base2DerivedClasses;
     TMap<UClass*, UClass*> Derived2BaseClasses;

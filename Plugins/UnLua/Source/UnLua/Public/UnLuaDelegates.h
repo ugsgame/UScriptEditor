@@ -15,7 +15,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UnLuaInterface.h"
 
 struct lua_State;
 
@@ -32,7 +31,6 @@ public:
 
     DECLARE_DELEGATE_RetVal_OneParam(int32, FGenericLuaDelegate, lua_State*);
     DECLARE_DELEGATE_RetVal_TwoParams(bool, FLuaFileLoader, const FString&, TArray<uint8>&);
-	DECLARE_DELEGATE_RetVal_TwoParams(bool, FModuleContextLoader, const FString&, FModuleContext&);
 
     static FOnLuaStateCreated OnLuaStateCreated;
     static FOnLuaContextInitialized OnLuaContextInitialized;
@@ -48,5 +46,4 @@ public:
     static FGenericLuaDelegate ConfigureLuaGC;
     
     static FLuaFileLoader LoadLuaFile;
-	static FModuleContextLoader LoadModuleContext;
 };

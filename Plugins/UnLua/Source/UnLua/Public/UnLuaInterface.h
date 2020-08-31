@@ -1,4 +1,4 @@
-﻿// Tencent is pleased to support the open source community by making UnLua available.
+// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -20,25 +20,6 @@
 /**
  * Interface for binding UCLASS and Lua module
  */
-
-struct FModuleContext
-{
-	FString Path;
-
-	FString SourceCode;
-
-	TArray<uint8> ByteCode;
-
-	void Empty()
-	{
-		Path.Empty();
-		SourceCode.Empty();
-		ByteCode.Empty();
-	};
-};
-
-UNLUA_API extern FModuleContext GModuleContext;
-
 UINTERFACE()
 class UNLUA_API UUnLuaInterface : public UInterface
 {
@@ -50,14 +31,9 @@ class UNLUA_API IUnLuaInterface
     GENERATED_BODY()
 
 public:
-	/**
-	 * return a Lua file path which is relative to project's 'Content/Script', for example 'Weapon.BP_DefaultProjectile_C'
-	 */
-	UFUNCTION(BlueprintNativeEvent)
-		FString GetModuleName() const;
-	/**
-	 * return  code context
-	 */
-	UFUNCTION(BlueprintNativeEvent)
-		void GetModuleContext(FString& Path, FString& SourceCode, TArray<uint8>& ByteCode) const;
+    /**
+     * return a Lua file path which is relative to project's 'Content/Script', for example 'Weapon.BP_DefaultProjectile_C'
+     */
+    UFUNCTION(BlueprintNativeEvent)
+    FString GetModuleName() const;
 };

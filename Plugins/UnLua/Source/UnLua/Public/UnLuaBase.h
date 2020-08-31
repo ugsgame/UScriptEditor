@@ -1,4 +1,4 @@
-﻿// Tencent is pleased to support the open source community by making UnLua available.
+// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "CoreUObject.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 #ifndef AUTO_UNLUA_STARTUP
 #define AUTO_UNLUA_STARTUP 0
@@ -30,6 +30,10 @@
 #endif
 
 UNLUA_API DECLARE_LOG_CATEGORY_EXTERN(LogUnLua, Log, All);
+
+#if ENGINE_MINOR_VERSION < 25
+typedef UProperty FProperty;
+#endif
 
 struct lua_State;
 struct luaL_Reg;
@@ -51,7 +55,7 @@ namespace UnLua
      */
     struct ITypeInterface : public ITypeOps
     {
-		virtual ~ITypeInterface() {}
+        virtual ~ITypeInterface() {}
 
         virtual bool IsPODType() const = 0;
         virtual bool IsTriviallyDestructible() const = 0;
@@ -64,7 +68,7 @@ namespace UnLua
         virtual void Copy(void *Dest, const void *Src) const = 0;
         virtual bool Identical(const void *A, const void *B) const = 0;
         virtual FString GetName() const = 0;
-        virtual UProperty* GetUProperty() const = 0;
+        virtual FProperty* GetUProperty() const = 0;
     };
 
     /**
@@ -229,13 +233,7 @@ namespace UnLua
      */
     UNLUA_API bool LoadChunk(lua_State *L, const char *Chunk, int32 ChunkSize, const char *ChunkName = "", const char *Mode = "bt", int32 Env = 0);
 
-	/**
-	 * Load a Lua string without running it
-	 * *param String - Lua string
-	 */
-	UNLUA_API bool LoadString(lua_State *L, const char *String);
-
-	/**
+    /**
      * Run a Lua chunk
      *
      * @param Chunk - Lua chunk

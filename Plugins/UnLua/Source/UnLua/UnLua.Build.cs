@@ -53,7 +53,7 @@ public class UnLua : ModuleRules
                 "InputCore",
                 "Projects",
                 "Lua",
-                "GameplayTags",
+				"GameplayTags",
             }
             );
         

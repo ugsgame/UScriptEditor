@@ -1,4 +1,4 @@
-﻿// Tencent is pleased to support the open source community by making UnLua available.
+// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -18,13 +18,12 @@
 #include "LuaCore.h"
 #include "LuaContext.h"
 #include "LuaFunctionInjection.h"
-#include "UEReflectionUtils.h"
+#include "DelegateHelper.h"
 #include "UEObjectReferencer.h"
 #include "GameFramework/InputSettings.h"
 #include "Components/InputComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/LevelScriptActor.h"
-#include "DelegateHelper.h"
 
 static const TCHAR* SReadableInputEvent[] = { TEXT("Pressed"), TEXT("Released"), TEXT("Repeat"), TEXT("DoubleClick"), TEXT("Axis"), TEXT("Max") };
 
@@ -72,41 +71,31 @@ bool UUnLuaManager::Bind(UObjectBaseUtility *Object, UClass *Class, const TCHAR 
         return false;
     }
 
-	FString *ModuleNamePtr = ModuleNames.Find(Class);
-	if (!ModuleNamePtr)
-	{
-		UnLua::FLuaRetValues RetValues = UnLua::Call(L, "require", TCHAR_TO_ANSI(InModuleName));    // require Lua module
-		bSuccess = RetValues.IsValid();
-
-
-		if (!bSuccess)
-		{
-			//load Code context
-			//TODO：CodeContext should be a param for the LoadContext
-			bool LoadString = false;
-			
- #if WITH_EDITOR
- 			LoadString = true;
- #endif
- 			UnLua::FLuaRetValues LoadContextValues = UnLua::Call(L, "LoadContext", TCHAR_TO_ANSI(InModuleName), LoadString/*true LoadString ,false Loadbuffer,default is true*/);
- 			bSuccess = LoadContextValues.IsValid();			
-		}
-
-		if (bSuccess)
-		{
-			bSuccess = BindInternal(Object, Class, InModuleName, true);                             // bind!!!
-		}
-	}
+    FString *ModuleNamePtr = ModuleNames.Find(Class);
+    if (!ModuleNamePtr)
+    {
+        UnLua::FLuaRetValues RetValues = UnLua::Call(L, "require", TCHAR_TO_ANSI(InModuleName));    // require Lua module
+        bSuccess = RetValues.IsValid();
+        if (bSuccess)
+        {
+            bSuccess = BindInternal(Object, Class, InModuleName, true);                             // bind!!!
+        }
+    }
 
     if (bSuccess)
     {
+        bool bDerivedClassBinded = false;
         if (Object->GetClass() != Class)
         {
+            bDerivedClassBinded = true;
             OnDerivedClassBinded(Object->GetClass(), Class);
         }
 
         GLuaCxt->AddModuleName(InModuleName);                                       // record this required module
-        int32 ObjectRef = NewLuaObject(L, Object,TCHAR_TO_ANSI(InModuleName));      // create a Lua instance for this UObject
+
+        // create a Lua instance for this UObject
+        int32 ObjectRef = NewLuaObject(L, Object, bDerivedClassBinded ? Class : nullptr, TCHAR_TO_ANSI(InModuleName));
+
         AddAttachedObject(Object, ObjectRef);                                       // record this binded UObject
 
         int32 FunctionRef = PushFunction(L, Object, "Initialize");                  // push hard coded Lua function 'Initialize'
@@ -248,6 +237,10 @@ void UUnLuaManager::Cleanup(UWorld *InWorld, bool bFullCleanup)
     CleanupDuplicatedFunctions();       // clean up duplicated UFunctions
     CleanupCachedNatives();             // restore cached thunk functions
     CleanupCachedScripts();             // restore cached scripts
+
+#if !ENABLE_CALL_OVERRIDDEN_FUNCTION
+    New2TemplateFunctions.Empty();
+#endif
 }
 
 /**
@@ -748,6 +741,16 @@ void UUnLuaManager::OverrideFunction(UFunction *TemplateFunction, UClass *OuterC
 {
     if (TemplateFunction->GetOuter() != OuterClass)
     {
+//#if UE_BUILD_SHIPPING || UE_BUILD_TEST
+        if (TemplateFunction->Script.Num() > 0 && TemplateFunction->Script[0] == EX_CallLua)
+        {
+#if ENABLE_CALL_OVERRIDDEN_FUNCTION
+            TemplateFunction = GReflectionRegistry.FindOverriddenFunction(TemplateFunction);
+#else
+            TemplateFunction = New2TemplateFunctions.FindChecked(TemplateFunction);
+#endif
+        }
+//#endif
         AddFunction(TemplateFunction, OuterClass, NewFuncName);     // add a duplicated UFunction to child UClass
     }
     else
@@ -764,6 +767,12 @@ void UUnLuaManager::AddFunction(UFunction *TemplateFunction, UClass *OuterClass,
     UFunction *Func = OuterClass->FindFunctionByName(NewFuncName, EIncludeSuperFlag::ExcludeSuper);
     if (!Func)
     {
+        if (TemplateFunction->HasAnyFunctionFlags(FUNC_Native))
+        {
+            // call this before duplicate UFunction that has FUNC_Native to eliminate "Failed to bind native function" warnings.
+            OuterClass->AddNativeFunction(*NewFuncName.ToString(), (FNativeFuncPtr)&FLuaInvoker::execCallLua);
+        }
+
         UFunction *NewFunc = DuplicateUFunction(TemplateFunction, OuterClass, NewFuncName); // duplicate a UFunction
         if (!NewFunc->HasAnyFunctionFlags(FUNC_Native) && NewFunc->Script.Num() > 0)
         {
@@ -774,6 +783,8 @@ void UUnLuaManager::AddFunction(UFunction *TemplateFunction, UClass *OuterClass,
         DuplicatedFuncs.AddUnique(NewFunc);
 #if ENABLE_CALL_OVERRIDDEN_FUNCTION
         GReflectionRegistry.AddOverriddenFunction(NewFunc, TemplateFunction);
+#else
+        New2TemplateFunctions.Add(NewFunc, TemplateFunction);
 #endif
     }
 }
@@ -788,6 +799,11 @@ void UUnLuaManager::ReplaceFunction(UFunction *TemplateFunction, UClass *OuterCl
     {
 #if ENABLE_CALL_OVERRIDDEN_FUNCTION
         FName NewFuncName(*FString::Printf(TEXT("%s%s"), *TemplateFunction->GetName(), TEXT("Copy")));
+        if (TemplateFunction->HasAnyFunctionFlags(FUNC_Native))
+        {
+            // call this before duplicate UFunction that has FUNC_Native to eliminate "Failed to bind native function" warnings.
+            OuterClass->AddNativeFunction(*NewFuncName.ToString(), TemplateFunction->GetNativeFunc());
+        }
         UFunction *NewFunc = DuplicateUFunction(TemplateFunction, OuterClass, NewFuncName);
         GReflectionRegistry.AddOverriddenFunction(TemplateFunction, NewFunc);
 #endif

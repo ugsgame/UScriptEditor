@@ -1,4 +1,4 @@
-﻿// Tencent is pleased to support the open source community by making UnLua available.
+// Tencent is pleased to support the open source community by making UnLua available.
 // 
 // Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
 //
@@ -22,9 +22,8 @@ public class Lua : ModuleRules
     {
         Type = ModuleType.External;
 
-        if (Target.Platform == UnrealTargetPlatform.Win64 || Target.Platform == UnrealTargetPlatform.Mac ||
-            Target.Platform == UnrealTargetPlatform.IOS || Target.Platform == UnrealTargetPlatform.Android||
-            Target.Platform == UnrealTargetPlatform.Linux)
+        if (Target.Platform == UnrealTargetPlatform.Win64 || Target.Platform == UnrealTargetPlatform.Mac || 
+            Target.Platform == UnrealTargetPlatform.IOS || Target.Platform == UnrealTargetPlatform.Android)
         {
             string LuaDynLibName = "";
             string LuaDynamicLibPath = "";
@@ -46,10 +45,6 @@ public class Lua : ModuleRules
                 {
                     PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "lib/Mac/liblua.a"));
                 }
-            }
-            else if (Target.Platform == UnrealTargetPlatform.Linux)
-            {
-                PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "lib/Linux/liblua.a"));              
             }
             else if (Target.Platform == UnrealTargetPlatform.IOS)
             {

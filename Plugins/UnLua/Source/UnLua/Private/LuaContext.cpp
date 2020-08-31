@@ -21,17 +21,16 @@
 #include "UnLuaDelegates.h"
 #include "UnLuaDebugBase.h"
 #include "UEObjectReferencer.h"
-#include "UEReflectionUtils.h"
 #include "CollisionHelper.h"
 #include "DelegateHelper.h"
-#include "PropertyCreator.h"
+#include "ReflectionUtils/PropertyCreator.h"
 #include "DefaultParamCollection.h"
+#include "ReflectionUtils/ReflectionRegistry.h"
 #include "Interfaces/IPluginManager.h"
-
-#include "UnLuaExtend.h"
 
 #if WITH_EDITOR
 #include "Editor.h"
+#include "GameDelegates.h"
 #endif
 
 #if UE_BUILD_TEST
@@ -124,6 +123,7 @@ void FLuaContext::RegisterDelegates()
     FEditorDelegates::PostPIEStarted.AddRaw(GLuaCxt, &FLuaContext::PostPIEStarted);
     FEditorDelegates::PrePIEEnded.AddRaw(GLuaCxt, &FLuaContext::PrePIEEnded);
     FEditorDelegates::EndPIE.AddRaw(GLuaCxt, &FLuaContext::EndPIE);
+    FGameDelegates::Get().GetEndPlayMapDelegate().AddRaw(GLuaCxt, &FLuaContext::OnEndPlayMap);
 #endif
 }
 
@@ -199,12 +199,6 @@ void FLuaContext::CreateState()
         {
             lua_register(L, "require", Global_Require);             // override 'require' when running with cooked data
         }
-
-		//UnLuaExtern Functions
-		lua_register(L, "CheckModule", Global_CheckModule);
-		lua_register(L, "RequireModule", Global_RequireModule);
-		lua_register(L, "LoadContext", Global_LoadContext);
-		//
 
         // register collision related enums
         RegisterECollisionChannel(L);
@@ -402,24 +396,25 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
         }
         if (Class->ImplementsInterface(InterfaceClass))                             // static binding
         {
-            UFunction *GetNameFunc = Class->FindFunctionByName(FName("GetModuleName"));    // find UFunction 'GetModuleName'. hard coded!!!
-			UFunction *GetContextFunc = Class->FindFunctionByName(FName("GetModuleContext"));    // find UFunction 'GetModuleCode'. hard coded!!!
-
-            if (GetNameFunc && GetContextFunc)
+#if WITH_EDITOR
+            if (GIsEditor && Object->GetOuter())
             {
-                if (GetNameFunc->GetNativeFunc() && GetContextFunc->GetNativeFunc()  && IsInGameThread())
+                UWorld *World = Object->GetOuter()->GetWorld();
+                if (World && !World->IsGameWorld())
+                {
+                    return false;
+                }
+            }
+#endif
+            UFunction *Func = Class->FindFunctionByName(FName("GetModuleName"));    // find UFunction 'GetModuleName'. hard coded!!!
+            if (Func)
+            {
+                if (Func->GetNativeFunc() && IsInGameThread())
                 {
                     FString ModuleName;
-					FModuleContext ModuleContext;
-
-                    UObject *DefaultObject = Class->GetDefaultObject();						// get CDO
-                    DefaultObject->UObject::ProcessEvent(GetNameFunc, &ModuleName);			// force to invoke UObject::ProcessEvent(...)
-					DefaultObject->UObject::ProcessEvent(GetContextFunc, &ModuleContext);
-
-					//Set Global Context
-					GModuleContext = ModuleContext;
-
-                    UClass *OuterClass = GetNameFunc->GetOuterUClass();                    // get UFunction's outer class
+                    UObject *DefaultObject = Class->GetDefaultObject();             // get CDO
+                    DefaultObject->UObject::ProcessEvent(Func, &ModuleName);        // force to invoke UObject::ProcessEvent(...)
+                    UClass *OuterClass = Func->GetOuterUClass();                    // get UFunction's outer class
                     Class = OuterClass == InterfaceClass ? Class : OuterClass;      // select the target UClass to bind Lua module
                     if (ModuleName.Len() < 1)
                     {
@@ -449,7 +444,7 @@ bool FLuaContext::TryToBindLua(UObjectBaseUtility *Object)
 /**
  * Callback for FWorldDelegates::OnWorldTickStart
  */
-#if ENGINE_MINOR_VERSION > 23	
+#if ENGINE_MINOR_VERSION > 23
 void FLuaContext::OnWorldTickStart(UWorld *World, ELevelTick TickType, float DeltaTime)
 #else
 void FLuaContext::OnWorldTickStart(ELevelTick TickType, float DeltaTime)
@@ -485,15 +480,23 @@ void FLuaContext::OnWorldCleanup(UWorld *World, bool bSessionEnded, bool bCleanu
         return;
     }
 
+#if WITH_EDITOR
+    UGameInstance *OwningGameInstance = World->GetGameInstance();
+    if (OwningGameInstance && OwningGameInstance->GetWorldContext() && OwningGameInstance->GetWorldContext()->PendingNetGame)
+    {
+        return;
+    }
+#endif
+
     World->RemoveOnActorSpawnedHandler(OnActorSpawnedHandle);
 
     if (World->PersistentLevel && World->PersistentLevel->OwningWorld == World)
     {
         bIsInSeamlessTravel = World->IsInSeamlessTravel();
     }
-#if ENGINE_MINOR_VERSION > 23	
-    Cleanup(IsEngineExitRequested(), World);                    // clean up	
-#else	
+#if ENGINE_MINOR_VERSION > 23
+    Cleanup(IsEngineExitRequested(), World);                    // clean up
+#else
     Cleanup(GIsRequestingExit, World);                          // clean up
 #endif
 
@@ -515,6 +518,14 @@ void FLuaContext::OnPostWorldCleanup(UWorld *World, bool bSessionEnded, bool bCl
     {
         return;
     }
+
+#if WITH_EDITOR
+    UGameInstance *OwningGameInstance = World->GetGameInstance();
+    if (OwningGameInstance && OwningGameInstance->GetWorldContext() && OwningGameInstance->GetWorldContext()->PendingNetGame)
+    {
+        return;
+    }
+#endif
 
     if (NextMap.Len() > 0)
     {
@@ -628,36 +639,21 @@ void FLuaContext::OnAsyncLoadingFlushUpdate()
             if (Object && !Object->HasAnyFlags(RF_NeedPostLoad))
             {
                 // see FLuaContext::TryToBindLua
-                UFunction *GetNameFunc = Object->FindFunction(FName("GetModuleName"));
-				UFunction *GetContextFunc = Object->FindFunction(FName("GetModuleContext"));
-
-                if (!GetNameFunc || !GetNameFunc->GetNativeFunc())
+                UFunction *Func = Object->FindFunction(FName("GetModuleName"));
+                if (!Func || !Func->GetNativeFunc())
                 {
                     continue;
                 }
-				if (!GetContextFunc || !GetContextFunc->GetNativeFunc())
-				{
-					continue;
-				}
-
                 FString ModuleName;
-				FModuleContext ModuleContext;
-
-                Object->UObject::ProcessEvent(GetNameFunc, &ModuleName);    // force to invoke UObject::ProcessEvent(...)
-				Object->UObject::ProcessEvent(GetContextFunc, &ModuleContext);    // force to invoke UObject::ProcessEvent(...)
-
-				//Set Global Context
-				GModuleContext = ModuleContext;
-
-                UClass *Class = GetNameFunc->GetOuterUClass();
+                Object->UObject::ProcessEvent(Func, &ModuleName);    // force to invoke UObject::ProcessEvent(...)
+                UClass *Class = Func->GetOuterUClass();
                 Class = Class == InterfaceClass ? Object->GetClass() : Class;
                 if (ModuleName.Len() < 1)
                 {
                     ModuleName = Class->GetName();
                 }
-
-				Candidates.RemoveAt(i);
-                Manager->Bind(Object, Class, *ModuleName);           
+                Manager->Bind(Object, Class, *ModuleName);
+                Candidates.RemoveAt(i);
             }
         }
     }
@@ -810,13 +806,7 @@ void FLuaContext::PostPIEStarted(bool bIsSimulating)
  */
 void FLuaContext::PrePIEEnded(bool bIsSimulating)
 {
-    bIsPIE = false;
-    Cleanup(true);
-    Manager->CleanupDefaultInputs();
-    ServerWorld = nullptr;
-    LoadedWorlds.Empty();
-    CandidateInputComponents.Empty();
-    FWorldDelegates::OnWorldTickStart.Remove(OnWorldTickStartHandle);
+    //bIsPIE = false;
 }
 
 /**
@@ -824,6 +814,20 @@ void FLuaContext::PrePIEEnded(bool bIsSimulating)
  */
 void FLuaContext::EndPIE(bool bIsSimulating)
 {
+}
+
+/**
+ * Callback for FGameDelegates::EndPlayMapDelegate
+ */
+void FLuaContext::OnEndPlayMap()
+{
+    bIsPIE = false;
+    Cleanup(true);
+    Manager->CleanupDefaultInputs();
+    ServerWorld = nullptr;
+    LoadedWorlds.Empty();
+    CandidateInputComponents.Empty();
+    FWorldDelegates::OnWorldTickStart.Remove(OnWorldTickStartHandle);
 }
 #endif
 
@@ -1031,7 +1035,7 @@ void FLuaContext::Initialize()
  */
 void FLuaContext::Cleanup(bool bFullCleanup, UWorld *World)
 {
-    if (!bEnable || !bInitialized || !Manager)
+    if (!bEnable || !Manager)
     {
         return;
     }
